@@ -41,7 +41,7 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-murali = "0.1.8"
+murali = "0.2.0"
 anyhow = "1"
 glam = "0.33"
 ```
@@ -59,6 +59,7 @@ The published crate excludes `examples/**`, so reference examples are available 
 Some useful places to start:
 
 - [Documentation](https://muraliengine.com/docs/intro)
+- [Landscape, portrait, and square video formats](https://muraliengine.com/docs/video-formats)
 - [Reference examples catalog](./examples/README.md)
 - [Future roadmap](./ROADMAP.md)
 - [Creative showcase repository](https://github.com/ravishankarkumar/murali-examples)
@@ -83,8 +84,16 @@ fps = 60
 [export]
 fps = 60
 width = 1920
-height = 1080
 ```
+
+The scene owns its aspect ratio. Landscape is the default; portrait and square scenes are explicit:
+
+```rust
+let portrait = Scene::new().with_frame(Frame::portrait());
+let square = Scene::new().with_frame(Frame::square());
+```
+
+Export `width` is literal pixel width. Murali derives height from the scene frame, so a portrait scene at `width = 1080` exports at `1080 × 1920`.
 
 A sample file is included at [murali.toml.example](./murali.toml.example).
 

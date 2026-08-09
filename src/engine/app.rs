@@ -19,6 +19,7 @@ use crate::engine::camera::controller::{
 };
 use crate::engine::config::RenderConfig;
 use crate::engine::export::{ExportSettings, export_scene};
+use crate::engine::frame::Frame;
 use crate::engine::render::RenderOptions;
 use crate::engine::scene::Scene;
 use crate::frontend::theme::Theme;
@@ -125,17 +126,16 @@ impl<'a> ApplicationHandler for App {
             return;
         }
 
+        let scene = self.pending_scene.take().unwrap_or_else(Scene::new);
         let window = event_loop
             .create_window(
                 Window::default_attributes()
                     .with_title("Murali")
-                    .with_inner_size(PhysicalSize::new(1280, 720)),
+                    .with_inner_size(preview_window_size(scene.frame())),
             )
             .expect("Failed to create window");
 
         let arc_window = Arc::new(window);
-
-        let scene = self.pending_scene.take().unwrap_or_else(Scene::new);
 
         let mut engine =
             pollster::block_on(async { Engine::new_with_scene(arc_window.clone(), scene).await });
@@ -229,7 +229,7 @@ impl<'a> ApplicationHandler for App {
             }
 
             WindowEvent::Resized(size) => {
-                let corrected = enforce_16_9(size);
+                let corrected = enforce_aspect(size, engine.scene.frame().aspect_ratio());
                 if corrected != size {
                     let _ = window.request_inner_size(corrected);
                 }
@@ -283,15 +283,25 @@ impl<'a> ApplicationHandler for App {
     }
 }
 
-fn enforce_16_9(size: PhysicalSize<u32>) -> PhysicalSize<u32> {
-    let ratio = 16.0 / 9.0;
-    let w = size.width as f32;
-    let h = size.height as f32;
+fn enforce_aspect(size: PhysicalSize<u32>, ratio: f32) -> PhysicalSize<u32> {
+    let width = size.width.max(1);
+    let height = size.height.max(1);
+    let w = width as f32;
+    let h = height as f32;
     if (w / h) > ratio {
-        PhysicalSize::new((h * ratio) as u32, size.height)
+        PhysicalSize::new((h * ratio).round().max(1.0) as u32, height)
     } else {
-        PhysicalSize::new(size.width, (w / ratio) as u32)
+        PhysicalSize::new(width, (w / ratio).round().max(1.0) as u32)
     }
+}
+
+fn preview_window_size(frame: Frame) -> PhysicalSize<u32> {
+    let ratio = frame.aspect_ratio();
+    let max_width: f32 = 1280.0;
+    let max_height: f32 = 960.0;
+    let width = max_width.min(max_height * ratio);
+    let height = width / ratio;
+    PhysicalSize::new(width.round() as u32, height.round() as u32)
 }
 
 fn print_camera_help() {
@@ -314,7 +324,9 @@ fn preview_has_reached_auto_close(scene_time: f32, timeline_end: f32, delay: f32
 
 #[cfg(test)]
 mod tests {
-    use super::preview_has_reached_auto_close;
+    use super::{enforce_aspect, preview_has_reached_auto_close, preview_window_size};
+    use crate::engine::frame::Frame;
+    use winit::dpi::PhysicalSize;
 
     #[test]
     fn auto_close_waits_five_seconds_after_timeline_completion() {
@@ -326,5 +338,36 @@ mod tests {
     fn auto_close_handles_scenes_without_a_timeline() {
         assert!(!preview_has_reached_auto_close(4.999, 0.0, 5.0));
         assert!(preview_has_reached_auto_close(5.0, 0.0, 5.0));
+    }
+
+    #[test]
+    fn preview_sizes_follow_the_scene_frame() {
+        assert_eq!(
+            preview_window_size(Frame::landscape()),
+            PhysicalSize::new(1280, 720)
+        );
+        assert_eq!(
+            preview_window_size(Frame::portrait()),
+            PhysicalSize::new(540, 960)
+        );
+        assert_eq!(
+            preview_window_size(Frame::square()),
+            PhysicalSize::new(960, 960)
+        );
+    }
+
+    #[test]
+    fn resize_enforces_the_requested_aspect() {
+        assert_eq!(
+            enforce_aspect(
+                PhysicalSize::new(800, 800),
+                Frame::portrait().aspect_ratio()
+            ),
+            PhysicalSize::new(450, 800)
+        );
+        assert_eq!(
+            enforce_aspect(PhysicalSize::new(1200, 800), Frame::square().aspect_ratio()),
+            PhysicalSize::new(800, 800)
+        );
     }
 }

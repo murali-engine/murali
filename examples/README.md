@@ -10,6 +10,9 @@ A first scene with a square, circle, rectangle, and polygon placed by hand.
 `cargo run --example layout_and_groups`
 Placement helpers like `next_to`, `align_to`, `HStack`, `VStack`, and `Group.move_to`.
 
+`cargo run --example portrait_video`
+An intentional 9:16 composition demonstrating portrait preview, export, and frame-relative layout.
+
 `cargo run --example style_and_paths`
 Fill, stroke, dashes, arrows, and one authored path in a single calm scene.
 

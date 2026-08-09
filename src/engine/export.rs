@@ -45,8 +45,8 @@ impl PngCompressionMode {
 
 #[derive(Debug, Clone)]
 pub struct ExportSettings {
+    /// Final output width in pixels. Height is derived from the scene frame.
     pub width: u32,
-    pub height: u32,
     pub fps: u32,
     pub duration_seconds: f32,
     pub artifact_dir: PathBuf,
@@ -62,7 +62,6 @@ impl Default for ExportSettings {
         let artifact_dir = default_artifact_dir(&stem);
         Self {
             width: 1920,
-            height: 1080,
             fps: 60,
             duration_seconds: 1.0,
             artifact_dir,
@@ -77,6 +76,7 @@ impl Default for ExportSettings {
 impl ExportSettings {
     pub fn from_scene(scene: &Scene) -> Self {
         let mut settings = Self::default();
+        settings.width = scene.frame().default_export_width();
         settings.duration_seconds = infer_duration(scene);
 
         let bg = Theme::global().background;
@@ -91,16 +91,7 @@ impl ExportSettings {
         let cfg = ExportConfig::load(project_root.join("murali.toml"))?;
 
         let mut settings = Self::from_scene(scene);
-        settings.width = options
-            .resolution
-            .map(|(w, _)| w)
-            .or(cfg.width)
-            .unwrap_or(settings.width);
-        settings.height = options
-            .resolution
-            .map(|(_, h)| h)
-            .or(cfg.height)
-            .unwrap_or(settings.height);
+        settings.width = options.width.or(cfg.width).unwrap_or(settings.width);
         settings.fps = options.fps.or(cfg.fps).unwrap_or(settings.fps);
         settings.duration_seconds = cfg.duration_seconds.unwrap_or(settings.duration_seconds);
         if let Some(artifact_dir) = cfg.artifact_dir {
@@ -148,6 +139,13 @@ impl ExportSettings {
 
     pub fn frame_time(&self, frame_index: u32) -> f32 {
         (frame_index as f32 * self.frame_dt()).min(self.duration_seconds.max(0.0))
+    }
+
+    pub fn pixel_dimensions(&self, scene: &Scene) -> Result<(u32, u32)> {
+        if self.width == 0 {
+            return Err(anyhow::anyhow!("export width must be greater than zero"));
+        }
+        Ok(scene.frame().pixel_dimensions(self.width))
     }
 
     pub fn export_stem(&self) -> String {
@@ -249,6 +247,7 @@ fn resolve_config_artifact_dir(project_root: &Path, path: PathBuf) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::{ExportSettings, resolve_config_artifact_dir};
+    use crate::engine::scene::Scene;
     use std::path::{Path, PathBuf};
 
     #[test]
@@ -315,6 +314,36 @@ mod tests {
         assert_eq!(settings.total_frames(), 7);
         assert_eq!(settings.frame_time(6), 0.1);
     }
+
+    #[test]
+    fn output_height_is_derived_from_the_scene_frame() {
+        let settings = ExportSettings {
+            width: 1080,
+            ..ExportSettings::default()
+        };
+
+        assert_eq!(
+            settings
+                .pixel_dimensions(&Scene::new().with_frame(crate::engine::frame::Frame::portrait()))
+                .unwrap(),
+            (1080, 1920)
+        );
+        assert_eq!(
+            settings
+                .pixel_dimensions(&Scene::new().with_frame(crate::engine::frame::Frame::square()))
+                .unwrap(),
+            (1080, 1080)
+        );
+    }
+
+    #[test]
+    fn zero_export_width_is_rejected() {
+        let settings = ExportSettings {
+            width: 0,
+            ..ExportSettings::default()
+        };
+        assert!(settings.pixel_dimensions(&Scene::new()).is_err());
+    }
 }
 
 pub fn infer_duration(scene: &Scene) -> f32 {
@@ -327,6 +356,7 @@ pub fn infer_duration(scene: &Scene) -> f32 {
 }
 
 pub fn export_scene(scene: Scene, settings: &ExportSettings) -> Result<()> {
+    let (output_width, output_height) = settings.pixel_dimensions(&scene)?;
     fs::create_dir_all(settings.resolved_artifact_dir())?;
     if settings.video_enabled {
         fs::create_dir_all(settings.frame_dir())?;
@@ -336,16 +366,13 @@ pub fn export_scene(scene: Scene, settings: &ExportSettings) -> Result<()> {
 
     let mut engine = pollster::block_on(Engine::new_headless_with_scene(
         scene,
-        settings.width,
-        settings.height,
+        output_width,
+        output_height,
     ))?;
     engine
         .backend
         .renderer
-        .resize(winit::dpi::PhysicalSize::new(
-            settings.width,
-            settings.height,
-        ));
+        .resize(winit::dpi::PhysicalSize::new(output_width, output_height));
     engine.backend.renderer.clear_color = wgpu::Color {
         r: settings.clear_color.x as f64,
         g: settings.clear_color.y as f64,

@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
     'which-api-should-i-use',
     'common-first-mistakes',
     'coordinate-system',
+    'video-formats',
     {
       type: 'category',
       label: 'Tattvas',

@@ -1,7 +1,7 @@
 use glam::{Vec3, Vec4, vec2};
 use murali::App;
-use murali::engine::camera::Projection;
 use murali::engine::export::{ExportSettings, PngCompressionMode, export_scene};
+use murali::engine::frame::Frame;
 use murali::engine::scene::Scene;
 use murali::frontend::TattvaId;
 use murali::frontend::collection::primitives::{circle::Circle, line::Line, path::Path};
@@ -89,7 +89,7 @@ fn add_line(
 }
 
 fn build_scene(mode: LogoMode, capture_name: Option<&str>) -> Scene {
-    let mut scene = Scene::new();
+    let mut scene = Scene::new().with_frame(Frame::square());
     let palette = palette_for(mode);
 
     let left = -3.2;
@@ -305,12 +305,7 @@ fn build_scene(mode: LogoMode, capture_name: Option<&str>) -> Scene {
     ];
 
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
-    scene.camera_mut().projection = Projection::Orthographic {
-        width: 10.0,
-        height: 10.0,
-        near: -100.0,
-        far: 100.0,
-    };
+    scene.camera_mut().set_view_width(10.0);
 
     if let Some(name) = capture_name {
         scene.capture_screenshots_named([(0.0, Some(name))]);
@@ -322,7 +317,6 @@ fn build_scene(mode: LogoMode, capture_name: Option<&str>) -> Scene {
 fn export_settings() -> ExportSettings {
     ExportSettings {
         width: 1200,
-        height: 1200,
         fps: 30,
         duration_seconds: 0.1,
         artifact_dir: PathBuf::from("murali_logo_transparent"),

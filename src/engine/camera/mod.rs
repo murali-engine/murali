@@ -10,6 +10,7 @@
 //! - 2D scenes are constrained 3D scenes with explicit painter-order layers.
 
 pub mod controller;
+use crate::engine::frame::Frame;
 use glam::{Mat4, Vec3};
 
 /// Canonical world-space constants.
@@ -92,6 +93,40 @@ pub struct Camera {
 }
 
 impl Camera {
+    pub fn for_frame(frame: Frame) -> Self {
+        let mut camera = Self::default();
+        camera.set_frame(frame);
+        camera
+    }
+
+    /// Applies a scene frame while preserving the current projection mode.
+    pub fn set_frame(&mut self, frame: Frame) {
+        let (frame_width, frame_height) = frame.logical_size();
+        match &mut self.projection {
+            Projection::Orthographic { width, height, .. } => {
+                *width = frame_width;
+                *height = frame_height;
+            }
+            Projection::Perspective { aspect, .. } => {
+                *aspect = frame.aspect_ratio();
+            }
+        }
+    }
+
+    /// Reconciles the current projection with a scene-owned aspect ratio.
+    /// Orthographic cameras retain their current visible width.
+    pub fn set_aspect_ratio(&mut self, aspect_ratio: f32) {
+        let aspect_ratio = aspect_ratio.max(0.001);
+        match &mut self.projection {
+            Projection::Orthographic { width, height, .. } => {
+                *height = *width / aspect_ratio;
+            }
+            Projection::Perspective { aspect, .. } => {
+                *aspect = aspect_ratio;
+            }
+        }
+    }
+
     /// View matrix (world → view)
     pub fn view_matrix(&self) -> Mat4 {
         glam::camera::rh::view::look_at_mat4(self.position, self.target, self.up)
@@ -163,7 +198,7 @@ impl Camera {
         }
     }
 
-    /// Sets the visible world width, maintaining 16:9 aspect ratio.
+    /// Sets the visible world width while preserving the current aspect ratio.
     /// Smaller values zoom in (objects appear larger).
     /// Larger values zoom out (more world is visible).
     /// No-op for perspective cameras.
@@ -174,8 +209,14 @@ impl Camera {
             ..
         } = &mut self.projection
         {
+            let current_aspect = *w / *h;
+            let aspect = if current_aspect.is_finite() && current_aspect > 0.0 {
+                current_aspect
+            } else {
+                ASPECT_RATIO
+            };
             *w = width.max(0.01);
-            *h = width.max(0.01) / ASPECT_RATIO;
+            *h = *w / aspect;
         }
     }
 
@@ -250,6 +291,25 @@ mod tests {
         assert!(bounds.center().abs_diff_eq(glam::vec2(3.0, -2.0), 1e-5));
         assert!((bounds.width() - DEFAULT_VIEW_WIDTH).abs() < 1e-5);
         assert!((bounds.height() - DEFAULT_VIEW_HEIGHT).abs() < 1e-5);
+    }
+
+    #[test]
+    fn set_view_width_preserves_portrait_and_square_aspects() {
+        let mut portrait = Camera::for_frame(Frame::portrait());
+        portrait.set_view_width(4.5);
+        let Projection::Orthographic { width, height, .. } = portrait.projection else {
+            panic!("expected orthographic camera");
+        };
+        assert!((width - 4.5).abs() < 1e-6);
+        assert!((height - 8.0).abs() < 1e-6);
+
+        let mut square = Camera::for_frame(Frame::square());
+        square.set_view_width(10.0);
+        let Projection::Orthographic { width, height, .. } = square.projection else {
+            panic!("expected orthographic camera");
+        };
+        assert!((width - 10.0).abs() < 1e-6);
+        assert!((height - 10.0).abs() < 1e-6);
     }
 
     #[test]

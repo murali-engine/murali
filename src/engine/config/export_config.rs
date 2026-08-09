@@ -11,7 +11,6 @@ pub(crate) struct ExportConfig {
     #[serde(default = "default_text_px_per_world_unit")]
     pub text_px_per_world_unit: f32,
     pub width: Option<u32>,
-    pub height: Option<u32>,
     pub fps: Option<u32>,
     pub duration_seconds: Option<f32>,
     #[serde(alias = "output_dir")]
@@ -27,7 +26,6 @@ impl Default for ExportConfig {
         Self {
             text_px_per_world_unit: default_text_px_per_world_unit(),
             width: None,
-            height: None,
             fps: None,
             duration_seconds: None,
             artifact_dir: None,

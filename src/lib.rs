@@ -14,6 +14,7 @@ pub mod validation;
 // Re-export common types for ergonomics
 pub use engine::EngineError;
 pub use engine::app::App;
+pub use engine::frame::Frame;
 pub use engine::render::RenderOptions;
 pub use engine::scene::{GifCapture, Scene, ScreenshotCapture};
 pub use engine::timeline::{Clip, SeekError, Timeline};

@@ -2,6 +2,23 @@
 
 All notable changes to Murali are recorded here.
 
+## 0.2.0 - 2026-08-09
+
+### Added
+
+- First-class `Frame::portrait()` support for intentionally composed 9:16 Shorts and vertical
+  videos, including matching preview windows, layout bounds, camera projection, and exports.
+- `Frame::square()` support for square compositions, while retaining `Frame::landscape()` as the
+  default 16:9 frame.
+- A runnable `portrait_video` reference example for 1080x1920 output.
+
+### Changed
+
+- The scene frame is now the single source of truth for aspect ratio. Export configuration accepts
+  a literal pixel `width`, and Murali derives output height from the selected frame.
+- `ExportSettings::height` and `RenderOptions::resolution` were replaced by frame-derived height
+  and `RenderOptions::width`, respectively.
+
 ## 0.1.8 - 2026-08-09
 
 ### Fixed

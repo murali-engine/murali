@@ -41,6 +41,14 @@ This document defines standard terminology usage across all Murali documentation
   - "world units" when referring to measurements
   - "world coordinates" when referring to positions
 
+### Scene Frame
+- **Definition:** The scene-owned logical composition rectangle and aspect ratio
+- **Usage:**
+  - Use "scene frame" when discussing `Frame::landscape()`, `Frame::portrait()`, or `Frame::square()`
+  - Use "rendered frame" for one exported or previewed image at a particular scene time
+  - Do not use "frame" alone when the meaning could be confused
+  - The scene frame controls composition; export width controls pixel dimensions
+
 ## Animation Terms
 
 ### Preview vs Export
@@ -81,6 +89,7 @@ This document defines standard terminology usage across all Murali documentation
 - "compose clips onto the timeline"
 - "schedule animations"
 - "world-space coordinates"
+- "scene frame" / "rendered frame"
 - "preview mode" / "export mode"
 - "scene time" (the current time in the scene)
 
@@ -104,6 +113,7 @@ When writing or reviewing docs, ensure:
 - [ ] Code examples use correct Rust casing
 - [ ] "preview" and "export" used consistently (not "render mode")
 - [ ] "world space" / "world units" used instead of "pixels"
+- [ ] "scene frame" and "rendered frame" are distinguished when necessary
 - [ ] Clip examples distinguish local time from absolute timeline time
 - [ ] Links use consistent capitalization
 

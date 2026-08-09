@@ -1,4 +1,5 @@
 pub use crate::engine::EngineError;
+pub use crate::engine::frame::Frame;
 pub use crate::engine::render::RenderOptions;
 pub use crate::engine::scene::{GifCapture, Scene, ScreenshotCapture};
 pub use crate::engine::timeline::{Clip, SeekError, Timeline};

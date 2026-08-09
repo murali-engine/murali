@@ -5,6 +5,7 @@ pub mod camera;
 pub mod config;
 pub mod doctor;
 pub mod export;
+pub mod frame;
 pub mod render;
 pub mod scene;
 pub mod timeline;
@@ -59,6 +60,7 @@ impl Engine {
     pub fn update(&mut self, dt: f32) -> Result<(), EngineError> {
         // 1. Advance the Frontend (Animations & Timelines)
         self.scene.update(dt)?;
+        self.scene.enforce_camera_frame_aspect();
 
         self.sync_scene()?;
         Ok(())
@@ -95,6 +97,7 @@ impl Engine {
 
     /// Draw the current state of the Backend ECS World.
     pub fn render(&mut self) -> Result<(), anyhow::Error> {
+        self.scene.enforce_camera_frame_aspect();
         self.backend
             .renderer
             .render_scene(&self.scene, &self.backend.world)

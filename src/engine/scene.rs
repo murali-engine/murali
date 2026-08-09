@@ -8,6 +8,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use crate::engine::camera::Camera;
+use crate::engine::frame::Frame;
 use crate::engine::timeline::{SeekError, Timeline};
 use crate::frontend::layout::{Anchor, Bounds, Direction, anchor_for_direction, opposite_anchor};
 use crate::frontend::props::DepthMode;
@@ -99,6 +100,7 @@ pub struct Scene {
 
     /// Global State
     pub camera: Camera,
+    frame: Frame,
     pub global_model: Mat4,
 
     /// Identity bookkeeping
@@ -115,11 +117,29 @@ impl Scene {
             screenshot_captures: Vec::new(),
             gif_captures: Vec::new(),
             updaters: UpdaterManager::new(),
-            camera: Camera::default(),
+            camera: Camera::for_frame(Frame::default()),
+            frame: Frame::default(),
             global_model: Mat4::IDENTITY,
             next_tattva_id: 1,
             removed_tattva_ids: Vec::new(),
         }
+    }
+
+    /// Selects the scene's logical composition frame.
+    ///
+    /// Call this before frame-relative layout operations such as `to_edge`.
+    pub fn with_frame(mut self, frame: Frame) -> Self {
+        self.set_frame(frame);
+        self
+    }
+
+    pub fn set_frame(&mut self, frame: Frame) {
+        self.frame = frame;
+        self.camera.set_frame(frame);
+    }
+
+    pub fn frame(&self) -> Frame {
+        self.frame
     }
 
     /// Adds a Tattva to the scene and returns its stable ID.
@@ -223,6 +243,7 @@ impl Scene {
 
     /// Installs or replaces the scene's global timeline.
     pub fn play(&mut self, mut timeline: Timeline) -> Result<(), ValidationError> {
+        self.enforce_camera_frame_aspect();
         timeline.validate()?;
         timeline.validate_for_scene(self)?;
         timeline.prepare(self);
@@ -582,7 +603,9 @@ impl Scene {
 
     /// Returns the camera frame projected onto Murali's 2D layout plane (`z = 0`).
     pub fn frame_bounds(&self) -> Option<Bounds> {
-        self.camera.frame_bounds_at_z(0.0)
+        let mut camera = self.camera;
+        camera.set_aspect_ratio(self.frame.aspect_ratio());
+        camera.frame_bounds_at_z(0.0)
     }
 
     pub fn clear(&mut self) {
@@ -596,7 +619,7 @@ impl Scene {
         self.updaters.clear();
         self.scene_time = 0.0;
         self.next_tattva_id = 1;
-        self.camera = Camera::default();
+        self.camera = Camera::for_frame(self.frame);
     }
 
     // camera
@@ -606,6 +629,10 @@ impl Scene {
 
     pub fn camera_mut(&mut self) -> &mut Camera {
         &mut self.camera
+    }
+
+    pub(crate) fn enforce_camera_frame_aspect(&mut self) {
+        self.camera.set_aspect_ratio(self.frame.aspect_ratio());
     }
 
     /// Replaces the implementation of an existing Tattva.
@@ -660,6 +687,7 @@ impl Default for Scene {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::engine::camera::Projection;
     use crate::frontend::collection::primitives::square::Square;
     use glam::Vec4;
 
@@ -678,6 +706,55 @@ mod tests {
             scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO),
             first
         );
+    }
+
+    #[test]
+    fn portrait_frame_is_available_to_layout_before_rendering() {
+        let mut scene = Scene::new().with_frame(Frame::portrait());
+        let id = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+
+        scene.to_edge(id, Direction::Up, 0.5);
+
+        let frame = scene.frame_bounds().unwrap();
+        let bounds = scene.world_bounds(id).unwrap();
+        assert!((frame.width() - 9.0).abs() < 1e-5);
+        assert!((frame.height() - 16.0).abs() < 1e-5);
+        assert!((frame.max.y - bounds.max.y - 0.5).abs() < 1e-5);
+    }
+
+    #[test]
+    fn clear_preserves_the_scene_frame() {
+        let mut scene = Scene::new().with_frame(Frame::square());
+        scene.camera_mut().set_view_width(5.0);
+
+        scene.clear();
+
+        assert_eq!(scene.frame(), Frame::square());
+        let Projection::Orthographic { width, height, .. } = scene.camera().projection else {
+            panic!("expected orthographic camera");
+        };
+        assert_eq!((width, height), (16.0, 16.0));
+    }
+
+    #[test]
+    fn scene_frame_remains_authoritative_after_direct_projection_mutation() {
+        let mut scene = Scene::new().with_frame(Frame::square());
+        scene.camera.projection = Projection::Orthographic {
+            width: 10.0,
+            height: 5.0,
+            near: -100.0,
+            far: 100.0,
+        };
+
+        let bounds = scene.frame_bounds().unwrap();
+        assert!((bounds.width() - 10.0).abs() < 1e-5);
+        assert!((bounds.height() - 10.0).abs() < 1e-5);
+
+        scene.enforce_camera_frame_aspect();
+        let Projection::Orthographic { width, height, .. } = scene.camera.projection else {
+            panic!("expected orthographic camera");
+        };
+        assert_eq!((width, height), (10.0, 10.0));
     }
 
     #[test]

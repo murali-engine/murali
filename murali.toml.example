@@ -6,5 +6,4 @@ fps = 60
 [export]
 fps = 60
 width = 1920
-height = 1080
 png_compression = "balanced"

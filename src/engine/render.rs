@@ -5,7 +5,8 @@ pub struct RenderOptions {
     pub video: Option<bool>,
     pub frames: Option<bool>,
     pub fps: Option<u32>,
-    pub resolution: Option<(u32, u32)>,
+    /// Final output width in pixels. Height is derived from the scene frame.
+    pub width: Option<u32>,
 }
 
 impl RenderOptions {
