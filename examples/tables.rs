@@ -89,7 +89,7 @@ fn main() -> anyhow::Result<()> {
         .unwrite_table()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
 
     App::new()?.with_scene(scene).run_app()

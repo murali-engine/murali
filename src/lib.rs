@@ -9,10 +9,16 @@ pub mod prelude;
 pub mod projection;
 pub mod resource;
 pub mod utils;
+pub mod validation;
 
 // Re-export common types for ergonomics
+pub use engine::EngineError;
 pub use engine::app::App;
 pub use engine::render::RenderOptions;
 pub use engine::scene::{GifCapture, Scene, ScreenshotCapture};
+pub use engine::timeline::{Clip, SeekError, Timeline};
 pub use frontend::Tattva;
+pub use frontend::props::{DepthMode, layers};
 pub use palette::Palette;
+pub use resource::text::register_font_path;
+pub use validation::ValidationError;

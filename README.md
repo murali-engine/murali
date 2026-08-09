@@ -33,7 +33,7 @@ Murali is a Rust-based animation engine for semantic graphics and mathematical s
 
 Requirements:
 
-- Rust toolchain
+- Rust 1.85 or newer
 - A working graphics environment for preview
 - `ffmpeg` if you want video export
 
@@ -41,9 +41,9 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-murali = "0.1.6"
+murali = "0.1.7"
 anyhow = "1"
-glam = "0.29"
+glam = "0.33"
 ```
 
 Browse runnable examples from the GitHub repository:
@@ -60,6 +60,7 @@ Some useful places to start:
 
 - [Documentation](https://muraliengine.com/docs/intro)
 - [Reference examples catalog](./examples/README.md)
+- [Future roadmap](./ROADMAP.md)
 - [Creative showcase repository](https://github.com/ravishankarkumar/murali-examples)
 - [YouTube showcase](https://www.youtube.com/@muraliengine)
 
@@ -90,7 +91,7 @@ A sample file is included at [murali.toml.example](./murali.toml.example).
 
 ## Examples
 
-### Shapes 
+### Shapes
 
 [![Watch the video](./resources/shapes.png)](https://youtu.be/rzQZHta2PQM)
 
@@ -107,6 +108,7 @@ Murali is under active development. The repository already includes:
 - text, LaTeX, and Typst support
 - primitives, layout helpers, tables, graph tattvas, and utility tattvas
 - write/unwrite, transform, text, and surface animation building blocks
+- semantic tensor snapshots, operations, slicing, transitions, and versioned AI trace ingestion
 
 ## License
 

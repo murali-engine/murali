@@ -1,0 +1,52 @@
+name: Rust
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Format, test, lint, and document
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Test all targets
+        run: cargo test --all-targets
+
+      - name: Check without default features
+        run: cargo check --no-default-features --all-targets
+
+      - name: Check rustdoc links and warnings
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --no-deps --all-features
+
+      - name: Run strict Clippy correctness tiers
+        run: >-
+          cargo clippy --all-targets --all-features --
+          -A warnings
+          -D clippy::correctness
+          -D clippy::suspicious

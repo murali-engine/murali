@@ -216,8 +216,8 @@ fn particle_mesh(center: Vec2, radius: f32, segments: u32, color: Vec4) -> std::
     let mut indices = Vec::with_capacity((seg * 3) as usize);
     for i in 0..seg {
         indices.push(0);
-        indices.push((i + 1) as u16);
-        indices.push(if i + 2 <= seg { (i + 2) as u16 } else { 1 });
+        indices.push(i + 1);
+        indices.push(if i + 2 <= seg { i + 2 } else { 1 });
     }
 
     Mesh::from_tessellation(vertices, indices)

@@ -204,7 +204,7 @@ impl NoisyHorizon {
         }
 
         for i in 0..points.len().saturating_sub(1) {
-            let base = (i * 2) as u16;
+            let base = (i * 2) as u32;
             indices.extend_from_slice(&[base, base + 1, base + 3, base, base + 3, base + 2]);
         }
 
@@ -522,7 +522,7 @@ impl LayeredPerlinField {
         }
 
         for i in 0..points.len().saturating_sub(1) {
-            let base = (i * 2) as u16;
+            let base = (i * 2) as u32;
             indices.extend_from_slice(&[base, base + 1, base + 3, base, base + 3, base + 2]);
         }
 

@@ -1,110 +1,53 @@
-# Release and docs versioning
+# Release And Docs Versioning
 
-Use this checklist when publishing a new Murali crate version and freezing a matching Docusaurus docs version.
+Use this checklist to publish a Murali crate and freeze matching Docusaurus documentation. Set
+`VERSION` to the version being released.
 
-Replace `0.1.6` in the commands below with the version you are releasing.
+## 1. Prepare The Crate
 
-## 1. Prepare the crate release
-
-Update the crate version in:
-
-- `Cargo.toml`
-- `Cargo.lock`, if it changes after running Cargo commands
-- public docs or examples that mention the current version
-
-Then run the local checks:
+- Update `Cargo.toml`, `Cargo.lock`, installation snippets, `CHANGELOG.md`, and any release post.
+- Confirm license metadata matches the repository license files.
+- Run:
 
 ```bash
-cargo fmt --check
-cargo test
+cargo fmt --all -- --check
+cargo test --all-targets
+cargo check --no-default-features --all-targets
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 cargo package --list
 cargo publish --dry-run
 ```
 
-Review the `cargo package --list` output before publishing. The crate intentionally excludes `docs/**`, `examples/**`, `scripts/**`, and other repo-only materials through the `exclude` list in `Cargo.toml`.
+Review the package contents and publish with `cargo publish` only after the dry run succeeds.
 
-When the dry run is clean, publish the crate:
+## 2. Validate And Freeze The Docs
 
-```bash
-cargo publish
-```
-
-After publishing, verify the crate page on crates.io and confirm a fresh project can depend on the released version.
-
-## 2. Prepare the docs release
-
-Update the live docs in `docs/docs/` first. These files become the next frozen version when Docusaurus versions the docs.
-
-Recommended docs checks:
+Update `docs/docs/` first, then run from `docs/`:
 
 ```bash
-cd docs
 npm ci
 npm run typecheck
 npm run build
-```
-
-If the release should have a blog announcement, add a post in `docs/blog/`, for example:
-
-```text
-docs/blog/YYYY-MM-DD-murali-0-1-6.md
-```
-
-## 3. Emit a new Docusaurus docs version
-
-Run this from the `docs/` directory:
-
-```bash
-npm run docusaurus -- docs:version 0.1.6
-```
-
-This creates or updates:
-
-- `docs/versions.json`
-- `docs/versioned_docs/version-0.1.6/`
-- `docs/versioned_sidebars/version-0.1.6-sidebars.json`
-
-Only run this once the current docs represent the released API. If you need to fix a generated version before committing, edit the generated files directly or remove the generated version and run the command again.
-
-Build again after versioning:
-
-```bash
+npm run docusaurus -- docs:version VERSION
 npm run build
 ```
 
-## 4. Commit, tag, and push
+Version docs only once the live pages represent the released API.
 
-Review the release diff:
-
-```bash
-git status --short
-git diff
-```
-
-Commit the release changes:
+## 3. Commit, Tag, And Push
 
 ```bash
-git add Cargo.toml Cargo.lock docs RELEASE.md
-git commit -m "Release murali 0.1.6"
-```
-
-Create and push the version tag:
-
-```bash
-git tag v0.1.6
+git add -A
+git commit -m "Release murali VERSION"
+git tag vVERSION
 git push origin main
-git push origin v0.1.6
+git push origin vVERSION
 ```
 
-Pushing to `main` deploys the Docusaurus site through `.github/workflows/deploy.yml`.
+Pushing `main` deploys the site through `.github/workflows/deploy.yml`.
 
-## 5. Post-release checks
+## 4. Post-Release Checks
 
-After GitHub Pages deploys, verify:
-
-- the latest docs render correctly
-- the new version appears in the Docusaurus version selector
-- the release blog post is visible, if one was added
-- crates.io shows the new crate version
-- the README install instructions still point to the right version
-
+- Verify the new crates.io version and a fresh dependency resolution.
+- Verify the deployed docs, version selector, and release post.
+- Confirm README installation instructions point to the released version.

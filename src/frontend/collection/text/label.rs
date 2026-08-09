@@ -14,6 +14,7 @@ pub struct Label {
     pub text: String,
     pub world_height: f32,
     pub color: Vec4,
+    pub font_name: Option<String>,
     /// Character reveal progress: 0.0 = no characters, 1.0 = all characters
     pub char_reveal: f32,
     /// Reveal mode: true = typewriter (fixed position), false = reveal (shifting)
@@ -29,6 +30,7 @@ impl Label {
             text: text.into(),
             world_height,
             color: Vec4::new(1.0, 1.0, 1.0, 1.0), // Default to white
+            font_name: None,
             char_reveal: 1.0,
             typewriter_mode: false, // Default to reveal mode
             indicate_t: 0.0,
@@ -38,6 +40,12 @@ impl Label {
     /// Builder-style method to set color.
     pub fn with_color(mut self, color: Vec4) -> Self {
         self.color = color;
+        self
+    }
+
+    /// Builder-style method to select a registered font by name.
+    pub fn with_font<S: Into<String>>(mut self, font_name: S) -> Self {
+        self.font_name = Some(font_name.into());
         self
     }
 
@@ -70,14 +78,17 @@ impl Label {
         let revealed_text = self.get_revealed_text();
 
         if self.typewriter_mode {
-            let full_layout = measure_label(&self.text, self.world_height);
-            let revealed_layout = measure_label(&revealed_text, self.world_height);
+            let full_layout =
+                measure_label(&self.text, self.world_height, self.font_name.as_deref());
+            let revealed_layout =
+                measure_label(&revealed_text, self.world_height, self.font_name.as_deref());
             let offset_x = (revealed_layout.width - full_layout.width) / 2.0;
 
             ctx.emit(RenderPrimitive::Text {
                 content: revealed_text,
                 height: self.world_height,
                 color,
+                font_name: self.font_name.clone(),
                 offset: glam::Vec3::new(offset_x, 0.0, 0.0),
                 rotation: 0.0,
             });
@@ -86,6 +97,7 @@ impl Label {
                 content: revealed_text,
                 height: self.world_height,
                 color,
+                font_name: self.font_name.clone(),
                 offset: glam::Vec3::ZERO,
                 rotation: 0.0,
             });
@@ -114,7 +126,7 @@ impl Indicate for Label {
 
 impl Bounded for Label {
     fn local_bounds(&self) -> Bounds {
-        let layout = measure_label(&self.text, self.world_height);
+        let layout = measure_label(&self.text, self.world_height, self.font_name.as_deref());
         Bounds::from_center_size(
             glam::Vec2::ZERO,
             glam::vec2(layout.width.max(self.world_height * 0.4), layout.height),

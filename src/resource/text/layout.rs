@@ -1,8 +1,5 @@
-// src/resources/text/layout.rs
-
-use std::sync::OnceLock;
-
 use crate::resource::text::font::{FontMetrics, LabelFont};
+use crate::resource::text::manager::font_asset;
 
 /// A positioned glyph in a single-line label.
 #[derive(Debug, Clone)]
@@ -103,8 +100,9 @@ pub fn layout_label(font: &LabelFont, text: &str, world_height: f32) -> LabelLay
     }
 }
 
-pub fn measure_label(text: &str, world_height: f32) -> LabelLayout {
-    static FONT: OnceLock<LabelFont> = OnceLock::new();
-    let font = FONT.get_or_init(LabelFont::load);
-    layout_label(font, text, world_height)
+pub fn measure_label(text: &str, world_height: f32, font_name: Option<&str>) -> LabelLayout {
+    match font_asset(font_name) {
+        Ok(asset) => layout_label(&asset.font, text, world_height),
+        Err(_) => layout_label(&LabelFont::load(), text, world_height),
+    }
 }

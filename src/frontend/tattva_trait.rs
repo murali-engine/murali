@@ -30,7 +30,7 @@ pub trait TattvaTrait: Send + Sync {
     fn project(&self, ctx: &mut ProjectionCtx);
 }
 
-/// Blanket implementation for the generic Tattva<T> struct.
+/// Blanket implementation for the generic `Tattva<T>` struct.
 /// This bridges concrete math types → dyn TattvaTrait.
 impl<T> TattvaTrait for Tattva<T>
 where

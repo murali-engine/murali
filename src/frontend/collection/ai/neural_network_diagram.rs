@@ -4,6 +4,9 @@ use crate::frontend::layout::{Bounded, Bounds};
 use crate::projection::{Mesh, Project, ProjectionCtx, RenderPrimitive};
 use glam::{Vec2, Vec3, Vec4, vec2};
 use std::collections::HashSet;
+use thiserror::Error;
+
+const MAX_INDICATION_PATHS: usize = 64;
 
 #[derive(Debug, Clone)]
 pub struct NeuralNetworkDiagram {
@@ -37,9 +40,28 @@ pub enum ActivationFunc {
     Sigmoid,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+pub enum NeuralNetworkDiagramError {
+    #[error("a neural-network diagram requires at least one layer")]
+    NoLayers,
+    #[error("neural-network layer {layer_index} must contain at least one node")]
+    EmptyLayer { layer_index: usize },
+}
+
 impl NeuralNetworkDiagram {
     pub fn new(layers: Vec<usize>) -> Self {
-        Self {
+        Self::try_new(layers).unwrap_or_else(|error| panic!("invalid neural network: {error}"))
+    }
+
+    pub fn try_new(layers: Vec<usize>) -> Result<Self, NeuralNetworkDiagramError> {
+        if layers.is_empty() {
+            return Err(NeuralNetworkDiagramError::NoLayers);
+        }
+        if let Some(layer_index) = layers.iter().position(|&count| count == 0) {
+            return Err(NeuralNetworkDiagramError::EmptyLayer { layer_index });
+        }
+
+        Ok(Self {
             layers,
             layer_spacing: 1.8,
             node_spacing: 0.8,
@@ -53,7 +75,7 @@ impl NeuralNetworkDiagram {
             inactive_node_color: Vec4::new(0.26, 0.30, 0.36, 0.95),
             inactive_edge_color: Vec4::new(0.28, 0.32, 0.38, 0.45),
             indication_style: IndicationStyle::Loop(3),
-        }
+        })
     }
 
     pub fn with_layer_spacing(mut self, spacing: f32) -> Self {
@@ -136,9 +158,11 @@ impl NeuralNetworkDiagram {
         from_layer_idx: usize,
         from_node_idx: usize,
         to_layer_idx: usize,
-        _to_node_idx: usize,
+        to_node_idx: usize,
     ) -> bool {
-        self.is_node_active(from_layer_idx, from_node_idx) && to_layer_idx == from_layer_idx + 1
+        self.is_node_active(from_layer_idx, from_node_idx)
+            && to_layer_idx == from_layer_idx + 1
+            && self.is_node_active(to_layer_idx, to_node_idx)
     }
 
     fn layer_x(&self, idx: usize) -> f32 {
@@ -187,6 +211,47 @@ impl NeuralNetworkDiagram {
         let mut node_choices = Vec::with_capacity(self.layers.len());
         self.collect_paths(0, &mut node_choices, &mut all_paths);
         all_paths
+    }
+
+    /// Returns a deterministic, bounded set of active routes for indication effects.
+    pub fn indication_path_points(&self, max_paths: usize) -> Vec<Vec<Vec3>> {
+        if max_paths == 0 || self.layers.is_empty() {
+            return Vec::new();
+        }
+
+        let active_nodes: Vec<Vec<usize>> = self
+            .layers
+            .iter()
+            .enumerate()
+            .map(|(layer_idx, &count)| {
+                (0..count)
+                    .filter(|&node_idx| self.is_node_active(layer_idx, node_idx))
+                    .collect()
+            })
+            .collect();
+        if active_nodes.iter().any(Vec::is_empty) {
+            return Vec::new();
+        }
+
+        let path_count = active_nodes
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0)
+            .min(max_paths);
+        (0..path_count)
+            .map(|path_index| {
+                active_nodes
+                    .iter()
+                    .enumerate()
+                    .map(|(layer_idx, choices)| {
+                        let choice_index = path_index * choices.len() / path_count;
+                        self.node_position(layer_idx, choices[choice_index])
+                            .unwrap()
+                    })
+                    .collect()
+            })
+            .collect()
     }
 
     fn collect_paths(
@@ -334,6 +399,7 @@ impl Project for NeuralNetworkDiagram {
                         content: label.clone(),
                         height: 0.22,
                         color: Vec4::new(0.9, 0.9, 0.9, 1.0),
+                        font_name: None,
                         offset: Vec3::new(x, y_offset, 0.0),
                         rotation: 0.0,
                     });
@@ -341,7 +407,7 @@ impl Project for NeuralNetworkDiagram {
             }
 
             // Draw activation icon if not None (only for hidden/output layers)
-            if layer_idx > 0 && self.activation != ActivationFunc::None {
+            if layer_idx > 0 && count > 0 && self.activation != ActivationFunc::None {
                 let y_offset = self.node_y(count, count - 1) - self.node_spacing * 0.7;
                 self.project_activation(ctx, x, y_offset);
             }
@@ -379,7 +445,7 @@ impl Indicate for NeuralNetworkDiagram {
                 IndicationStyle::Loop(n) => (t * n as f32).fract(),
             };
 
-            let paths = self.all_path_points();
+            let paths = self.indication_path_points(MAX_INDICATION_PATHS);
             if !paths.is_empty() {
                 SignalFlow::from_paths(paths)
                     .with_progress(loop_progress)
@@ -388,5 +454,46 @@ impl Indicate for NeuralNetworkDiagram {
                     .project(ctx);
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{NeuralNetworkDiagram, NeuralNetworkDiagramError};
+
+    #[test]
+    fn constructors_reject_missing_and_zero_sized_layers() {
+        assert_eq!(
+            NeuralNetworkDiagram::try_new(vec![]).unwrap_err(),
+            NeuralNetworkDiagramError::NoLayers
+        );
+        assert_eq!(
+            NeuralNetworkDiagram::try_new(vec![3, 0, 2]).unwrap_err(),
+            NeuralNetworkDiagramError::EmptyLayer { layer_index: 1 }
+        );
+    }
+
+    #[test]
+    fn edge_activity_requires_both_endpoint_nodes() {
+        let diagram = NeuralNetworkDiagram::new(vec![2, 2]).deactivate_node(1, 1);
+
+        assert!(diagram.is_edge_active(0, 0, 1, 0));
+        assert!(!diagram.is_edge_active(0, 0, 1, 1));
+        assert!(!diagram.is_edge_active(0, 0, 2, 0));
+    }
+
+    #[test]
+    fn indication_paths_are_active_and_bounded() {
+        let diagram = NeuralNetworkDiagram::new(vec![100, 100, 100]).deactivate_node(1, 50);
+        let paths = diagram.indication_path_points(64);
+
+        assert_eq!(paths.len(), 64);
+        assert!(paths.iter().all(|path| path.len() == 3));
+        let inactive_position = diagram.node_position(1, 50).unwrap();
+        assert!(
+            paths
+                .iter()
+                .all(|path| !path.iter().any(|point| *point == inactive_position))
+        );
     }
 }

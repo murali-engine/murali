@@ -10,13 +10,14 @@ use crate::projection::{ProjectionCtx, RenderPrimitive};
 use crate::resource::latex_resource::backend::compile_latex;
 use crate::resource::latex_resource::raster::{normalized_world_height, rasterize_svg};
 use crate::resource::text::layout::layout_label;
-use crate::resource::text::manager::LabelResources;
+use crate::resource::text::manager::font_asset;
 use crate::resource::text::mesh::build_label_mesh;
 use crate::resource::typst_resource::cache::{TypstRaster, TypstRasterCache};
 use crate::resource::typst_resource::compiler::TypstBackend;
 use crate::resource::typst_resource::raster::{
     normalized_world_height_from_metrics as normalized_typst_world_height, rasterize_svg_to_rgba,
 };
+use crate::validation::ValidationError;
 use hecs::{Entity, World};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -26,8 +27,7 @@ use std::sync::Arc;
 pub struct SyncBoundary {
     /// Maps TattvaId to the list of entities representing its current geometry.
     pub entity_cache: HashMap<TattvaId, Vec<Entity>>,
-    label_resources: Option<LabelResources>,
-    text_bind_group: Option<Arc<wgpu::BindGroup>>,
+    text_bind_groups: HashMap<String, Arc<wgpu::BindGroup>>,
     latex_cache_dir: PathBuf,
     typst_backend: Option<TypstBackend>,
     typst_cache: TypstRasterCache,
@@ -40,8 +40,7 @@ impl SyncBoundary {
     pub fn new() -> Self {
         Self {
             entity_cache: HashMap::new(),
-            label_resources: None,
-            text_bind_group: None,
+            text_bind_groups: HashMap::new(),
             latex_cache_dir: std::env::temp_dir().join("murali_latex_cache"),
             typst_backend: None,
             typst_cache: TypstRasterCache::new(128),
@@ -60,19 +59,20 @@ impl SyncBoundary {
         device: &wgpu::Device,
         renderer: &Renderer,
         tattva: &mut dyn TattvaTrait,
-    ) {
+    ) -> Result<(), ValidationError> {
         let dirty = tattva.dirty_flags();
         if dirty.is_empty() {
-            return;
+            return Ok(());
         }
 
         if dirty.intersects(Self::REBUILD_FLAGS) {
-            self.rebuild_render_entities(world, device, renderer, tattva);
+            self.rebuild_render_entities(world, device, renderer, tattva)?;
             tattva.clear_all_dirty();
-            return;
+            return Ok(());
         }
 
         self.sync_runtime_only(tattva);
+        Ok(())
     }
 
     pub fn remove_tattva(&mut self, world: &mut World, tattva_id: TattvaId) {
@@ -89,11 +89,12 @@ impl SyncBoundary {
         device: &wgpu::Device,
         renderer: &Renderer,
         tattva: &mut dyn TattvaTrait,
-    ) {
+    ) -> Result<(), ValidationError> {
         self.despawn_cached_entities(world, tattva.id());
-        let primitives = self.project_tattva(tattva);
+        let primitives = self.project_tattva(tattva)?;
         let entities = self.materialize_primitives(world, device, renderer, tattva, primitives);
         self.entity_cache.insert(tattva.id(), entities);
+        Ok(())
     }
 
     fn despawn_cached_entities(&mut self, world: &mut World, tattva_id: TattvaId) {
@@ -104,10 +105,16 @@ impl SyncBoundary {
         }
     }
 
-    fn project_tattva(&self, tattva: &dyn TattvaTrait) -> Vec<RenderPrimitive> {
+    fn project_tattva(
+        &self,
+        tattva: &dyn TattvaTrait,
+    ) -> Result<Vec<RenderPrimitive>, ValidationError> {
         let mut ctx = ProjectionCtx::new(tattva.props().clone());
         tattva.project(&mut ctx);
-        ctx.primitives
+        if let Some(error) = ctx.diagnostics.into_iter().next() {
+            return Err(error);
+        }
+        Ok(ctx.primitives)
     }
 
     fn materialize_primitives(
@@ -120,13 +127,18 @@ impl SyncBoundary {
     ) -> Vec<Entity> {
         let mut new_entities = Vec::new();
 
-        for primitive in primitives {
+        for (primitive_index, primitive) in primitives.into_iter().enumerate() {
+            let render_order = RenderOrderComponent {
+                tattva_id: tattva.id(),
+                primitive_index: primitive_index as u32,
+            };
             let entity = match primitive {
                 RenderPrimitive::Mesh(mesh) => upload_mesh(device, renderer, mesh.as_ref(), None)
                     .map(|mesh_instance| {
                         world.spawn((
                             MeshComponent(Arc::new(mesh_instance)),
                             tattva.props().clone(),
+                            render_order,
                         ))
                     }),
                 RenderPrimitive::Line {
@@ -148,19 +160,31 @@ impl SyncBoundary {
                     },
                     ColorComponent(color),
                     tattva.props().clone(),
+                    render_order,
                 ))),
                 RenderPrimitive::Text {
                     content,
                     height,
                     color,
+                    font_name,
                     offset,
                     rotation,
                 } => self
-                    .build_label_instance(device, renderer, &content, height, color, offset, rotation)
+                    .build_label_instance(
+                        device,
+                        renderer,
+                        &content,
+                        height,
+                        color,
+                        font_name.as_deref(),
+                        offset,
+                        rotation,
+                    )
                     .map(|mesh_instance| {
                         world.spawn((
                             MeshComponent(Arc::new(mesh_instance)),
                             tattva.props().clone(),
+                            render_order,
                         ))
                     }),
                 RenderPrimitive::Latex {
@@ -174,6 +198,7 @@ impl SyncBoundary {
                         world.spawn((
                             MeshComponent(Arc::new(mesh_instance)),
                             tattva.props().clone(),
+                            render_order,
                         ))
                     }),
                 RenderPrimitive::Typst {
@@ -191,6 +216,7 @@ impl SyncBoundary {
                         world.spawn((
                             MeshComponent(Arc::new(mesh_instance)),
                             tattva.props().clone(),
+                            render_order,
                         ))
                     }),
             };
@@ -210,35 +236,44 @@ impl SyncBoundary {
         content: &str,
         height: f32,
         color: glam::Vec4,
+        font_name: Option<&str>,
         offset: glam::Vec3,
         rotation: f32,
     ) -> Option<MeshInstance> {
-        if self.label_resources.is_none() {
-            self.label_resources = Some(LabelResources::new());
-        }
-        let resources = self.label_resources.as_ref()?;
+        let asset = match font_asset(font_name) {
+            Ok(asset) => asset,
+            Err(error) => {
+                let key = font_name.unwrap_or("default").to_string();
+                self.report_once(
+                    format!("font-load::{key}::{error}"),
+                    format!("Text font load failed for `{key}`: {error}"),
+                );
+                return None;
+            }
+        };
+        let key = font_name.unwrap_or("default").to_string();
 
-        if self.text_bind_group.is_none() {
-            self.text_bind_group = Some(
-                renderer
-                    .create_text_bind_group_from_raster(
-                        &resources.atlas.rgba,
-                        resources.atlas.width,
-                        resources.atlas.height,
-                    )
-                    .into(),
-            );
-        }
+        let bind_group = if let Some(existing) = self.text_bind_groups.get(&key) {
+            existing.clone()
+        } else {
+            let created = Arc::new(renderer.create_text_bind_group_from_raster(
+                &asset.atlas.rgba,
+                asset.atlas.width,
+                asset.atlas.height,
+            ));
+            self.text_bind_groups.insert(key.clone(), created.clone());
+            created
+        };
 
-        let layout = layout_label(&resources.font, content, height);
-        let mesh = build_label_mesh(&layout, &resources.atlas, color);
+        let layout = layout_label(&asset.font, content, height);
+        let mesh = build_label_mesh(&layout, &asset.atlas, color);
         let mesh = if rotation != 0.0 {
             rotate_mesh(mesh.as_ref(), rotation)
         } else {
             mesh.as_ref().clone()
         };
         let mesh = translate_mesh(&mesh, offset);
-        upload_mesh(device, renderer, &mesh, self.text_bind_group.clone())
+        upload_mesh(device, renderer, &mesh, Some(bind_group))
     }
 
     fn build_latex_instance(
@@ -263,7 +298,7 @@ impl SyncBoundary {
 
         let raster = match rasterize_svg(
             &latex.svg_path,
-            renderer.device_mgr.config.borrow().height as f32 / 4.0,
+            renderer.device_mgr.config.read().height as f32 / 4.0,
             renderer.device_mgr.max_texture_size(),
         ) {
             Ok(raster) => raster,
@@ -295,7 +330,20 @@ impl SyncBoundary {
         normalize: bool,
         tint: bool,
     ) -> Option<MeshInstance> {
-        let cache_key = format!("{height:.4}::{tint}::{source}");
+        let (target_width, target_height) = {
+            let config = renderer.device_mgr.config.read();
+            (config.width, config.height)
+        };
+        let scale = typst_raster_scale(target_height, height);
+        let cache_key = typst_raster_cache_key(
+            source,
+            height,
+            tint,
+            target_width,
+            target_height,
+            scale,
+            renderer.device_mgr.max_texture_size(),
+        );
         let raster = if let Some(existing) = self.typst_cache.get(&cache_key) {
             existing
         } else {
@@ -324,9 +372,6 @@ impl SyncBoundary {
                 }
             };
 
-            let scale =
-                ((renderer.device_mgr.config.borrow().height as f32) / 4.0 / height.max(0.1))
-                    .clamp(1.0, 8.0);
             let rasterized = match rasterize_svg_to_rgba(
                 &svg,
                 scale,
@@ -359,7 +404,7 @@ impl SyncBoundary {
 
         let bind_group =
             renderer.create_text_bind_group_from_raster(&raster.rgba, raster.width, raster.height);
-        
+
         let world_height = if normalize {
             normalized_typst_world_height(height, raster.height, raster.normalized_height_px)
         } else {
@@ -382,6 +427,24 @@ impl SyncBoundary {
     }
 }
 
+fn typst_raster_scale(target_height: u32, world_height: f32) -> f32 {
+    (target_height as f32 / 4.0 / world_height.max(0.1)).clamp(1.0, 8.0)
+}
+
+fn typst_raster_cache_key(
+    source: &str,
+    world_height: f32,
+    tint: bool,
+    target_width: u32,
+    target_height: u32,
+    scale: f32,
+    max_texture_size: u32,
+) -> String {
+    format!(
+        "target={target_width}x{target_height}::scale={scale:.4}::max_texture={max_texture_size}::height={world_height:.4}::tint={tint}::{source}"
+    )
+}
+
 fn upload_mesh(
     device: &wgpu::Device,
     renderer: &Renderer,
@@ -400,6 +463,8 @@ fn upload_mesh(
                 mesh.indices.len() as u32,
                 bind_group,
                 MeshPipelineKind::Mesh,
+                center_of_positions(vertices.iter().map(|vertex| vertex.position)),
+                vertices.iter().any(|vertex| vertex.color[3] < 1.0),
             ))
         }
         MeshData::Textured(vertices) => {
@@ -422,6 +487,9 @@ fn upload_mesh(
                 mesh.indices.len() as u32,
                 Some(bind_group),
                 MeshPipelineKind::Textured,
+                center_of_positions(vertices.iter().map(|vertex| vertex.position)),
+                vertices.iter().any(|vertex| vertex.color[3] < 1.0)
+                    || texture.rgba.chunks_exact(4).any(|pixel| pixel[3] < u8::MAX),
             ))
         }
         MeshData::Text(vertices) => {
@@ -434,9 +502,70 @@ fn upload_mesh(
                 mesh.indices.len() as u32,
                 bind_group,
                 MeshPipelineKind::Text,
+                center_of_positions(vertices.iter().map(|vertex| vertex.position)),
+                true,
             ))
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::frontend::Tattva;
+    use crate::frontend::collection::graph::stream_lines::StreamLines;
+    use glam::Vec2;
+
+    #[test]
+    fn projection_diagnostics_cross_the_sync_boundary_as_errors() {
+        let tattva = Tattva::new(7, StreamLines::new(Vec::new(), |_| Vec2::X));
+        let error = match SyncBoundary::new().project_tattva(&tattva) {
+            Err(error) => error,
+            Ok(_) => panic!("invalid projection unexpectedly succeeded"),
+        };
+
+        assert!(matches!(
+            error,
+            ValidationError::Empty {
+                component: "StreamLines",
+                field: "start_points"
+            }
+        ));
+    }
+
+    #[test]
+    fn typst_raster_cache_key_changes_with_render_target_resolution() {
+        let first_scale = typst_raster_scale(720, 0.4);
+        let resized_scale = typst_raster_scale(1080, 0.4);
+        let first = typst_raster_cache_key("$x$", 0.4, true, 1280, 720, first_scale, 8192);
+        let resized = typst_raster_cache_key("$x$", 0.4, true, 1920, 1080, resized_scale, 8192);
+
+        assert_ne!(first, resized);
+    }
+
+    #[test]
+    fn typst_raster_cache_key_is_stable_for_an_unchanged_target() {
+        let scale = typst_raster_scale(900, 0.6);
+        let first = typst_raster_cache_key("hello", 0.6, false, 1440, 900, scale, 8192);
+        let second = typst_raster_cache_key("hello", 0.6, false, 1440, 900, scale, 8192);
+
+        assert_eq!(first, second);
+    }
+}
+
+fn center_of_positions(positions: impl IntoIterator<Item = [f32; 3]>) -> glam::Vec3 {
+    let mut positions = positions.into_iter();
+    let Some(first) = positions.next() else {
+        return glam::Vec3::ZERO;
+    };
+    let mut min = glam::Vec3::from(first);
+    let mut max = min;
+    for position in positions {
+        let position = glam::Vec3::from(position);
+        min = min.min(position);
+        max = max.max(position);
+    }
+    (min + max) * 0.5
 }
 
 fn translate_mesh(mesh: &crate::projection::Mesh, offset: glam::Vec3) -> crate::projection::Mesh {

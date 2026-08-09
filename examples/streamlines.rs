@@ -50,7 +50,7 @@ fn main() -> anyhow::Result<()> {
 
     let streams_id = scene.add_tattva(
         StreamLines::new(
-            circle_start_points(vec2(-1.8, -0.15), 1.15, 14),
+            circle_start_points(vec2(-1.8, -0.15), 1.15, 14)?,
             vortex_with_drift,
         )
         .with_color(Vec4::new(GOLD_C.x, GOLD_C.y, GOLD_C.z, 0.0))
@@ -138,7 +138,7 @@ fn main() -> anyhow::Result<()> {
         .zoom_to(1.12)
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
     scene.camera_mut().set_view_width(16.0);
 

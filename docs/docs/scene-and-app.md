@@ -10,13 +10,13 @@ For most authored code, prefer the higher-level APIs first:
 
 - `scene.add_tattva(...)` instead of `scene.add(...)`
 - scene intent helpers like `hide`, `show`, `set_position_2d`, `set_position_3d`, `set_scale`, and `set_rotation`
-- `scene.play(...)` for the common single-timeline case
+- `scene.play(...)` to install the global timeline
 
-Use lower-level access only when you need type-specific mutation, generic scene tooling, or explicit multi-timeline organization.
+Use lower-level access only when you need type-specific mutation or generic scene tooling.
 
 ## Scene
 
-`Scene` is the authoritative source of truth for your animation. It owns all tattvas, timelines, camera state, and scene time.
+`Scene` is the authoritative source of truth for your animation. It owns all tattvas, the global timeline, camera state, and scene time.
 
 ```rust
 use murali::engine::scene::Scene;
@@ -26,7 +26,7 @@ let mut scene = Scene::new();
 
 **What the scene owns:**
 - All tattvas (visual objects)
-- All timelines
+- The global timeline
 - Scene time (current playback position)
 - Camera configuration
 - Updaters (frame-by-frame callbacks)
@@ -126,23 +126,21 @@ if let Some(label) = scene.get_tattva_typed::<Label>(label_id) {
 
 **When to use:** When you need to access or modify properties specific to a tattva type.
 
+Successful typed mutable access automatically marks the tattva for a full backend rebuild. You do
+not need to call `mark_dirty` after changing `state` through this API.
+
 ### Untyped Access
 
 For advanced scenarios where you don't know the concrete type:
 
 ```rust
-// Untyped mutable access
-if let Some(tattva) = scene.get_tattva_any_mut(id) {
-    // Access through TattvaTrait methods
-}
-
-// Untyped immutable access
 if let Some(tattva) = scene.get_tattva_any(id) {
-    // Read-only access
+    println!("Tattva ID: {}", tattva.id());
 }
 ```
 
-**When to use:** Generic code that works with any tattva type, internal systems, advanced patterns.
+**When to use:** Generic read-only code that works with any tattva type. Raw untyped mutation is
+reserved for engine internals so authored state changes cannot bypass dirty tracking.
 
 ## Removing Tattvas
 
@@ -223,11 +221,11 @@ scene.align_to(label_id, circle_id, Anchor::Center);
 
 For more layout patterns, see the Layout and Composition guide (coming soon).
 
-## Timelines
+## Timeline and Clips
 
-Timelines schedule when animations happen.
+The scene plays one global timeline. Clips organize reusable animation sections with their own local time starting at `0.0`.
 
-### Single Timeline (Preferred)
+### Direct Timeline Authoring
 
 Most scenes use a single timeline:
 
@@ -242,41 +240,30 @@ timeline
     .move_to(Vec3::new(3.0, 0.0, 0.0))
     .spawn();
 
-// Play the timeline (uses name "main" internally)
-scene.play(timeline);
+scene.play(timeline)?;
 ```
 
-**This is the recommended API** for most use cases.
+Direct `.at(...)` values on a timeline are absolute scene times. This remains convenient for small scenes.
 
-### Multiple Named Timelines
+### Composing Local-Time Clips
 
-For complex scenes, you can use multiple timelines:
+Use clips when sections should be authored independently or rearranged without rewriting their internal timestamps:
 
 ```rust
-let mut main_timeline = Timeline::new();
-let mut background_timeline = Timeline::new();
+let mut intro = Clip::new();
+let mut explanation = Clip::new();
 
-// Add animations to each timeline...
+intro.animate(title_id).at(0.0).for_duration(1.0).appear().spawn();
+explanation.animate(graph_id).at(0.0).for_duration(3.0).draw().spawn();
 
-scene.play_named("main", main_timeline);
-scene.play_named("background", background_timeline);
+let mut timeline = Timeline::new();
+timeline.append(intro).append(explanation);
+scene.play(timeline)?;
 ```
 
-**Important:** All timelines share the same `scene_time`. They progress together, not independently.
+Both clips use local time `0.0`; `append` converts those local times into one flat absolute schedule. Use `overlay` for concurrent clips and `place_at` for explicit global placement.
 
-**When to use multiple timelines:**
-- Organizing complex scenes by layer or concern
-- Separating foreground and background animations
-- Managing different "tracks" independently
-
-If you're not sure, start with one timeline. Multiple timelines are mainly an organizational tool, not a way to get independent clocks or playback control.
-
-**Current limitations:**
-- All timelines advance with the same scene time
-- No independent playback control per timeline
-- This is an advanced feature still being refined
-
-For more details, see the Timelines guide (coming soon).
+For composition semantics and examples, see the [Timelines and Clips](./timelines) guide.
 
 ## Capture Helpers
 
@@ -562,7 +549,7 @@ let settings = ExportSettings {
 - Use `add_tattva()` for adding objects
 - Use intent helpers (`set_position_2d`, `set_position_3d`, `hide`, `show`) for common operations
 - Keep tattva IDs in variables for later reference
-- Use `scene.play(timeline)` for single-timeline scenes
+- Use `scene.play(timeline)` to install the scene's global timeline
 - Stage objects (hide them) before reveal animations
 
 ❌ **Don't:**

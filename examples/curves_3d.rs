@@ -1,5 +1,4 @@
 use glam::Vec3;
-use murali::App;
 use murali::colors::*;
 use murali::engine::camera::Projection;
 use murali::engine::scene::Scene;
@@ -10,6 +9,7 @@ use murali::frontend::collection::composite::axes3d::Axes3D;
 use murali::frontend::collection::graph::parametric_curve3d::ParametricCurve3D;
 use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
+use murali::{App, DepthMode};
 
 fn space_curve(t: f32) -> Vec3 {
     Vec3::new(
@@ -88,6 +88,9 @@ fn main() -> anyhow::Result<()> {
     };
     scene.camera_mut().position = Vec3::new(0.0, 0.8, 12.8);
     scene.camera_mut().target = Vec3::new(0.0, 0.1, 0.0);
+    for id in [title_id, subtitle_id, footer_id] {
+        scene.set_depth_mode(id, DepthMode::Overlay);
+    }
 
     let mut timeline = Timeline::new();
     timeline
@@ -166,7 +169,7 @@ fn main() -> anyhow::Result<()> {
         .typewrite_text()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
 
     App::new()?.with_scene(scene).run_app()
 }

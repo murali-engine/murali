@@ -301,13 +301,14 @@ fn main() -> anyhow::Result<()> {
         .zoom_to(1.0 / CLOSEUP_ZOOM)
         .spawn();
     timeline.call_at(TRACE_START + TRACE_DURATION, move |scene| {
-        let final_tip = if let Some(epicycle) = scene.get_tattva_typed_mut::<FourierEpicycles>(epicycle_id) {
-            epicycle.state.phase = 1.0;
-            epicycle.mark_dirty(DirtyFlags::GEOMETRY | DirtyFlags::BOUNDS | DirtyFlags::STYLE);
-            Some(epicycle.state.tip())
-        } else {
-            None
-        };
+        let final_tip =
+            if let Some(epicycle) = scene.get_tattva_typed_mut::<FourierEpicycles>(epicycle_id) {
+                epicycle.state.phase = 1.0;
+                epicycle.mark_dirty(DirtyFlags::GEOMETRY | DirtyFlags::BOUNDS | DirtyFlags::STYLE);
+                Some(epicycle.state.tip())
+            } else {
+                None
+            };
         if let Some(tip) = final_tip {
             scene.set_position_2d(tip_id, tip);
         }
@@ -317,7 +318,7 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
-    scene.play(timeline);
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
     scene.camera_mut().set_view_width(INITIAL_VIEW_WIDTH);
 

@@ -12,6 +12,8 @@ pub mod timeline;
 use crate::backend::Backend;
 use crate::backend::sync::SyncBoundary;
 use crate::engine::scene::Scene;
+use crate::engine::timeline::SeekError;
+use crate::validation::ValidationError;
 
 use std::sync::Arc;
 use winit::window::Window;
@@ -23,6 +25,14 @@ pub struct Engine {
     pub scene: Scene,
     pub backend: Backend,
     sync_boundary: SyncBoundary,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum EngineError {
+    #[error(transparent)]
+    Seek(#[from] SeekError),
+    #[error(transparent)]
+    Validation(#[from] ValidationError),
 }
 
 impl Engine {
@@ -46,10 +56,23 @@ impl Engine {
     }
 
     /// The Heartbeat: This moves time forward and syncs the layers.
-    pub fn update(&mut self, dt: f32) {
+    pub fn update(&mut self, dt: f32) -> Result<(), EngineError> {
         // 1. Advance the Frontend (Animations & Timelines)
-        self.scene.update(dt);
+        self.scene.update(dt)?;
 
+        self.sync_scene()?;
+        Ok(())
+    }
+
+    /// Reconstructs the scene at an absolute timeline time and immediately
+    /// synchronizes the resulting frontend state to the renderer backend.
+    pub fn seek_to(&mut self, scene_time: f32) -> Result<(), EngineError> {
+        self.scene.seek_to(scene_time)?;
+        self.sync_scene()?;
+        Ok(())
+    }
+
+    fn sync_scene(&mut self) -> Result<(), ValidationError> {
         // 2. Perform the Sync Boundary pass
         // Project dirty tattvas and materialize GPU resources
         let device = &self.backend.renderer.device_mgr.device;
@@ -65,8 +88,9 @@ impl Engine {
                 device,
                 &self.backend.renderer,
                 tattva.as_mut(),
-            );
+            )?;
         }
+        Ok(())
     }
 
     /// Draw the current state of the Backend ECS World.

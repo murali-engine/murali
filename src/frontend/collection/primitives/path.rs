@@ -873,8 +873,8 @@ impl Project for Path {
                             })
                             .collect();
 
-                        let mesh =
-                            crate::projection::Mesh::from_tessellation(vertices, geometry.indices);
+                        let indices = geometry.indices.into_iter().map(u32::from).collect();
+                        let mesh = crate::projection::Mesh::from_tessellation(vertices, indices);
                         ctx.emit(RenderPrimitive::Mesh(mesh));
                     }
                 }

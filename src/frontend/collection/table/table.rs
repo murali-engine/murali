@@ -380,6 +380,7 @@ fn project_v1_text(state: &TableState, ctx: &mut ProjectionCtx, text_progress: f
                 content: title.content,
                 height: title.height,
                 color,
+                font_name: None,
                 offset: title.offset,
                 rotation: 0.0,
             });
@@ -399,6 +400,7 @@ fn project_v1_text(state: &TableState, ctx: &mut ProjectionCtx, text_progress: f
             content: entry.content,
             height: entry.height,
             color,
+            font_name: None,
             offset: entry.offset,
             rotation: 0.0,
         });

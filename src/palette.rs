@@ -19,7 +19,6 @@ pub struct Palette {
 
 impl Palette {
     /// Look up a colour by name. Returns `None` if the key is not in the palette.
-
     #[must_use]
     pub fn get(&self, key: &str) -> Option<Vec4> {
         self.colors.get(key).copied()
@@ -60,7 +59,7 @@ impl Palette {
     ///
     /// Returns `None` if the palette is empty.
     ///
-    /// Use [`cycle_or_panic`] if you want a guaranteed colour and prefer
+    /// Use [`Self::cycle_or_panic`] if you want a guaranteed colour and prefer
     /// a panic on empty palettes (recommended in scene setup code).
     #[must_use]
     pub fn cycle(&self, index: usize) -> Option<Vec4> {

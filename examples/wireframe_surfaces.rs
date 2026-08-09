@@ -1,5 +1,4 @@
 use glam::Vec3;
-use murali::App;
 use murali::colors::*;
 use murali::engine::camera::Projection;
 use murali::engine::scene::Scene;
@@ -10,6 +9,7 @@ use murali::frontend::collection::graph::parametric_surface::{
     ParametricSurface, SurfaceRenderMode,
 };
 use murali::frontend::collection::text::label::Label;
+use murali::{App, DepthMode};
 
 fn saddle_surface(u: f32, v: f32) -> Vec3 {
     Vec3::new(u, 0.26 * (u * u - v * v), v)
@@ -80,6 +80,9 @@ fn main() -> anyhow::Result<()> {
     };
     scene.camera_mut().position = Vec3::new(-4.6, 2.4, 6.4);
     scene.camera_mut().target = Vec3::new(0.0, 0.0, 0.0);
+    for id in [title_id, subtitle_id, footer_id] {
+        scene.set_depth_mode(id, DepthMode::Overlay);
+    }
 
     let mut timeline = Timeline::new();
     timeline
@@ -156,7 +159,7 @@ fn main() -> anyhow::Result<()> {
         .typewrite_text()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
 
     App::new()?.with_scene(scene).run_app()
 }

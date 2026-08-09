@@ -125,7 +125,7 @@ fn main() -> anyhow::Result<()> {
         .typewrite_text()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
 
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
 

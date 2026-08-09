@@ -13,7 +13,8 @@ pub enum RenderPrimitive {
     /// A pre-computed 3D triangle mesh.
     ///
     /// Meshes are wrapped in an [`Arc`] for efficient reuse across frames and
-    /// multiple instances (e.g., in [`NeuralNetworkDiagram`]).
+    /// multiple instances (e.g., in
+    /// [`NeuralNetworkDiagram`](crate::frontend::collection::ai::neural_network_diagram::NeuralNetworkDiagram)).
     Mesh(Arc<Mesh>),
 
     /// A 3D line segment with fixed thickness.
@@ -39,7 +40,7 @@ pub enum RenderPrimitive {
 
     /// A text string rendered at a specific world position.
     ///
-    /// Character layout and glyph generation are handled by the [`TextSystem`]
+    /// Character layout and glyph generation are handled by the text resource system
     /// in the Projection context during materialization.
     Text {
         /// String content to render.
@@ -48,6 +49,8 @@ pub enum RenderPrimitive {
         height: f32,
         /// Text color.
         color: Vec4,
+        /// Optional registered font key.
+        font_name: Option<String>,
         /// Bottom-left or center anchor position in 3D space.
         offset: Vec3,
         /// Rotation in radians around Z-axis (for vertical text).
@@ -117,12 +120,14 @@ impl RenderPrimitive {
                 content,
                 height,
                 color,
+                font_name,
                 offset: old_offset,
                 rotation,
             } => RenderPrimitive::Text {
                 content,
                 height,
                 color,
+                font_name,
                 offset: old_offset + offset,
                 rotation,
             },
@@ -183,12 +188,14 @@ impl RenderPrimitive {
                 content,
                 height,
                 color,
+                font_name,
                 offset,
                 rotation,
             } => RenderPrimitive::Text {
                 content,
                 height,
                 color: f(color),
+                font_name,
                 offset,
                 rotation,
             },
@@ -246,12 +253,14 @@ impl RenderPrimitive {
                 content,
                 height,
                 color,
+                font_name,
                 offset,
                 rotation,
             } => RenderPrimitive::Text {
                 content,
                 height: height * scale,
                 color,
+                font_name,
                 offset: offset * scale,
                 rotation,
             },

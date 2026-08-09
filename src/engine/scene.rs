@@ -8,11 +8,13 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use crate::engine::camera::Camera;
-use crate::engine::timeline::Timeline;
+use crate::engine::timeline::{SeekError, Timeline};
 use crate::frontend::layout::{Anchor, Bounds, Direction, anchor_for_direction, opposite_anchor};
+use crate::frontend::props::DepthMode;
 use crate::frontend::updater::UpdaterManager;
 use crate::frontend::{DirtyFlags, IntoTattva, TattvaId, tattva_trait::TattvaTrait};
 use crate::resource::texture::TextureImage;
+use crate::validation::ValidationError;
 
 #[derive(Debug, Clone, Default)]
 pub struct ScreenshotCapture {
@@ -25,9 +27,10 @@ impl ScreenshotCapture {
     where
         I: IntoIterator<Item = f32>,
     {
-        let mut times: Vec<f32> = times.into_iter().collect();
-        times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        Self { times, names: None }
+        Self {
+            times: times.into_iter().collect(),
+            names: None,
+        }
     }
 
     pub fn with_names<I, P>(mut self, names: I) -> Self
@@ -37,6 +40,25 @@ impl ScreenshotCapture {
     {
         self.names = Some(names.into_iter().map(|name| name.map(Into::into)).collect());
         self
+    }
+
+    fn sort_by_time(&mut self) {
+        let Some(names) = self.names.take() else {
+            self.times
+                .sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+            return;
+        };
+
+        if names.len() != self.times.len() {
+            self.names = Some(names);
+            return;
+        }
+
+        let mut entries: Vec<_> = self.times.drain(..).zip(names).collect();
+        entries.sort_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let (times, names) = entries.into_iter().unzip();
+        self.times = times;
+        self.names = Some(names);
     }
 }
 
@@ -64,11 +86,11 @@ impl GifCapture {
 pub struct Scene {
     /// Authoritative Tattvas (Source of Truth)
     /// We use TattvaTrait to allow different types (Circle, Latex, etc.) in one list.
-    pub tattvas: HashMap<TattvaId, Box<dyn TattvaTrait>>,
+    pub(crate) tattvas: HashMap<TattvaId, Box<dyn TattvaTrait>>,
 
     /// Time & Animation
     pub scene_time: f32,
-    pub timelines: HashMap<String, Timeline>,
+    pub timeline: Option<Timeline>,
     pub screenshot_captures: Vec<ScreenshotCapture>,
     pub gif_captures: Vec<GifCapture>,
 
@@ -89,7 +111,7 @@ impl Scene {
         Self {
             tattvas: HashMap::new(),
             scene_time: 0.0,
-            timelines: HashMap::new(),
+            timeline: None,
             screenshot_captures: Vec::new(),
             gif_captures: Vec::new(),
             updaters: UpdaterManager::new(),
@@ -159,7 +181,8 @@ impl Scene {
         self.hide(id);
     }
 
-    pub fn add_screenshot_capture(&mut self, capture: ScreenshotCapture) {
+    pub fn add_screenshot_capture(&mut self, mut capture: ScreenshotCapture) {
+        capture.sort_by_time();
         self.screenshot_captures.push(capture);
     }
 
@@ -198,18 +221,13 @@ impl Scene {
         self.add_gif_capture(GifCapture::new(name, times));
     }
 
-    /// Installs or replaces a named timeline in the scene.
-    pub fn set_timeline(&mut self, name: impl Into<String>, timeline: Timeline) {
-        self.timelines.insert(name.into(), timeline);
-    }
-
-    /// Preferred authored API for the common single-timeline case.
-    pub fn play(&mut self, timeline: Timeline) {
-        self.set_timeline("main", timeline);
-    }
-
-    pub fn play_named(&mut self, name: impl Into<String>, timeline: Timeline) {
-        self.set_timeline(name, timeline);
+    /// Installs or replaces the scene's global timeline.
+    pub fn play(&mut self, mut timeline: Timeline) -> Result<(), ValidationError> {
+        timeline.validate()?;
+        timeline.validate_for_scene(self)?;
+        timeline.prepare(self);
+        self.timeline = Some(timeline);
+        Ok(())
     }
 
     pub fn add_textured_surface<F>(
@@ -241,8 +259,11 @@ impl Scene {
         Ok(self.add_tattva(surface, position))
     }
 
-    /// Retrieves a Tattva for inspection or mutation.
-    pub fn get_tattva_any_mut(&mut self, id: TattvaId) -> Option<&mut (dyn TattvaTrait + '_)> {
+    /// Retrieves a Tattva for internal mutation with explicit dirty-flag handling.
+    pub(crate) fn get_tattva_any_mut(
+        &mut self,
+        id: TattvaId,
+    ) -> Option<&mut (dyn TattvaTrait + '_)> {
         match self.tattvas.get_mut(&id) {
             Some(b) => Some(b.as_mut()),
             None => None,
@@ -269,22 +290,28 @@ impl Scene {
         &mut self,
         id: TattvaId,
     ) -> Option<&mut crate::frontend::Tattva<T>> {
-        self.get_tattva_any_mut(id)?
+        let tattva = self
+            .tattvas
+            .get_mut(&id)?
             .as_any_mut()
-            .downcast_mut::<crate::frontend::Tattva<T>>()
+            .downcast_mut::<crate::frontend::Tattva<T>>()?;
+        tattva.mark_dirty(DirtyFlags::ALL);
+        Some(tattva)
     }
 
     /// Primary update loop for the frontend.
-    pub fn update(&mut self, dt: f32) {
+    pub fn update(&mut self, dt: f32) -> Result<(), SeekError> {
+        if dt < 0.0 {
+            return self.seek_to(self.scene_time + dt);
+        }
         self.scene_time += dt;
 
-        // 1. Tick all timelines (this mutates Tattva props/state)
-        // We temporarily move them out to avoid borrow checker conflicts with 'self'
-        let mut timelines = std::mem::take(&mut self.timelines);
-        for (_, tl) in timelines.iter_mut() {
-            tl.update(self.scene_time, self);
+        // We temporarily move the timeline out to avoid borrow checker conflicts with `self`.
+        if let Some(mut timeline) = self.timeline.take() {
+            let result = timeline.update(self.scene_time, self);
+            self.timeline = Some(timeline);
+            result?;
         }
-        self.timelines = timelines;
 
         // 2. Update traced paths
         self.update_traced_paths();
@@ -293,6 +320,48 @@ impl Scene {
         let updaters = std::mem::take(&mut self.updaters);
         updaters.update_all(self, dt);
         self.updaters = updaters;
+        Ok(())
+    }
+
+    /// Reconstructs seekable timeline state at an absolute time.
+    pub fn seek_to(&mut self, scene_time: f32) -> Result<(), SeekError> {
+        let scene_time = if scene_time.is_finite() {
+            scene_time.max(0.0)
+        } else {
+            0.0
+        };
+        if !self.updaters.is_empty() {
+            return Err(SeekError::FrameDependentUpdaters {
+                count: self.updaters.len(),
+            });
+        }
+
+        let traced_path_count = self.traced_path_count();
+        if traced_path_count > 0 {
+            return Err(SeekError::HistoryDependentTracedPaths {
+                count: traced_path_count,
+            });
+        }
+
+        if let Some(mut timeline) = self.timeline.take() {
+            let result = timeline.seek_to(scene_time, self);
+            self.timeline = Some(timeline);
+            result?;
+        }
+        self.scene_time = scene_time;
+        Ok(())
+    }
+
+    fn traced_path_count(&self) -> usize {
+        use crate::frontend::Tattva;
+        use crate::frontend::collection::utility::TracedPath;
+
+        self.tattvas
+            .values()
+            .filter(|tattva| {
+                tattva.as_any().is::<TracedPath>() || tattva.as_any().is::<Tattva<TracedPath>>()
+            })
+            .count()
     }
 
     /// Update all traced paths in the scene
@@ -340,7 +409,7 @@ impl Scene {
     }
 
     /// Returns an iterator over all Tattvas for the Sync Boundary to process.
-    pub fn tattvas_iter_mut(
+    pub(crate) fn tattvas_iter_mut(
         &mut self,
     ) -> impl Iterator<Item = (&TattvaId, &mut Box<dyn TattvaTrait>)> {
         self.tattvas.iter_mut()
@@ -354,8 +423,7 @@ impl Scene {
         let tattva = self.get_tattva_any(id)?;
         let local = tattva.local_bounds();
         let props = DrawableProps::read(tattva.props());
-        let scaled = local.scale(vec2(props.scale.x, props.scale.y));
-        Some(scaled.translate(vec2(props.position.x, props.position.y)))
+        Some(local.transform_3d(props.model_matrix()))
     }
 
     pub fn anchor_position(&self, id: TattvaId, anchor: Anchor) -> Option<Vec2> {
@@ -408,6 +476,27 @@ impl Scene {
         }
     }
 
+    /// Sets the painter-order layer used by 2D rendering.
+    /// Higher layers are drawn later and therefore appear on top.
+    pub fn set_layer(&mut self, id: TattvaId, layer: i32) {
+        if let Some(tattva) = self.get_tattva_any_mut(id) {
+            let mut props = DrawableProps::write(tattva.props());
+            props.layer = layer;
+            drop(props);
+            tattva.mark_dirty(DirtyFlags::STYLE);
+        }
+    }
+
+    /// Selects world-depth or always-on-top overlay rendering for perspective scenes.
+    pub fn set_depth_mode(&mut self, id: TattvaId, depth_mode: DepthMode) {
+        if let Some(tattva) = self.get_tattva_any_mut(id) {
+            let mut props = DrawableProps::write(tattva.props());
+            props.depth_mode = depth_mode;
+            drop(props);
+            tattva.mark_dirty(DirtyFlags::STYLE);
+        }
+    }
+
     pub fn show(&mut self, id: TattvaId) {
         self.set_opacity(id, 1.0);
     }
@@ -424,14 +513,14 @@ impl Scene {
             return;
         };
         let delta = target_anchor - moving_anchor;
-        if let Some(bounds) = self.world_bounds(moving) {
-            let current_pos = bounds.center();
-            let new_pos = match anchor {
-                Anchor::Up | Anchor::Down => glam::vec2(current_pos.x, current_pos.y + delta.y),
-                Anchor::Left | Anchor::Right => glam::vec2(current_pos.x + delta.x, current_pos.y),
-                _ => current_pos + delta,
+        if let Some(tattva) = self.get_tattva_any(moving) {
+            let position = DrawableProps::read(tattva.props()).position.truncate();
+            let new_position = match anchor {
+                Anchor::Up | Anchor::Down => glam::vec2(position.x, position.y + delta.y),
+                Anchor::Left | Anchor::Right => glam::vec2(position.x + delta.x, position.y),
+                _ => position + delta,
             };
-            self.set_position_2d(moving, new_pos);
+            self.set_position_2d(moving, new_position);
         }
     }
 
@@ -445,14 +534,14 @@ impl Scene {
         let Some(target_bounds) = self.world_bounds(target) else {
             return;
         };
-        let Some(local_bounds) = self.local_bounds(moving) else {
+        let Some(moving_bounds) = self.world_bounds(moving) else {
             return;
         };
 
         let moving_anchor = opposite_anchor(direction);
         let target_anchor = anchor_for_direction(direction);
         let target_point = target_bounds.anchor(target_anchor);
-        let local_anchor = local_bounds.anchor(moving_anchor);
+        let moving_point = moving_bounds.anchor(moving_anchor);
 
         let offset = match direction {
             Direction::Up => vec2(0.0, padding),
@@ -461,16 +550,22 @@ impl Scene {
             Direction::Right => vec2(padding, 0.0),
         };
 
-        self.set_position_2d(moving, target_point + offset - local_anchor);
+        let delta = target_point + offset - moving_point;
+        if let Some(tattva) = self.get_tattva_any(moving) {
+            let position = DrawableProps::read(tattva.props()).position.truncate();
+            self.set_position_2d(moving, position + delta);
+        }
     }
 
     pub fn to_edge(&mut self, id: TattvaId, direction: Direction, margin: f32) {
-        let Some(local_bounds) = self.local_bounds(id) else {
+        let Some(moving_bounds) = self.world_bounds(id) else {
             return;
         };
-        let frame = self.frame_bounds();
+        let Some(frame) = self.frame_bounds() else {
+            return;
+        };
         let target_anchor = anchor_for_direction(direction);
-        let moving_anchor = opposite_anchor(direction);
+        let moving_anchor = target_anchor;
         let edge_point = frame.anchor(target_anchor);
         let margin_offset = match direction {
             Direction::Up => vec2(0.0, -margin),
@@ -478,31 +573,29 @@ impl Scene {
             Direction::Left => vec2(margin, 0.0),
             Direction::Right => vec2(-margin, 0.0),
         };
-        self.set_position_2d(
-            id,
-            edge_point + margin_offset - local_bounds.anchor(moving_anchor),
-        );
+        let delta = edge_point + margin_offset - moving_bounds.anchor(moving_anchor);
+        if let Some(tattva) = self.get_tattva_any(id) {
+            let position = DrawableProps::read(tattva.props()).position.truncate();
+            self.set_position_2d(id, position + delta);
+        }
     }
 
-    pub fn frame_bounds(&self) -> Bounds {
-        let view_width = self.camera.view_width();
-        let half_width = view_width / 2.0;
-        let half_height = half_width / crate::engine::camera::ASPECT_RATIO;
-        Bounds::new(
-            vec2(-half_width, -half_height),
-            vec2(half_width, half_height),
-        )
+    /// Returns the camera frame projected onto Murali's 2D layout plane (`z = 0`).
+    pub fn frame_bounds(&self) -> Option<Bounds> {
+        self.camera.frame_bounds_at_z(0.0)
     }
 
     pub fn clear(&mut self) {
+        self.removed_tattva_ids.extend(self.tattvas.keys().copied());
+        self.removed_tattva_ids.sort_unstable();
+        self.removed_tattva_ids.dedup();
         self.tattvas.clear();
-        self.timelines.clear();
+        self.timeline = None;
         self.screenshot_captures.clear();
         self.gif_captures.clear();
         self.updaters.clear();
         self.scene_time = 0.0;
         self.next_tattva_id = 1;
-        self.removed_tattva_ids.clear();
         self.camera = Camera::default();
     }
 
@@ -517,7 +610,9 @@ impl Scene {
 
     /// Replaces the implementation of an existing Tattva.
     /// This is used for shape morphing where we swap types (e.g., Circle -> Path).
-    pub fn replace_tattva(&mut self, id: TattvaId, tattva: Box<dyn TattvaTrait>) {
+    pub fn replace_tattva(&mut self, id: TattvaId, mut tattva: Box<dyn TattvaTrait>) {
+        tattva.set_id(id);
+        tattva.mark_dirty(DirtyFlags::ALL);
         self.tattvas.insert(id, tattva);
     }
 
@@ -559,5 +654,183 @@ impl Scene {
 impl Default for Scene {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::frontend::collection::primitives::square::Square;
+    use glam::Vec4;
+
+    #[test]
+    fn clear_queues_every_tattva_for_backend_removal_before_reusing_ids() {
+        let mut scene = Scene::new();
+        let first = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+        let second = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+        scene.remove_tattva(first);
+
+        scene.clear();
+
+        assert!(scene.tattvas.is_empty());
+        assert_eq!(scene.take_removed_tattva_ids(), vec![first, second]);
+        assert_eq!(
+            scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO),
+            first
+        );
+    }
+
+    #[test]
+    fn replace_tattva_preserves_scene_identity_and_forces_backend_rebuild() {
+        let mut scene = Scene::new();
+        let id = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+        let mut replacement =
+            crate::frontend::Tattva::new(id + 100, Square::new(2.0, Vec4::new(0.2, 0.4, 0.6, 1.0)));
+        replacement.clear_all_dirty();
+
+        scene.replace_tattva(id, Box::new(replacement));
+
+        let replacement = scene.get_tattva_any(id).unwrap();
+        assert_eq!(replacement.id(), id);
+        assert_eq!(replacement.dirty_flags(), DirtyFlags::ALL);
+    }
+
+    #[test]
+    fn typed_mutable_access_automatically_marks_state_dirty() {
+        let mut scene = Scene::new();
+        let id = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+        scene.tattvas.get_mut(&id).unwrap().clear_all_dirty();
+
+        scene.get_tattva_typed_mut::<Square>(id).unwrap().state.size = 2.0;
+
+        assert_eq!(
+            scene.get_tattva_any(id).unwrap().dirty_flags(),
+            DirtyFlags::ALL
+        );
+    }
+
+    #[test]
+    fn failed_typed_mutable_access_does_not_mark_state_dirty() {
+        use crate::frontend::collection::primitives::circle::Circle;
+
+        let mut scene = Scene::new();
+        let id = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+        scene.tattvas.get_mut(&id).unwrap().clear_all_dirty();
+
+        assert!(scene.get_tattva_typed_mut::<Circle>(id).is_none());
+        assert_eq!(
+            scene.get_tattva_any(id).unwrap().dirty_flags(),
+            DirtyFlags::NONE
+        );
+    }
+
+    #[test]
+    fn world_bounds_include_signed_scale_and_rotation() {
+        let mut scene = Scene::new();
+        let id = scene.add_tattva(Square::new(2.0, Vec4::ONE), Vec3::new(3.0, 4.0, 0.0));
+        scene.set_scale(id, Vec3::new(-2.0, 1.0, 1.0));
+        scene.set_rotation(id, Quat::from_rotation_z(std::f32::consts::FRAC_PI_2));
+
+        let bounds = scene.world_bounds(id).unwrap();
+        assert!(bounds.min.abs_diff_eq(vec2(2.0, 2.0), 1e-5));
+        assert!(bounds.max.abs_diff_eq(vec2(4.0, 6.0), 1e-5));
+    }
+
+    #[test]
+    fn next_to_preserves_padding_for_transformed_objects() {
+        let mut scene = Scene::new();
+        let target = scene.add_tattva(Square::new(2.0, Vec4::ONE), Vec3::ZERO);
+        let moving = scene.add_tattva(Square::new(2.0, Vec4::ONE), Vec3::ZERO);
+        scene.set_scale(moving, Vec3::new(-2.0, 1.0, 1.0));
+        scene.set_rotation(moving, Quat::from_rotation_z(std::f32::consts::FRAC_PI_2));
+
+        scene.next_to(moving, target, Direction::Right, 0.5);
+
+        let target_bounds = scene.world_bounds(target).unwrap();
+        let moving_bounds = scene.world_bounds(moving).unwrap();
+        assert!((moving_bounds.min.x - target_bounds.max.x - 0.5).abs() < 1e-5);
+    }
+
+    #[test]
+    fn perspective_to_edge_uses_the_layout_plane_frame() {
+        let mut scene = Scene::new();
+        scene.camera.projection = crate::engine::camera::Projection::Perspective {
+            fov_y_rad: std::f32::consts::FRAC_PI_2,
+            aspect: 2.0,
+            near: 0.1,
+            far: 100.0,
+        };
+        let id = scene.add_tattva(Square::new(2.0, Vec4::ONE), Vec3::ZERO);
+
+        scene.to_edge(id, Direction::Up, 0.5);
+
+        let frame = scene.frame_bounds().unwrap();
+        let bounds = scene.world_bounds(id).unwrap();
+        assert!((frame.max.y - bounds.max.y - 0.5).abs() < 1e-3);
+    }
+
+    #[test]
+    fn seeking_with_frame_dependent_updaters_returns_an_error() {
+        let mut scene = Scene::new();
+        let id = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+        scene.add_updater(id, |_scene, _id, _dt| {});
+
+        assert_eq!(
+            scene.seek_to(1.0).unwrap_err(),
+            SeekError::FrameDependentUpdaters { count: 1 }
+        );
+        assert_eq!(scene.scene_time, 0.0);
+    }
+
+    #[test]
+    fn seeking_with_traced_path_history_returns_an_error() {
+        use crate::frontend::collection::utility::TracedPath;
+
+        let mut scene = Scene::new();
+        let tracked = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
+        scene.add_tattva(
+            TracedPath::new(tracked, |position, _rotation| position, Vec4::ONE, 0.02),
+            Vec3::ZERO,
+        );
+
+        assert_eq!(
+            scene.seek_to(1.0).unwrap_err(),
+            SeekError::HistoryDependentTracedPaths { count: 1 }
+        );
+        assert_eq!(scene.scene_time, 0.0);
+    }
+
+    #[test]
+    fn named_screenshot_sorting_keeps_times_and_names_together() {
+        let mut scene = Scene::new();
+        scene.capture_screenshots_named([(2.0, Some("second.png")), (1.0, Some("first.png"))]);
+
+        let capture = &scene.screenshot_captures[0];
+        assert_eq!(capture.times, vec![1.0, 2.0]);
+        assert_eq!(
+            capture.names.as_ref().unwrap(),
+            &vec![
+                Some(PathBuf::from("first.png")),
+                Some(PathBuf::from("second.png")),
+            ]
+        );
+    }
+
+    #[test]
+    fn added_screenshot_capture_normalizes_chained_names() {
+        let mut scene = Scene::new();
+        scene.add_screenshot_capture(
+            ScreenshotCapture::new([2.0, 1.0]).with_names([Some("second.png"), Some("first.png")]),
+        );
+
+        let capture = &scene.screenshot_captures[0];
+        assert_eq!(capture.times, vec![1.0, 2.0]);
+        assert_eq!(
+            capture.names.as_ref().unwrap(),
+            &vec![
+                Some(PathBuf::from("first.png")),
+                Some(PathBuf::from("second.png")),
+            ]
+        );
     }
 }

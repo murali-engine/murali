@@ -1,13 +1,15 @@
 use glam::Vec3;
-use murali::App;
 use murali::colors::*;
 use murali::engine::camera::Projection;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
 use murali::frontend::collection::composite::axes3d::Axes3D;
-use murali::frontend::collection::graph::parametric_surface::{ParametricSurface, SurfaceRenderMode};
+use murali::frontend::collection::graph::parametric_surface::{
+    ParametricSurface, SurfaceRenderMode,
+};
 use murali::frontend::collection::text::label::Label;
+use murali::{App, DepthMode};
 
 fn sphere_surface(u: f32, v: f32) -> Vec3 {
     let radius = 1.35;
@@ -98,6 +100,9 @@ fn main() -> anyhow::Result<()> {
     };
     scene.camera_mut().position = Vec3::new(-3.2, 1.9, 5.8);
     scene.camera_mut().target = Vec3::new(0.0, 0.0, 0.0);
+    for id in [title_id, subtitle_id, footer_id] {
+        scene.set_depth_mode(id, DepthMode::Overlay);
+    }
 
     let mut timeline = Timeline::new();
     timeline
@@ -157,6 +162,13 @@ fn main() -> anyhow::Result<()> {
         .ease(Ease::InOutCubic)
         .appear()
         .spawn();
+    timeline
+        .animate(wire_surface_id)
+        .at(4.9)
+        .for_duration(1.4)
+        .ease(Ease::InOutCubic)
+        .fade_to(0.0)
+        .spawn();
 
     timeline
         .animate_camera()
@@ -181,7 +193,7 @@ fn main() -> anyhow::Result<()> {
         .typewrite_text()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
 
     App::new()?.with_scene(scene).run_app()
 }

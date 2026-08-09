@@ -202,7 +202,7 @@ fn main() -> anyhow::Result<()> {
     // ... (all previous code)
     
     // Play the timeline
-    scene.play(timeline);
+    scene.play(timeline)?;
     
     Ok(())
 }
@@ -280,7 +280,7 @@ fn main() -> anyhow::Result<()> {
         .move_to(2.0 * LEFT)
         .spawn();
     
-    scene.play(timeline);
+    scene.play(timeline)?;
     
     // Run
     App::new()?.with_scene(scene).run_app()
@@ -340,7 +340,7 @@ The origin (0, 0, 0) is at the center of the frame.
 ## Key Concepts
 
 ### Scene
-The container for all objects, timelines, and state. It's the source of truth for your animation.
+The container for all objects, the global timeline, and state. It's the source of truth for your animation.
 
 ### Tattva
 Any visual object in Murali (shapes, text, graphs, etc.). Each tattva has:
@@ -349,7 +349,10 @@ Any visual object in Murali (shapes, text, graphs, etc.). Each tattva has:
 - Properties like color, scale, rotation, opacity
 
 ### Timeline
-Schedules when animations happen and how long they take. You can have multiple timelines, but most scenes use just one.
+The scene's global time axis. It schedules when animations happen and how long they take.
+
+### Clip
+A reusable animation section authored from its own local time `0.0`, then appended, overlaid, or explicitly placed on the timeline.
 
 ### Animation Verbs
 Methods that change tattva properties over time:

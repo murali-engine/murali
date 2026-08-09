@@ -42,7 +42,7 @@ timeline
     .move_to(Vec3::new(3.0, 0.0, 0.0))    // Animation verb
     .spawn();                             // Add to timeline
 
-scene.play(timeline);  // Preferred API for single timeline
+scene.play(timeline)?;
 ```
 
 **Key concepts:**
@@ -52,7 +52,7 @@ scene.play(timeline);  // Preferred API for single timeline
 - `.animation_verb()` - What actually changes
 - `.spawn()` - Adds the animation to the timeline
 
-You can have multiple named timelines in a scene using `scene.play_named("name", timeline)`, but they still share the same `scene_time`. Use them for organization, not for independent playback.
+For larger scenes, author related animations in a `Clip`. A clip's `.at(...)` values are local to that clip, beginning at `0.0`; `Timeline::append`, `overlay`, or `place_at` converts them to absolute scene times.
 
 ## Animation Verbs
 

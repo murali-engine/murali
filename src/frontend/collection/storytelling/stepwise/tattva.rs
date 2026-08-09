@@ -197,7 +197,7 @@ impl Stepwise {
 // ── internal rendering helpers using primitives ─────────────────────────────────
 
 fn node_size_for(label: &str, style: &StepwiseStyle) -> glam::Vec2 {
-    let layout = crate::resource::text::layout::measure_label(label, style.label_height);
+    let layout = crate::resource::text::layout::measure_label(label, style.label_height, None);
     let min_width = style.node_height;
     let width = (layout.width + 0.6).max(min_width);
     glam::vec2(width, style.node_height)

@@ -1,4 +1,5 @@
 use sha2::{Digest, Sha256};
+use std::fmt::Write;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -19,7 +20,13 @@ pub fn compile_latex(latex_src: &str, cache_dir: &Path) -> Result<LatexResource,
     let mut hasher = Sha256::new();
     hasher.update("murali-latex-v2-displaystyle");
     hasher.update(latex_src);
-    let hash = format!("{:x}", hasher.finalize());
+    let hash = hasher
+        .finalize()
+        .iter()
+        .fold(String::with_capacity(64), |mut output, byte| {
+            write!(&mut output, "{byte:02x}").expect("writing to a String cannot fail");
+            output
+        });
 
     let work_dir = cache_dir.join(&hash);
     fs::create_dir_all(&work_dir)?;

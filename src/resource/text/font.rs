@@ -1,6 +1,8 @@
 // src/resources/text/font.rs
 
+use anyhow::{Context, Result};
 use fontdue::Font;
+use std::path::Path;
 
 pub const LABEL_FONT_RASTER_PX: f32 = 64.0;
 
@@ -37,15 +39,29 @@ pub struct LabelFont {
 impl LabelFont {
     /// Load the embedded label font.
     pub fn load() -> Self {
-        // Embedded font bytes
-        let font_bytes = include_bytes!("../assets/fonts/Inter-Regular.ttf");
+        Self::load_default().expect("Failed to load embedded label font")
+    }
 
+    pub fn load_default() -> Result<Self> {
+        let font_bytes = include_bytes!("../assets/fonts/Inter-Regular.ttf");
+        Self::load_from_bytes(font_bytes as &[u8]).context("Failed to load embedded label font")
+    }
+
+    pub fn load_from_path(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
+        let font_bytes = std::fs::read(path)
+            .with_context(|| format!("Failed to read font file at {}", path.display()))?;
+        Self::load_from_bytes(&font_bytes)
+            .with_context(|| format!("Failed to parse font file at {}", path.display()))
+    }
+
+    pub fn load_from_bytes(font_bytes: &[u8]) -> Result<Self> {
         let font = Font::from_bytes(font_bytes as &[u8], fontdue::FontSettings::default())
-            .expect("Failed to load embedded label font");
+            .map_err(|error| anyhow::anyhow!("fontdue failed to load font: {error}"))?;
 
         let metrics = Self::compute_metrics(&font);
 
-        Self { font, metrics }
+        Ok(Self { font, metrics })
     }
 
     /// Access font metrics.

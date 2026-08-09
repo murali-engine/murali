@@ -1,6 +1,6 @@
 use crate::frontend::layout::{Bounded, Bounds};
-use crate::resource::typst_resource::compiler::TypstBackend;
 use crate::projection::{Mesh, Project, ProjectionCtx, RenderPrimitive};
+use crate::resource::typst_resource::compiler::TypstBackend;
 use glam::{Vec2, Vec4};
 use parking_lot::Mutex;
 use resvg::usvg;
@@ -136,11 +136,15 @@ impl CodeBlock {
         match &self.theme {
             CodeBlockTheme::Dark => Some(format!(
                 "theme: bytes(\"{}\")",
-                Self::escape_typst_string(include_str!("../../../../assets/code_themes/murali_dark.tmTheme"))
+                Self::escape_typst_string(include_str!(
+                    "../../../../assets/code_themes/murali_dark.tmTheme"
+                ))
             )),
             CodeBlockTheme::Light => Some(format!(
                 "theme: bytes(\"{}\")",
-                Self::escape_typst_string(include_str!("../../../../assets/code_themes/murali_light.tmTheme"))
+                Self::escape_typst_string(include_str!(
+                    "../../../../assets/code_themes/murali_light.tmTheme"
+                ))
             )),
         }
     }
@@ -196,7 +200,10 @@ impl CodeBlock {
             .max()
             .unwrap_or(0) as f32;
         let glyph_width = self.font_size * 0.62;
-        glam::vec2(longest_row_chars * glyph_width, self.authored_code_height(code))
+        glam::vec2(
+            longest_row_chars * glyph_width,
+            self.authored_code_height(code),
+        )
     }
 
     fn line_number_gutter_width(&self, code: &str) -> f32 {
@@ -261,13 +268,8 @@ impl CodeBlock {
         }
 
         // Return the natural size in world units. 1 unit = 36 pts.
-        let size = glam::vec2(
-            svg_size.width() / 36.0,
-            svg_size.height() / 36.0,
-        );
-        CODEBLOCK_MEASURE_CACHE
-            .lock()
-            .insert(cache_key, size);
+        let size = glam::vec2(svg_size.width() / 36.0, svg_size.height() / 36.0);
+        CODEBLOCK_MEASURE_CACHE.lock().insert(cache_key, size);
         Some(size)
     }
 }
@@ -328,30 +330,40 @@ impl Project for CodeBlock {
 
         // 1. Base Panel
         let panel_mesh = Mesh::rectangle(total_w, total_h, panel_fill);
-        ctx.emit(RenderPrimitive::Mesh(panel_mesh.as_ref().translated(glam::Vec3::new(0.0, 0.0, -0.002))));
+        ctx.emit(RenderPrimitive::Mesh(
+            panel_mesh
+                .as_ref()
+                .translated(glam::Vec3::new(0.0, 0.0, -0.002)),
+        ));
 
         // 2. Title Bar
         if bar_h > 0.0 {
             let bar_mesh = Mesh::rectangle(total_w, bar_h, title_bar_fill);
             let bar_y = (total_h - bar_h) * 0.5;
-            ctx.emit(RenderPrimitive::Mesh(bar_mesh.as_ref().translated(glam::Vec3::new(0.0, bar_y, -0.001))));
+            ctx.emit(RenderPrimitive::Mesh(
+                bar_mesh
+                    .as_ref()
+                    .translated(glam::Vec3::new(0.0, bar_y, -0.001)),
+            ));
 
             // Window Buttons
             if self.show_controls {
                 let btn_radius = bar_h * 0.18;
                 let btn_y = bar_y;
                 let btn_x_start = -total_w * 0.5 + inset * 0.8;
-                
+
                 let colors = [
-                    Vec4::new(1.0, 0.37, 0.34, 1.0), // Red
-                    Vec4::new(1.0, 0.74, 0.18, 1.0), // Yellow
+                    Vec4::new(1.0, 0.37, 0.34, 1.0),  // Red
+                    Vec4::new(1.0, 0.74, 0.18, 1.0),  // Yellow
                     Vec4::new(0.15, 0.79, 0.25, 1.0), // Green
                 ];
 
                 for (i, color) in colors.iter().enumerate() {
                     let dot = Mesh::circle(btn_radius, 16, *color);
                     let x = btn_x_start + i as f32 * (btn_radius * 2.8);
-                    ctx.emit(RenderPrimitive::Mesh(dot.as_ref().translated(glam::Vec3::new(x, btn_y, 0.0))));
+                    ctx.emit(RenderPrimitive::Mesh(
+                        dot.as_ref().translated(glam::Vec3::new(x, btn_y, 0.0)),
+                    ));
                 }
             }
 
@@ -361,6 +373,7 @@ impl Project for CodeBlock {
                     content: title.clone(),
                     height: self.font_size * 0.32,
                     color: text_fallback * 0.7,
+                    font_name: None,
                     offset: glam::Vec3::new(0.0, bar_y, 0.0),
                     rotation: 0.0,
                 });
@@ -369,8 +382,12 @@ impl Project for CodeBlock {
 
         // 3. Code content and optional line numbers
         let typst_source = revealed_typst;
-        let content_center_x =
-            -total_w * 0.5 + inset + gutter_w + gutter_gap + panel_size.x * 0.5 + self.content_offset.x;
+        let content_center_x = -total_w * 0.5
+            + inset
+            + gutter_w
+            + gutter_gap
+            + panel_size.x * 0.5
+            + self.content_offset.x;
         let y_offset = -bar_h * 0.5 + self.content_offset.y;
 
         ctx.emit(RenderPrimitive::Typst {
@@ -414,10 +431,10 @@ impl Bounded for CodeBlock {
             };
             measured
         };
-        
+
         let inset = self.panel_inset_world();
         let bar_h = self.title_bar_height();
-        
+
         Bounds::from_center_size(
             glam::Vec2::ZERO,
             glam::vec2(size.x + inset * 2.0, size.y + inset * 2.0 + bar_h),

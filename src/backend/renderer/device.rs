@@ -1,4 +1,5 @@
 use anyhow::Result;
+use parking_lot::RwLock;
 use std::sync::Arc;
 use wgpu::{Backends, InstanceDescriptor, SurfaceError};
 use winit::window::Window;
@@ -10,21 +11,20 @@ pub struct DeviceManager {
     pub surface: Option<Arc<wgpu::Surface<'static>>>,
     pub device: Arc<wgpu::Device>,
     pub queue: Arc<wgpu::Queue>,
-    // pub config: wgpu::SurfaceConfiguration,
-    pub config: std::cell::RefCell<wgpu::SurfaceConfiguration>,
+    pub config: Arc<RwLock<wgpu::SurfaceConfiguration>>,
 }
 
 impl DeviceManager {
     /// Create a DeviceManager for a given winit window.
     pub async fn new(window: Arc<Window>) -> Result<Self> {
         // Create instance
-        let instance = wgpu::Instance::new(InstanceDescriptor {
+        let instance = wgpu::Instance::new(&InstanceDescriptor {
             backends: Backends::all(),
             ..Default::default()
         });
 
         // Create surface
-        let surface = unsafe { instance.create_surface(window.clone()) }?;
+        let surface = instance.create_surface(window.clone())?;
 
         // Request adapter
         let adapter = instance
@@ -33,19 +33,16 @@ impl DeviceManager {
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
-            .await
-            .ok_or_else(|| anyhow::anyhow!("No suitable GPU adapters found"))?;
+            .await?;
 
         // Request device & queue
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("murali-device"),
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: Some("murali-device"),
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                ..Default::default()
+            })
             .await?;
 
         let device = Arc::new(device);
@@ -80,18 +77,17 @@ impl DeviceManager {
             surface: Some(Arc::new(surface)),
             device,
             queue,
-            // config,
-            config: std::cell::RefCell::new(config),
+            config: Arc::new(RwLock::new(config)),
         })
     }
 
     pub async fn new_headless(width: u32, height: u32) -> Result<Self> {
-        let instance = wgpu::Instance::new(InstanceDescriptor {
+        let instance = wgpu::Instance::new(&InstanceDescriptor {
             backends: Backends::all(),
             ..Default::default()
         });
 
-        let adapter = if let Some(adapter) = instance
+        let adapter = if let Ok(adapter) = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: None,
@@ -100,7 +96,7 @@ impl DeviceManager {
             .await
         {
             adapter
-        } else if let Some(adapter) = instance
+        } else if let Ok(adapter) = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::LowPower,
                 compatible_surface: None,
@@ -116,14 +112,12 @@ impl DeviceManager {
         };
 
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("murali-headless-device"),
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: Some("murali-headless-device"),
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                ..Default::default()
+            })
             .await?;
 
         let config = wgpu::SurfaceConfiguration {
@@ -142,7 +136,7 @@ impl DeviceManager {
             surface: None,
             device: Arc::new(device),
             queue: Arc::new(queue),
-            config: std::cell::RefCell::new(config),
+            config: Arc::new(RwLock::new(config)),
         })
     }
 
@@ -153,7 +147,7 @@ impl DeviceManager {
     /// Resize surface on window resize.
     pub fn resize(&self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
-            let mut config = self.config.borrow_mut(); // 🔑 Borrow interiorly
+            let mut config = self.config.write();
             config.width = new_size.width;
             config.height = new_size.height;
             if let Some(surface) = &self.surface {

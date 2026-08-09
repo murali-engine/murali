@@ -64,6 +64,19 @@ One network with a clean forward pass and a second signal playback variation.
 `cargo run --example transformer_attention`
 Token sequence, attention matrix, and transformer block composition in one staged AI explainer.
 
+`cargo run --example tensor_semantics`
+Computed self-attention stages with named axes, stable element identity, and semantic selection.
+
+`cargo run --example tensor_operations`
+Semantic broadcasting, named-axis split/merge, and explicit reshape in one staged tensor lesson.
+
+`cargo run --example tensor_slicing`
+Semantic projection of rank-4 activations into an animated token-by-feature head view.
+
+`cargo run --example self_attention_lesson`
+One JSON-backed computed path from stable token IDs through Q/K/V, attention, residuals, logits,
+and sampling.
+
 `cargo run --example stepwise_storytelling`
 One narrative flow that reveals step by step and then replays a routed feedback journey.
 

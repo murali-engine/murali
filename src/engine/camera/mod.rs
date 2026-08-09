@@ -7,7 +7,7 @@
 //! - Orthographic projection by default (math-first).
 //! - Perspective projection is opt-in.
 //! - Camera is PURE state: no input, no movement logic.
-//! - 2D scenes are constrained 3D scenes (Z used for layering).
+//! - 2D scenes are constrained 3D scenes with explicit painter-order layers.
 
 pub mod controller;
 use glam::{Mat4, Vec3};
@@ -55,7 +55,7 @@ impl Projection {
                 height,
                 near,
                 far,
-            } => Mat4::orthographic_rh(
+            } => glam::camera::rh::proj::directx::orthographic(
                 -width / 2.0,
                 width / 2.0,
                 -height / 2.0,
@@ -69,7 +69,7 @@ impl Projection {
                 aspect,
                 near,
                 far,
-            } => Mat4::perspective_rh(fov_y_rad, aspect, near, far),
+            } => glam::camera::rh::proj::directx::perspective(fov_y_rad, aspect, near, far),
         }
     }
 }
@@ -94,7 +94,7 @@ pub struct Camera {
 impl Camera {
     /// View matrix (world → view)
     pub fn view_matrix(&self) -> Mat4 {
-        Mat4::look_at_rh(self.position, self.target, self.up)
+        glam::camera::rh::view::look_at_mat4(self.position, self.target, self.up)
     }
 
     /// Projection matrix (view → clip)
@@ -105,6 +105,43 @@ impl Camera {
     /// Combined view-projection matrix (world → clip)
     pub fn view_proj_matrix(&self) -> Mat4 {
         self.projection_matrix() * self.view_matrix()
+    }
+
+    /// Intersects the four camera-corner rays with a world-space Z plane.
+    ///
+    /// Returns `None` when the plane is parallel to any corner ray or the
+    /// camera matrices cannot produce finite intersections.
+    pub fn frame_bounds_at_z(&self, plane_z: f32) -> Option<crate::frontend::layout::Bounds> {
+        use crate::frontend::layout::Bounds;
+
+        let inverse = self.view_proj_matrix().inverse();
+        if !inverse.is_finite() {
+            return None;
+        }
+
+        let mut intersections = Vec::with_capacity(4);
+        for (x, y) in [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)] {
+            let near = inverse.project_point3(Vec3::new(x, y, -1.0));
+            let far = inverse.project_point3(Vec3::new(x, y, 1.0));
+            let ray = far - near;
+            if ray.z.abs() <= f32::EPSILON {
+                return None;
+            }
+            let point = near + ray * ((plane_z - near.z) / ray.z);
+            if !point.is_finite() {
+                return None;
+            }
+            intersections.push(point.truncate());
+        }
+
+        let first = intersections[0];
+        Some(
+            intersections[1..]
+                .iter()
+                .fold(Bounds::new(first, first), |bounds, point| {
+                    Bounds::new(bounds.min.min(*point), bounds.max.max(*point))
+                }),
+        )
     }
 
     /// Convenience: forward direction (normalized)
@@ -175,5 +212,54 @@ impl Default for Camera {
                 far: 100.0,
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn perspective_frame_bounds_intersect_the_layout_plane() {
+        let camera = Camera {
+            position: Vec3::new(0.0, 0.0, 10.0),
+            target: Vec3::ZERO,
+            up: Vec3::Y,
+            projection: Projection::Perspective {
+                fov_y_rad: std::f32::consts::FRAC_PI_2,
+                aspect: 2.0,
+                near: 0.1,
+                far: 100.0,
+            },
+        };
+
+        let bounds = camera.frame_bounds_at_z(0.0).unwrap();
+        assert!(bounds.min.abs_diff_eq(glam::vec2(-20.0, -10.0), 1e-3));
+        assert!(bounds.max.abs_diff_eq(glam::vec2(20.0, 10.0), 1e-3));
+    }
+
+    #[test]
+    fn orthographic_frame_bounds_follow_camera_pan() {
+        let camera = Camera {
+            position: Vec3::new(3.0, -2.0, 10.0),
+            target: Vec3::new(3.0, -2.0, 0.0),
+            ..Camera::default()
+        };
+
+        let bounds = camera.frame_bounds_at_z(0.0).unwrap();
+        assert!(bounds.center().abs_diff_eq(glam::vec2(3.0, -2.0), 1e-5));
+        assert!((bounds.width() - DEFAULT_VIEW_WIDTH).abs() < 1e-5);
+        assert!((bounds.height() - DEFAULT_VIEW_HEIGHT).abs() < 1e-5);
+    }
+
+    #[test]
+    fn frame_bounds_reject_a_parallel_layout_plane() {
+        let camera = Camera {
+            position: Vec3::new(10.0, 0.0, 0.0),
+            target: Vec3::ZERO,
+            ..Camera::default()
+        };
+
+        assert!(camera.frame_bounds_at_z(0.0).is_none());
     }
 }

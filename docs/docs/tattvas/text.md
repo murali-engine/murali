@@ -67,6 +67,35 @@ let red = Vec4::new(0.9, 0.3, 0.3, 1.0);
 let blue = Vec4::new(0.2, 0.6, 0.9, 1.0);
 ```
 
+### Custom Fonts
+
+`Label` uses Murali's lightweight glyph text pipeline. By default it renders with the built-in font, but you can now register additional fonts from file paths and opt into them per label.
+
+Register a font once before preview or export:
+
+```rust
+use murali::register_font_path;
+
+register_font_path(
+    "Satoshi",
+    "/absolute/path/to/Satoshi-Regular.otf",
+)?;
+```
+
+Then select it on any label:
+
+```rust
+let title = Label::new("KAVRIQ", 0.8)
+    .with_font("Satoshi")
+    .with_color(Vec4::new(0.9, 0.9, 0.9, 1.0));
+```
+
+Notes:
+- Font selection is optional. If you do not call `.with_font(...)`, Murali uses the default embedded font.
+- The font name passed to `.with_font(...)` must match the name used in `register_font_path(...)`.
+- Path-based registration is the recommended workflow for reproducible renders across machines.
+- Register fonts before the scene is rendered so the text backend can load and atlas them lazily on first use.
+
 ### Text Animations
 
 Label supports two reveal modes for character-by-character animations:

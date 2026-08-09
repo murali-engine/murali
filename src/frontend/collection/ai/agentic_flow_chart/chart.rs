@@ -263,7 +263,7 @@ impl AgenticFlowChart {
         }
 
         let text_layout =
-            crate::resource::text::layout::measure_label(&node.label, self.text_height);
+            crate::resource::text::layout::measure_label(&node.label, self.text_height, None);
         let mut size = vec2(
             self.default_node_size
                 .x
@@ -572,6 +572,7 @@ fn project_content_in_node(
 
     let mut subctx = ProjectionCtx::new(ctx.props.clone());
     content.project(&mut subctx);
+    ctx.diagnostics.append(&mut subctx.diagnostics);
     for primitive in subctx.primitives {
         emit_transformed_primitive(ctx, primitive, source_center, target_center, scale);
     }
@@ -670,6 +671,7 @@ fn emit_transformed_primitive(
             content,
             height,
             color,
+            font_name,
             offset,
             rotation,
         } => {
@@ -677,6 +679,7 @@ fn emit_transformed_primitive(
                 content,
                 height: height * scale,
                 color,
+                font_name,
                 offset: transform_vec3(offset, source_center, target_center, scale),
                 rotation,
             });

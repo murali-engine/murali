@@ -2,29 +2,42 @@
 sidebar_position: 6
 ---
 
-# Timelines
+# Timelines and Clips
 
-A **Timeline** is how you schedule when animations happen in Murali. It's the conductor that orchestrates all the changes in your scene over time.
+A **Timeline** is the scene's single global time axis. A **Clip** is a reusable group of animations authored from its own local time `0.0` and placed onto that timeline.
 
 ## What is a Timeline?
 
-Think of a timeline as a musical score:
-- It tells each "instrument" (tattva) when to play (start time)
-- It specifies how long each note lasts (duration)
-- It controls how the note is played (easing)
-- It defines what happens (animation verb)
+Think of the timeline as the editing surface for the complete animation. Clips are the sections arranged on it: an introduction, a model explanation, a background motion sequence, or an outro.
 
-**Key insight:** Timelines don't store state—they schedule mutations. The scene holds the actual state, and the timeline tells it when and how to change.
+Murali has one runtime clock and one global timeline per scene. Clips do not introduce independent runtime clocks. Murali converts every clip-local start time into an absolute scene time when the clip is composed.
+
+```text
+absolute start = clip placement + clip-local start
+```
+
+**Key insight:** Timelines and clips schedule mutations; the scene holds the actual visual state.
 
 ## Creating a Timeline
 
 ```rust
-use murali::engine::timeline::Timeline;
+use murali::{Clip, Timeline};
 
 let mut timeline = Timeline::new();
 ```
 
-That's it! A timeline starts empty, and you add animations to it.
+Directly authored timeline times are absolute scene times. Use a clip when a section should have its own local time frame or be reusable.
+
+```rust
+let mut intro = Clip::new();
+
+intro
+    .animate(title_id)
+    .at(0.0) // Local to `intro`
+    .for_duration(1.0)
+    .appear()
+    .spawn();
+```
 
 ## Adding Animations
 
@@ -46,88 +59,105 @@ timeline
 
 ### 1. Build Phase
 
-You create animations and add them to the timeline:
+You can add animations directly to the global timeline or author them inside local-time clips:
 
 ```rust
 let mut timeline = Timeline::new();
+let mut intro = Clip::new();
+let mut explanation = Clip::new();
 
-timeline.animate(id1).at(0.0).for_duration(2.0).move_to(...).spawn();
-timeline.animate(id2).at(1.5).for_duration(1.5).scale_to(...).spawn();
-timeline.animate(id3).at(2.0).for_duration(1.0).fade_to(...).spawn();
+intro.animate(id1).at(0.0).for_duration(2.0).move_to(...).spawn();
+explanation.animate(id2).at(0.0).for_duration(1.5).scale_to(...).spawn();
+explanation.animate(id3).at(0.5).for_duration(1.0).fade_to(...).spawn();
+
+timeline.append(intro);
+timeline.append(explanation);
 ```
+
+Both clips begin at local `0.0`. `append` places `explanation` after `intro` and flattens both schedules into absolute scene times.
 
 ### 2. Play Phase
 
 You give the timeline to the scene:
 
 ```rust
-scene.play(timeline);
+scene.play(timeline)?;
 ```
+
+Timeline start times and durations must be finite. Fluent builders reject invalid entries and
+retain a structured `ValidationError`; `scene.play(timeline)?` surfaces that error instead of
+installing a partial schedule. Low-level authors can use `timeline.try_add_animation(...)` when
+they need the error immediately. Clip placement and `wait_until` follow the same contract.
 
 ### 3. Runtime Phase
 
 Each frame:
 1. Scene time advances by `dt` (e.g., 1/60 second)
-2. Timeline checks which animations should be active
+2. The timeline checks which animations should be active
 3. Active animations apply their changes to tattvas
 4. Scene state is updated
 5. Renderer draws the new state
 
-## One Timeline vs Many Timelines
+## Seeking And Rewinding
 
-### Single Timeline (Recommended)
+Use an absolute scene time when reconstructing a timeline-authored frame:
 
-Most scenes use a single timeline:
+```rust
+scene.seek_to(2.5)?;
+```
+
+When an `Engine` already owns the scene and renderer, use `engine.seek_to(2.5)?` instead. It reconstructs the frontend state and immediately synchronizes the result to the rendering backend.
+
+Before its first evaluation, a timeline captures the scene's drawable properties and camera as its baseline. Seeking restores that baseline, resets animation-specific state in reverse order, and then evaluates the authored schedule forward to the requested time. Repeated seeks to the same time therefore produce the same property and camera state. A negative `scene.update(dt)?` also uses this reconstruction path and clamps at time `0.0`.
+
+Seeking is fail-closed. Murali returns a `SeekError` before changing scene state when reconstruction would cross a non-reversible callback, or when the scene contains frame-dependent updaters or history-dependent traced paths. A seek therefore either produces a reconstructed frame or reports why that frame cannot be reconstructed; it never silently returns a partial approximation.
+
+## One Timeline, Many Clips
+
+Every scene has at most one installed timeline:
 
 ```rust
 let mut timeline = Timeline::new();
 
-// Add all your animations
-timeline.animate(id1).at(0.0).for_duration(2.0).move_to(...).spawn();
-timeline.animate(id2).at(1.0).for_duration(1.5).scale_to(...).spawn();
-timeline.animate(id3).at(2.0).for_duration(1.0).appear().spawn();
+timeline.append(intro);
+timeline.append(explanation);
+timeline.overlay(background_motion);
+timeline.place_at(12.0, outro);
 
-// Play it
-scene.play(timeline);  // Internally uses the name "main"
+scene.play(timeline)?;
 ```
 
-**This is the preferred API** for most use cases.
+The composition methods have distinct placement behavior:
 
-### Multiple Named Timelines
+- `append(clip)` places the clip at the composition cursor and advances the cursor by its duration.
+- `overlay(clip)` places the clip at the start of the most recently appended composition group. If it is longer, it extends the cursor.
+- `place_at(time, clip)` places the clip at an explicit absolute scene time without moving the composition cursor.
+- `cursor()` returns where the next appended clip will begin.
 
-You can have multiple timelines for organization:
+After composition, clips are consumed. Playback evaluates a flat, deterministically ordered animation schedule.
+
+### Migrating from Named Timelines
+
+`Scene::play_named` and named `Scene::set_timeline` have been removed. Convert each former scheduling lane into a clip, then compose those clips onto one timeline:
 
 ```rust
-let mut main_timeline = Timeline::new();
-let mut background_timeline = Timeline::new();
-let mut ui_timeline = Timeline::new();
+let mut content = Clip::new();
+let mut background = Clip::new();
 
-// Add animations to each...
+// Author both clips from local time 0.0.
 
-scene.play_named("main", main_timeline);
-scene.play_named("background", background_timeline);
-scene.play_named("ui", ui_timeline);
+let mut timeline = Timeline::new();
+timeline.append(content).overlay(background);
+scene.play(timeline)?;
 ```
 
-**Important limitations:**
-- All timelines share the same `scene_time`
-- They progress together, not independently
-- You can't pause one timeline while others continue
-- You can't play timelines at different speeds
+Use `append` when former sections should run sequentially, `overlay` when they should share a composition origin, and `place_at` when the global start time is intentional.
 
-**When to use multiple timelines:**
-- Organizing complex scenes by layer (foreground, background, UI)
-- Separating concerns (content animations vs camera movements)
-- Managing different "tracks" that you want to edit separately
-- Code organization in large projects
-
-**Current status:** This is an advanced feature that works but has limitations. Treat multiple timelines as organizational lanes for one shared scene clock, not as independent playback systems. Future versions may add more explicit control.
-
-## Timeline Time vs Scene Time
+## Global Time vs Clip-Local Time
 
 **Scene time** is the authoritative clock. It's a single `f32` that represents "where we are" in the animation.
 
-**Timeline time** is just how animations are scheduled relative to scene time.
+Animations authored directly on a timeline use absolute scene time:
 
 ```rust
 // At scene_time = 1.5:
@@ -138,9 +168,17 @@ timeline.animate(id).at(2.0).for_duration(1.0).scale_to(...).spawn();
 // This animation hasn't started yet (starts at 2.0)
 ```
 
-All timelines advance with scene time. There's no separate "timeline time" that can drift or be controlled independently.
+A clip uses local time:
 
-If you are choosing between one timeline and many, use one timeline by default. Reach for multiple named timelines when separating concerns makes a large scene easier to edit and reason about.
+```rust
+let mut clip = Clip::new();
+clip.animate(id).at(2.0).for_duration(1.0).appear().spawn();
+
+timeline.place_at(10.0, clip);
+// The animation starts at absolute scene time 12.0.
+```
+
+Clip-local time is an authoring reference frame, not a clock that can drift, pause, or advance independently.
 
 ## Callbacks
 
@@ -148,7 +186,7 @@ Sometimes you need to run custom code at specific times.
 
 ### call_at
 
-Run code once at a specific time:
+Run a one-shot effect once at a specific time during forward playback:
 
 ```rust
 timeline.call_at(2.0, |scene| {
@@ -158,14 +196,24 @@ timeline.call_at(2.0, |scene| {
 ```
 
 **Use cases:**
-- Discrete events (show/hide objects)
-- State changes
 - Logging or debugging
-- Cleanup
+- External notifications
+- Effects that are intentionally not seekable
+
+`call_at` is non-reversible and blocks seeking once the requested or previously played interval
+crosses it. For scene mutations, provide an explicit inverse:
+
+```rust
+timeline.call_at_reversible(
+    2.0,
+    move |scene| scene.hide(some_id),
+    move |scene| scene.show(some_id),
+);
+```
 
 ### call_during
 
-Run code continuously over a duration:
+Run non-seekable procedural code continuously over a duration:
 
 ```rust
 timeline.call_during(1.0, 2.0, |scene, t| {
@@ -188,7 +236,7 @@ timeline.call_during(1.0, 2.0, |scene, t| {
 - Procedural animations
 - Custom interpolation logic
 
-**Note:** The `t` parameter is normalized from 0.0 to 1.0, regardless of the actual duration.
+**Note:** The `t` parameter is normalized from `0.0` to `1.0`, regardless of the actual duration. Each endpoint is invoked once per forward evaluation. Use `call_during_reversible(start, duration, callback, reset)` when seeking must be supported. The reset closure restores the callback-owned state before Murali replays the normalized callback at the requested time.
 
 ## Advanced Timeline Features
 
@@ -256,29 +304,31 @@ This considers all scheduled animations and any `wait_until` calls.
 
 ```rust
 let mut timeline = Timeline::new();
-let mut current_time = 0.0;
+let mut first = Clip::new();
+let mut second = Clip::new();
+let mut third = Clip::new();
 
-// Animation 1
-timeline.animate(id1).at(current_time).for_duration(2.0).move_to(...).spawn();
-current_time += 2.0;
+first.animate(id1).at(0.0).for_duration(2.0).move_to(...).spawn();
+second.animate(id2).at(0.0).for_duration(1.5).scale_to(...).spawn();
+third.animate(id3).at(0.0).for_duration(1.0).appear().spawn();
 
-// Animation 2 (starts when 1 ends)
-timeline.animate(id2).at(current_time).for_duration(1.5).scale_to(...).spawn();
-current_time += 1.5;
-
-// Animation 3 (starts when 2 ends)
-timeline.animate(id3).at(current_time).for_duration(1.0).appear().spawn();
+timeline.append(first).append(second).append(third);
 ```
+
+Each section stays locally authored from zero. Changing the first clip's duration automatically moves the clips that follow it.
 
 ### Parallel (All at Once)
 
 ```rust
 let mut timeline = Timeline::new();
+let mut content = Clip::new();
+let mut background = Clip::new();
 
-// All start at the same time
-timeline.animate(id1).at(0.0).for_duration(2.0).move_to(...).spawn();
-timeline.animate(id2).at(0.0).for_duration(2.0).scale_to(...).spawn();
-timeline.animate(id3).at(0.0).for_duration(2.0).fade_to(...).spawn();
+content.animate(id1).at(0.0).for_duration(2.0).move_to(...).spawn();
+content.animate(id2).at(0.0).for_duration(2.0).scale_to(...).spawn();
+background.animate(id3).at(0.0).for_duration(3.0).fade_to(...).spawn();
+
+timeline.append(content).overlay(background);
 ```
 
 ### Staggered (Overlapping)
@@ -312,6 +362,10 @@ timeline.animate(id2).at(1.5).for_duration(1.5).scale_to(...).spawn();
 // Animation 3: 2.5 to 3.5 (overlaps with 2)
 timeline.animate(id3).at(2.5).for_duration(1.0).appear().spawn();
 ```
+
+Animations writing different properties compose normally. When multiple core animations write the same property on the same tattva, the animation with the later start time has precedence. If their start times are equal, the one spawned later has precedence. Its terminal value remains authoritative after it finishes, so direct seeking and frame-by-frame playback produce the same result.
+
+The scheduler evaluates every crossed animation start boundary exactly, even when that boundary falls between rendered frames. This ensures an animation captures the same starting value at every frame rate.
 
 ## Common Patterns
 
@@ -404,6 +458,14 @@ timeline
 
 ### Do's
 
+✅ **Use clips for independently authored sections**
+```rust
+let mut explanation = Clip::new();
+explanation.animate(id).at(0.0).for_duration(2.0).draw().spawn();
+
+timeline.append(explanation);
+```
+
 ✅ **Use descriptive timing constants**
 ```rust
 const INTRO_START: f32 = 0.0;
@@ -451,15 +513,17 @@ timeline.animate(id).at(0.0).for_duration(2.0).move_to(...);
 // Missing .spawn()
 ```
 
-❌ **Don't use magic numbers**
+❌ **Don't encode section placement into every animation**
 ```rust
 // Bad
-timeline.animate(id).at(2.347).for_duration(1.823).move_to(...).spawn();
+timeline.animate(id1).at(12.0).for_duration(1.0).appear().spawn();
+timeline.animate(id2).at(13.5).for_duration(2.0).draw().spawn();
 
-// Good
-const REVEAL_TIME: f32 = 2.35;
-const REVEAL_DURATION: f32 = 1.8;
-timeline.animate(id).at(REVEAL_TIME).for_duration(REVEAL_DURATION).move_to(...).spawn();
+// Better: author the section from local zero, then place it once.
+let mut section = Clip::new();
+section.animate(id1).at(0.0).for_duration(1.0).appear().spawn();
+section.animate(id2).at(1.5).for_duration(2.0).draw().spawn();
+timeline.place_at(12.0, section);
 ```
 
 ❌ **Don't make timings too tight**
@@ -525,6 +589,8 @@ println!("6.0s: End");
 
 **Animations happen in wrong order:**
 - Check your `.at(time)` values
+- Confirm whether `.at(time)` is global on a `Timeline` or local on a `Clip`
+- Print `timeline.cursor()` to inspect where the next clip will be appended
 - Make sure you're not reusing the same time for sequential animations
 - Print `timeline.end_time()` to verify total duration
 
@@ -533,10 +599,11 @@ println!("6.0s: End");
 - Adjust duration (too fast or too slow?)
 - Add small delays between animations for breathing room
 
-**Multiple timelines don't work as expected:**
-- Remember: all timelines share scene_time
-- They can't run at different speeds
-- Consider using a single timeline with organized sections instead
+**A clip starts at the wrong time:**
+- Remember that clip timestamps start from local `0.0`
+- Use `append` for sequential placement
+- Use `overlay` to share the previous append origin
+- Use `place_at` for an explicit absolute placement
 
 ## What's Next?
 

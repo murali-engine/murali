@@ -12,6 +12,19 @@ pub enum MeshData {
     Text(Vec<TextVertex>),
 }
 
+#[cfg(test)]
+mod tests {
+    use super::Mesh;
+    use glam::Vec4;
+
+    #[test]
+    fn generated_mesh_indices_can_address_vertices_beyond_u16() {
+        let mesh = Mesh::circle(1.0, u16::MAX as u32 + 1, Vec4::ONE);
+
+        assert_eq!(mesh.indices.iter().copied().max(), Some(65_536));
+    }
+}
+
 /// CPU-side mesh description.
 ///
 /// This lives in the projection layer because it is part of the
@@ -19,12 +32,12 @@ pub enum MeshData {
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub data: MeshData,
-    pub indices: Vec<u16>,
+    pub indices: Vec<u32>,
     pub texture: Option<Arc<TextureImage>>,
 }
 
 impl Mesh {
-    pub fn from_tessellation(vertices: Vec<MeshVertex>, indices: Vec<u16>) -> Arc<Self> {
+    pub fn from_tessellation(vertices: Vec<MeshVertex>, indices: Vec<u32>) -> Arc<Self> {
         Arc::new(Self {
             data: MeshData::Mesh(vertices),
             indices,
@@ -34,7 +47,7 @@ impl Mesh {
 
     pub fn from_textured_vertices(
         vertices: Vec<TextVertex>,
-        indices: Vec<u16>,
+        indices: Vec<u32>,
         texture: Arc<TextureImage>,
     ) -> Arc<Self> {
         Arc::new(Self {
@@ -196,8 +209,8 @@ impl Mesh {
         let mut indices = Vec::with_capacity((seg * 3) as usize);
         for i in 0..seg {
             indices.push(0);
-            indices.push((i + 1) as u16);
-            indices.push(if i + 2 <= seg { (i + 2) as u16 } else { 1 });
+            indices.push(i + 1);
+            indices.push(if i + 2 <= seg { i + 2 } else { 1 });
         }
 
         Arc::new(Self {
@@ -247,8 +260,8 @@ impl Mesh {
         let mut indices = Vec::with_capacity((seg * 3) as usize);
         for i in 0..seg {
             indices.push(0);
-            indices.push((i + 1) as u16);
-            indices.push(if i + 2 <= seg { (i + 2) as u16 } else { 1 });
+            indices.push(i + 1);
+            indices.push(if i + 2 <= seg { i + 2 } else { 1 });
         }
 
         Arc::new(Self {
@@ -293,8 +306,8 @@ impl Mesh {
         let mut indices = Vec::with_capacity((n - 2) * 3);
         for i in 1..(n - 1) {
             indices.push(0);
-            indices.push(i as u16);
-            indices.push((i + 1) as u16);
+            indices.push(i as u32);
+            indices.push((i + 1) as u32);
         }
 
         Arc::new(Self {

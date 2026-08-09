@@ -173,4 +173,8 @@ impl Animation for CameraAnimate {
             }
         }
     }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
+    }
 }

@@ -5,8 +5,8 @@ use murali::engine::scene::Scene;
 use murali::engine::timeline::{SignalPlayback, Timeline};
 use murali::frontend::animation::Ease;
 use murali::frontend::collection::ai::{
-    attention_matrix::AttentionMatrix, signal_flow::SignalFlow,
-    token_sequence::TokenSequence, transformer_block_diagram::TransformerBlockDiagram,
+    attention_matrix::AttentionMatrix, signal_flow::SignalFlow, token_sequence::TokenSequence,
+    transformer_block_diagram::TransformerBlockDiagram,
 };
 use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
@@ -32,20 +32,20 @@ fn main() -> anyhow::Result<()> {
 
     let tokens_heading_id = scene.add_tattva(
         Label::new("Token sequence", 0.2).with_color(GRAY_B),
-        Vec3::new(0.0, 2.25, 0.0),
+        Vec3::new(-4.6, 2.15, 0.0),
     );
     let matrix_heading_id = scene.add_tattva(
         Label::new("Attention matrix", 0.2).with_color(GRAY_B),
-        Vec3::new(-6.0, -1.5, 0.0),
+        Vec3::new(-4.6, -2.25, 0.0),
     );
     let block_heading_id = scene.add_tattva(
-        Label::new("Transformer block", 0.2).with_color(GRAY_B),
-        Vec3::new(3.7, -2.65, 0.0),
+        Label::new("Semantic transformer block", 0.2).with_color(GRAY_B),
+        Vec3::new(3.25, 2.3, 0.0),
     );
 
     let tokens_id = scene.add_tattva(
         TokenSequence::new(vec!["The", "model", "reads", "context"], 0.24),
-        Vec3::new(0.0, 1.75, 0.0),
+        Vec3::new(-4.6, 1.65, 0.0),
     );
     scene.hide(tokens_id);
 
@@ -64,31 +64,29 @@ fn main() -> anyhow::Result<()> {
                 "context".into(),
             ]),
         ),
-        Vec3::new(-6.0, -0.3, 0.0),
+        Vec3::new(-4.6, -0.65, 0.0),
     );
     scene.hide(matrix_id);
 
     let mut block = TransformerBlockDiagram::new();
     block.width = 3.6;
-    block.block_height = 0.56;
-    block.gap = 0.18;
+    block.block_height = 0.48;
+    block.gap = 0.13;
     block.accent_color = TEAL_C;
     block.frame_color = GRAY_A;
+    block.input_label = "Input stream".to_string();
+    block.output_label = "Output stream".to_string();
 
-    let block_id = scene.add_tattva(block, Vec3::new(3.45, -0.3, 0.0));
+    let block_id = scene.add_tattva(block, Vec3::new(3.25, -0.25, 0.0));
     scene.hide(block_id);
 
     let tokens_to_matrix_flow_id = scene.add_tattva(
         {
-            let mut flow = SignalFlow::new(vec![
-                Vec3::new(0.0, 1.5, 0.0),
-                Vec3::new(0.0, 0.8, 0.0),
-                Vec3::new(-6.0, 0.8, 0.0),
-                Vec3::new(-6.0, 0.55, 0.0),
-            ])
-            .with_progress(0.0)
-            .with_edge_color(GOLD_C)
-            .with_pulse_color(GOLD_A);
+            let mut flow =
+                SignalFlow::new(vec![Vec3::new(-4.6, 1.42, 0.0), Vec3::new(-4.6, 0.48, 0.0)])
+                    .with_progress(0.0)
+                    .with_edge_color(GOLD_C)
+                    .with_pulse_color(GOLD_A);
             flow.highlight_nodes = false;
             flow.node_radius = 0.0;
             flow.edge_thickness = 0.04;
@@ -102,10 +100,8 @@ fn main() -> anyhow::Result<()> {
     let matrix_to_block_flow_id = scene.add_tattva(
         {
             let mut flow = SignalFlow::new(vec![
-                Vec3::new(-5.2, -0.3, 0.0),
-                Vec3::new(0.0, -0.3, 0.0),
-                // Vec3::new(0.0, -0.15, 0.0),
-                Vec3::new(1.85, -0.3, 0.0),
+                Vec3::new(-3.45, -0.65, 0.0),
+                Vec3::new(1.58, -0.65, 0.0),
             ])
             .with_progress(0.0)
             .with_edge_color(TEAL_C)
@@ -126,7 +122,7 @@ fn main() -> anyhow::Result<()> {
             0.17,
         )
         .with_color(GRAY_B),
-        Vec3::new(0.0, -3.25, 0.0),
+        Vec3::new(0.0, -3.15, 0.0),
     );
 
     let mut timeline = Timeline::new();
@@ -212,15 +208,39 @@ fn main() -> anyhow::Result<()> {
         SignalPlayback::once(6.3, 1.7, Ease::InOutQuad),
     );
 
+    for (start, stage_id) in [
+        (6.4, "self_attention"),
+        (7.6, "attention_residual"),
+        (8.8, "mlp"),
+        (10.0, "mlp_residual"),
+    ] {
+        timeline
+            .animate(block_id)
+            .at(start)
+            .for_duration(0.45)
+            .ease(Ease::InOutQuad)
+            .transformer_focus(stage_id)
+            .spawn();
+    }
+    timeline
+        .animate(block_id)
+        .at(11.1)
+        .for_duration(0.45)
+        .ease(Ease::InOutQuad)
+        .transformer_clear_focus()
+        .spawn();
+
     timeline
         .animate(footer_id)
-        .at(7.5)
+        .at(10.0)
         .for_duration(1.7)
         .ease(Ease::Linear)
         .typewrite_text()
         .spawn();
 
-    scene.play(timeline);
+    timeline.wait_until(12.2);
+
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
     scene.camera_mut().set_view_width(17.0);
 

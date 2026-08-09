@@ -68,7 +68,7 @@ impl BitOrAssign for DirtyFlags {
 }
 
 pub struct Tattva<T> {
-    pub id: TattvaId,
+    id: TattvaId,
     pub state: T,
     pub props: SharedProps,
     dirty: DirtyFlags,
@@ -86,6 +86,10 @@ impl<T> Tattva<T> {
 
     pub fn mark_dirty(&mut self, flags: DirtyFlags) {
         self.dirty |= flags;
+    }
+
+    pub fn id(&self) -> TattvaId {
+        self.id
     }
 
     pub fn dirty_flags(&self) -> DirtyFlags {

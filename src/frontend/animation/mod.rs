@@ -9,6 +9,12 @@ use std::collections::HashMap;
 use crate::engine::scene::Scene;
 use crate::frontend::collection::ai::agentic_flow_chart::AgenticFlowChart;
 use crate::frontend::collection::ai::signal_flow::SignalFlow;
+use crate::frontend::collection::ai::tensor::{
+    TensorSelectionFrame, TensorSelector, TensorSnapshot, TensorTransitionFrame, TensorView,
+};
+use crate::frontend::collection::ai::transformer_block_diagram::{
+    TransformerBlockDiagram, TransformerStageFocusFrame,
+};
 use crate::frontend::collection::math::equation::{
     EquationLayout, EquationPart, EquationPartLayout,
 };
@@ -22,6 +28,7 @@ use crate::frontend::collection::primitives::particle_belt::ParticleBelt;
 use crate::frontend::collection::primitives::path::Path;
 use crate::frontend::collection::primitives::polygon::Polygon;
 use crate::frontend::collection::primitives::rectangle::Rectangle;
+use crate::frontend::collection::primitives::rounded_rectangle::RoundedRectangle;
 use crate::frontend::collection::primitives::square::Square;
 use crate::frontend::collection::primitives::to_path::ToPath;
 use crate::frontend::collection::storytelling::stepwise::Stepwise;
@@ -79,10 +86,281 @@ impl Ease {
 /// The core trait for all Frontend logic changes over time.
 /// Every implementation must be deterministic.
 pub trait Animation: Send + Sync {
+    fn validate(&self, _scene: &Scene) -> Result<(), crate::validation::ValidationError> {
+        Ok(())
+    }
+    fn prepare(&mut self, _scene: &mut Scene) {}
     fn on_start(&mut self, scene: &mut Scene);
     fn apply_at(&mut self, scene: &mut Scene, t: f32);
     fn on_finish(&mut self, _scene: &mut Scene) {}
     fn reset(&mut self, _scene: &mut Scene) {}
+    fn reapplies_terminal_state(&self) -> bool {
+        false
+    }
+    fn seek_blocker(&self) -> Option<&'static str> {
+        None
+    }
+}
+
+pub struct TensorTransition {
+    pub target_id: TattvaId,
+    pub target: TensorSnapshot,
+    pub ease: Ease,
+    source: Option<TensorSnapshot>,
+}
+
+pub struct TensorSelectionTransition {
+    pub target_id: TattvaId,
+    pub target: Vec<TensorSelector>,
+    pub ease: Ease,
+    source: Option<Vec<TensorSelector>>,
+}
+
+pub struct TransformerStageFocus {
+    pub target_id: TattvaId,
+    pub target_stage_id: Option<String>,
+    pub ease: Ease,
+    source_stage_id: Option<Option<String>>,
+}
+
+impl TransformerStageFocus {
+    pub fn new(target_id: TattvaId, target_stage_id: Option<String>, ease: Ease) -> Self {
+        Self {
+            target_id,
+            target_stage_id,
+            ease,
+            source_stage_id: None,
+        }
+    }
+
+    fn mark_changed(tattva: &mut Tattva<TransformerBlockDiagram>) {
+        tattva.mark_dirty(DirtyFlags::GEOMETRY | DirtyFlags::STYLE);
+    }
+}
+
+impl Animation for TransformerStageFocus {
+    fn validate(&self, scene: &Scene) -> Result<(), crate::validation::ValidationError> {
+        let Some(tattva) = scene.get_tattva_any(self.target_id) else {
+            return Err(crate::validation::ValidationError::MissingTarget {
+                component: "TransformerStageFocus",
+                target_id: self.target_id,
+            });
+        };
+        let Some(diagram) = tattva
+            .as_any()
+            .downcast_ref::<Tattva<TransformerBlockDiagram>>()
+        else {
+            return Err(crate::validation::ValidationError::TargetTypeMismatch {
+                component: "TransformerStageFocus",
+                target_id: self.target_id,
+                expected: "TransformerBlockDiagram",
+            });
+        };
+        let mut terminal = diagram.state.clone();
+        terminal.active_stage_id = self.target_stage_id.clone();
+        terminal.focus_transition = None;
+        terminal.validate()
+    }
+
+    fn on_start(&mut self, scene: &mut Scene) {
+        if let Some(diagram) = scene.get_tattva_typed::<TransformerBlockDiagram>(self.target_id) {
+            self.source_stage_id = Some(diagram.state.active_stage_id.clone());
+        }
+    }
+
+    fn apply_at(&mut self, scene: &mut Scene, t: f32) {
+        let Some(source_stage_id) = &self.source_stage_id else {
+            return;
+        };
+        let progress = self.ease.eval(t);
+        if let Some(diagram) = scene.get_tattva_typed_mut::<TransformerBlockDiagram>(self.target_id)
+        {
+            diagram.state.active_stage_id = self.target_stage_id.clone();
+            diagram.state.focus_transition =
+                (progress < 1.0 - f32::EPSILON).then(|| TransformerStageFocusFrame {
+                    source_stage_id: source_stage_id.clone(),
+                    target_stage_id: self.target_stage_id.clone(),
+                    progress,
+                });
+            Self::mark_changed(diagram);
+        }
+    }
+
+    fn on_finish(&mut self, scene: &mut Scene) {
+        self.apply_at(scene, 1.0);
+    }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        if let Some(source_stage_id) = &self.source_stage_id {
+            if let Some(diagram) =
+                scene.get_tattva_typed_mut::<TransformerBlockDiagram>(self.target_id)
+            {
+                diagram.state.active_stage_id = source_stage_id.clone();
+                diagram.state.focus_transition = None;
+                Self::mark_changed(diagram);
+            }
+        }
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
+    }
+}
+
+impl TensorSelectionTransition {
+    pub fn new(target_id: TattvaId, target: Vec<TensorSelector>, ease: Ease) -> Self {
+        Self {
+            target_id,
+            target,
+            ease,
+            source: None,
+        }
+    }
+}
+
+impl Animation for TensorSelectionTransition {
+    fn validate(&self, scene: &Scene) -> Result<(), crate::validation::ValidationError> {
+        let Some(tattva) = scene.get_tattva_any(self.target_id) else {
+            return Err(crate::validation::ValidationError::MissingTarget {
+                component: "TensorSelectionTransition",
+                target_id: self.target_id,
+            });
+        };
+        let Some(tensor) = tattva.as_any().downcast_ref::<Tattva<TensorView>>() else {
+            return Err(crate::validation::ValidationError::TargetTypeMismatch {
+                component: "TensorSelectionTransition",
+                target_id: self.target_id,
+                expected: "TensorView",
+            });
+        };
+        TensorView::validate_selections(&self.target, &tensor.state.snapshot)
+    }
+
+    fn on_start(&mut self, scene: &mut Scene) {
+        if let Some(tensor) = scene.get_tattva_typed::<TensorView>(self.target_id) {
+            self.source = Some(tensor.state.selections.clone());
+        }
+    }
+
+    fn apply_at(&mut self, scene: &mut Scene, t: f32) {
+        let Some(source) = &self.source else {
+            return;
+        };
+        let progress = self.ease.eval(t);
+        if let Some(tensor) = scene.get_tattva_typed_mut::<TensorView>(self.target_id) {
+            tensor.state.selections = self.target.clone();
+            tensor.state.selection_transition =
+                (progress < 1.0 - f32::EPSILON).then(|| TensorSelectionFrame {
+                    source: source.clone(),
+                    target: self.target.clone(),
+                    progress,
+                });
+            TensorTransition::mark_changed(tensor);
+        }
+    }
+
+    fn on_finish(&mut self, scene: &mut Scene) {
+        self.apply_at(scene, 1.0);
+    }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        if let Some(source) = &self.source {
+            if let Some(tensor) = scene.get_tattva_typed_mut::<TensorView>(self.target_id) {
+                tensor.state.selections = source.clone();
+                tensor.state.selection_transition = None;
+                TensorTransition::mark_changed(tensor);
+            }
+        }
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
+    }
+}
+
+impl TensorTransition {
+    pub fn new(target_id: TattvaId, target: TensorSnapshot, ease: Ease) -> Self {
+        Self {
+            target_id,
+            target,
+            ease,
+            source: None,
+        }
+    }
+
+    fn mark_changed(tensor: &mut Tattva<TensorView>) {
+        tensor.mark_dirty(
+            DirtyFlags::GEOMETRY | DirtyFlags::STYLE | DirtyFlags::TEXT_LAYOUT | DirtyFlags::BOUNDS,
+        );
+    }
+}
+
+impl Animation for TensorTransition {
+    fn validate(&self, scene: &Scene) -> Result<(), crate::validation::ValidationError> {
+        let Some(tattva) = scene.get_tattva_any(self.target_id) else {
+            return Err(crate::validation::ValidationError::MissingTarget {
+                component: "TensorTransition",
+                target_id: self.target_id,
+            });
+        };
+        let Some(tensor) = tattva.as_any().downcast_ref::<Tattva<TensorView>>() else {
+            return Err(crate::validation::ValidationError::TargetTypeMismatch {
+                component: "TensorTransition",
+                target_id: self.target_id,
+                expected: "TensorView",
+            });
+        };
+        tensor.state.snapshot.validate_transition_to(&self.target)?;
+        let mut terminal_view = tensor.state.clone();
+        terminal_view.snapshot = self.target.clone();
+        terminal_view.transition = None;
+        terminal_view.validate()
+    }
+
+    fn on_start(&mut self, scene: &mut Scene) {
+        if let Some(tensor) = scene.get_tattva_typed::<TensorView>(self.target_id) {
+            self.source = Some(tensor.state.snapshot.clone());
+        }
+    }
+
+    fn apply_at(&mut self, scene: &mut Scene, t: f32) {
+        let Some(source) = &self.source else {
+            return;
+        };
+        let progress = self.ease.eval(t);
+        if let Some(tensor) = scene.get_tattva_typed_mut::<TensorView>(self.target_id) {
+            if progress >= 1.0 - f32::EPSILON {
+                tensor.state.snapshot = self.target.clone();
+                tensor.state.transition = None;
+            } else {
+                tensor.state.snapshot = source.interpolated_target(&self.target, progress);
+                tensor.state.transition = Some(TensorTransitionFrame {
+                    source: source.clone(),
+                    target: self.target.clone(),
+                    progress,
+                });
+            }
+            Self::mark_changed(tensor);
+        }
+    }
+
+    fn on_finish(&mut self, scene: &mut Scene) {
+        self.apply_at(scene, 1.0);
+    }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        if let Some(source) = &self.source {
+            if let Some(tensor) = scene.get_tattva_typed_mut::<TensorView>(self.target_id) {
+                tensor.state.snapshot = source.clone();
+                tensor.state.transition = None;
+                Self::mark_changed(tensor);
+            }
+        }
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
+    }
 }
 
 pub struct RunSceneCallback {
@@ -108,6 +386,10 @@ impl Animation for RunSceneCallback {
     fn on_finish(&mut self, scene: &mut Scene) {
         (self.callback.lock())(scene);
     }
+
+    fn seek_blocker(&self) -> Option<&'static str> {
+        Some("call_at")
+    }
 }
 
 pub struct RunSceneCallbackOverTime {
@@ -126,16 +408,76 @@ impl RunSceneCallbackOverTime {
 }
 
 impl Animation for RunSceneCallbackOverTime {
-    fn on_start(&mut self, scene: &mut Scene) {
-        (self.callback.lock())(scene, 0.0);
-    }
+    fn on_start(&mut self, _scene: &mut Scene) {}
 
     fn apply_at(&mut self, scene: &mut Scene, t: f32) {
         (self.callback.lock())(scene, t.clamp(0.0, 1.0));
     }
 
+    fn seek_blocker(&self) -> Option<&'static str> {
+        Some("call_during")
+    }
+}
+
+pub struct RunReversibleSceneCallback {
+    callback: Mutex<Box<dyn FnMut(&mut Scene) + Send>>,
+    reset: Mutex<Box<dyn FnMut(&mut Scene) + Send>>,
+}
+
+impl RunReversibleSceneCallback {
+    pub fn new<F, R>(callback: F, reset: R) -> Self
+    where
+        F: FnMut(&mut Scene) + Send + 'static,
+        R: FnMut(&mut Scene) + Send + 'static,
+    {
+        Self {
+            callback: Mutex::new(Box::new(callback)),
+            reset: Mutex::new(Box::new(reset)),
+        }
+    }
+}
+
+impl Animation for RunReversibleSceneCallback {
+    fn on_start(&mut self, _scene: &mut Scene) {}
+
+    fn apply_at(&mut self, _scene: &mut Scene, _t: f32) {}
+
     fn on_finish(&mut self, scene: &mut Scene) {
-        (self.callback.lock())(scene, 1.0);
+        (self.callback.lock())(scene);
+    }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        (self.reset.lock())(scene);
+    }
+}
+
+pub struct RunReversibleSceneCallbackOverTime {
+    callback: Mutex<Box<dyn FnMut(&mut Scene, f32) + Send>>,
+    reset: Mutex<Box<dyn FnMut(&mut Scene) + Send>>,
+}
+
+impl RunReversibleSceneCallbackOverTime {
+    pub fn new<F, R>(callback: F, reset: R) -> Self
+    where
+        F: FnMut(&mut Scene, f32) + Send + 'static,
+        R: FnMut(&mut Scene) + Send + 'static,
+    {
+        Self {
+            callback: Mutex::new(Box::new(callback)),
+            reset: Mutex::new(Box::new(reset)),
+        }
+    }
+}
+
+impl Animation for RunReversibleSceneCallbackOverTime {
+    fn on_start(&mut self, _scene: &mut Scene) {}
+
+    fn apply_at(&mut self, scene: &mut Scene, t: f32) {
+        (self.callback.lock())(scene, t.clamp(0.0, 1.0));
+    }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        (self.reset.lock())(scene);
     }
 }
 
@@ -193,6 +535,10 @@ impl Animation for MoveTo {
             props.position = new_pos;
         });
     }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
+    }
 }
 
 pub struct RotateTo {
@@ -234,6 +580,10 @@ impl Animation for RotateTo {
         with_props_mut(scene, self.target_id, DirtyFlags::TRANSFORM, |props| {
             props.rotation = rotation;
         });
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
     }
 }
 
@@ -278,6 +628,10 @@ impl Animation for ScaleTo {
         with_props_mut(scene, self.target_id, DirtyFlags::TRANSFORM, |props| {
             props.scale = scale;
         });
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
     }
 }
 
@@ -340,6 +694,10 @@ impl Animation for FadeTo {
                 },
             );
         }
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
     }
 }
 
@@ -407,16 +765,33 @@ impl Create {
 }
 
 impl Animation for Create {
-    fn on_start(&mut self, scene: &mut Scene) {
+    fn prepare(&mut self, scene: &mut Scene) {
         if let Some(tattva) = scene.get_tattva_any_mut(self.target_id) {
             let mut props = DrawableProps::write(tattva.props());
-            // If the target was pre-hidden for staging, treat create() as revealing it to
-            // normal visibility rather than preserving the staged zero opacity.
             self.target_opacity = Some(if props.opacity > 0.001 {
                 props.opacity
             } else {
                 1.0
             });
+            props.visible = false;
+            props.opacity = 0.0;
+            drop(props);
+            tattva.mark_dirty(DirtyFlags::STYLE | DirtyFlags::VISIBILITY);
+        }
+    }
+
+    fn on_start(&mut self, scene: &mut Scene) {
+        if let Some(tattva) = scene.get_tattva_any_mut(self.target_id) {
+            let mut props = DrawableProps::write(tattva.props());
+            // If the target was pre-hidden for staging, treat create() as revealing it to
+            // normal visibility rather than preserving the staged zero opacity.
+            if self.target_opacity.is_none() {
+                self.target_opacity = Some(if props.opacity > 0.001 {
+                    props.opacity
+                } else {
+                    1.0
+                });
+            }
             props.visible = true;
             props.opacity = 0.0;
             drop(props);
@@ -448,6 +823,10 @@ impl Animation for Create {
                 props.opacity = 0.0;
             },
         );
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
     }
 }
 
@@ -1544,6 +1923,7 @@ impl Animation for MorphObjects {
 struct EquationContinuitySnapshot {
     source_props: DrawableProps,
     target_props: DrawableProps,
+    final_target_opacity: f32,
     source_parts: Vec<EquationPartLayout>,
     target_parts: Vec<EquationPartLayout>,
     original_target_parts: Vec<EquationPart>,
@@ -1578,9 +1958,18 @@ impl Animation for EquationContinuity {
             None => return,
         };
 
+        let source_props = DrawableProps::read(&source_tattva.props).clone();
+        let target_props = DrawableProps::read(&target_tattva.props).clone();
+        let final_target_opacity = if target_props.opacity > 0.001 {
+            target_props.opacity
+        } else {
+            source_props.opacity.max(0.001)
+        };
+
         self.snapshot = Some(EquationContinuitySnapshot {
-            source_props: DrawableProps::read(&source_tattva.props).clone(),
-            target_props: DrawableProps::read(&target_tattva.props).clone(),
+            source_props,
+            target_props,
+            final_target_opacity,
             source_parts: source_tattva.state.layout_snapshot(),
             target_parts: target_tattva.state.layout_snapshot(),
             original_target_parts: target_tattva.state.parts.clone(),
@@ -1650,7 +2039,7 @@ impl Animation for EquationContinuity {
             DirtyFlags::STYLE | DirtyFlags::VISIBILITY,
             |props| {
                 props.visible = true;
-                props.opacity = snapshot.target_props.opacity;
+                props.opacity = snapshot.final_target_opacity;
             },
         );
     }
@@ -1676,6 +2065,8 @@ impl Animation for EquationContinuity {
                 DirtyFlags::STYLE | DirtyFlags::VISIBILITY,
                 |props| {
                     *props = snapshot.target_props.clone();
+                    props.opacity = snapshot.final_target_opacity;
+                    props.visible = true;
                 },
             );
         }
@@ -1704,6 +2095,10 @@ impl Animation for EquationContinuity {
                 },
             );
         }
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
     }
 }
 
@@ -1901,6 +2296,9 @@ impl MorphGeometry {
         if let Some(p) = any.downcast_ref::<Tattva<Rectangle>>() {
             return Some(p.state.to_path());
         }
+        if let Some(p) = any.downcast_ref::<Tattva<RoundedRectangle>>() {
+            return Some(p.state.to_path());
+        }
         if let Some(p) = any.downcast_ref::<Tattva<Circle>>() {
             return Some(p.state.to_path());
         }
@@ -2011,6 +2409,15 @@ impl Animation for MorphGeometry {
             }
         }
     }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        if let Some(original) = self.original_target_tattva.take() {
+            scene.replace_tattva(self.target_id, original);
+            if let Some(target) = scene.get_tattva_any_mut(self.target_id) {
+                target.mark_dirty(DirtyFlags::ALL);
+            }
+        }
+    }
 }
 
 /// WritePath animation: traces the path outline and fills the completed sector
@@ -2051,6 +2458,9 @@ impl WritePath {
         if let Some(t) = any.downcast_ref::<Tattva<Rectangle>>() {
             return Some(t.state.to_path());
         }
+        if let Some(t) = any.downcast_ref::<Tattva<RoundedRectangle>>() {
+            return Some(t.state.to_path());
+        }
         if let Some(t) = any.downcast_ref::<Tattva<Square>>() {
             return Some(t.state.to_path());
         }
@@ -2084,6 +2494,10 @@ impl WritePath {
 }
 
 impl Animation for WritePath {
+    fn prepare(&mut self, scene: &mut Scene) {
+        self.reset(scene);
+    }
+
     fn on_start(&mut self, scene: &mut Scene) {
         // If target is already a Path, drive it directly
         if scene.get_tattva_typed_mut::<Path>(self.target_id).is_some() {
@@ -2347,7 +2761,21 @@ impl WriteText {
 }
 
 impl Animation for WriteText {
+    fn prepare(&mut self, scene: &mut Scene) {
+        self.reset(scene);
+    }
+
     fn on_start(&mut self, scene: &mut Scene) {
+        with_props_mut(
+            scene,
+            self.target_id,
+            DirtyFlags::STYLE | DirtyFlags::VISIBILITY,
+            |props| {
+                props.visible = true;
+                props.opacity = 1.0;
+            },
+        );
+
         // Try Label first
         if let Some(label) = scene
             .get_tattva_typed_mut::<crate::frontend::collection::text::label::Label>(self.target_id)
@@ -2608,6 +3036,10 @@ impl RevealText {
 }
 
 impl Animation for RevealText {
+    fn prepare(&mut self, scene: &mut Scene) {
+        self.reset(scene);
+    }
+
     fn on_start(&mut self, scene: &mut Scene) {
         // Try Label first
         if let Some(label) = scene
@@ -2815,6 +3247,10 @@ impl WriteTable {
 }
 
 impl Animation for WriteTable {
+    fn prepare(&mut self, scene: &mut Scene) {
+        self.reset(scene);
+    }
+
     fn on_start(&mut self, scene: &mut Scene) {
         if let Some(tattva) =
             scene.get_tattva_typed_mut::<crate::frontend::collection::table::Table>(self.target_id)
@@ -2980,6 +3416,10 @@ impl WriteSurface {
 }
 
 impl Animation for WriteSurface {
+    fn prepare(&mut self, scene: &mut Scene) {
+        self.reset(scene);
+    }
+
     fn on_start(&mut self, scene: &mut Scene) {
         if let Some(tattva) = scene.get_tattva_typed_mut::<crate::frontend::collection::graph::parametric_surface::ParametricSurface>(self.target_id) {
             self.from = Some(tattva.state.write_progress);

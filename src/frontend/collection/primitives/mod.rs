@@ -9,5 +9,6 @@ pub mod particle_belt;
 pub mod path;
 pub mod polygon;
 pub mod rectangle;
+pub mod rounded_rectangle;
 pub mod square;
 pub mod to_path;

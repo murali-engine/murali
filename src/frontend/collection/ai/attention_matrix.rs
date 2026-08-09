@@ -83,16 +83,20 @@ impl Project for AttentionMatrix {
         if let Some(tokens) = &self.tokens {
             let max_label_width = tokens
                 .iter()
-                .map(|t| crate::resource::text::layout::measure_label(t, self.label_height).width)
+                .map(|t| {
+                    crate::resource::text::layout::measure_label(t, self.label_height, None).width
+                })
                 .fold(0.0, f32::max);
 
             for (idx, token) in tokens.iter().enumerate().take(cols) {
-                let layout = crate::resource::text::layout::measure_label(token, self.label_height);
+                let layout =
+                    crate::resource::text::layout::measure_label(token, self.label_height, None);
                 let x = left + idx as f32 * self.cell_size + self.cell_size * 0.5;
                 ctx.emit(RenderPrimitive::Text {
                     content: token.clone(),
                     height: self.label_height,
                     color: self.grid_color,
+                    font_name: None,
                     offset: Vec3::new(x, top + layout.width * 0.5 + self.label_height * 0.4, 0.0),
                     rotation: std::f32::consts::PI / 2.0,
                 });
@@ -103,11 +107,8 @@ impl Project for AttentionMatrix {
                     content: token.clone(),
                     height: self.label_height,
                     color: self.grid_color,
-                    offset: Vec3::new(
-                        left - max_label_width * 0.5 - self.cell_size * 0.25,
-                        y,
-                        0.0,
-                    ),
+                    font_name: None,
+                    offset: Vec3::new(left - max_label_width * 0.5 - self.cell_size * 0.25, y, 0.0),
                     rotation: 0.0,
                 });
             }

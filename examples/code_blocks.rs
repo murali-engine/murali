@@ -4,9 +4,7 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::text::code_block::{
-    CodeBlock, CodeBlockSurface, CodeBlockTheme,
-};
+use murali::frontend::collection::text::code_block::{CodeBlock, CodeBlockSurface, CodeBlockTheme};
 use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
 use murali::positions::CAMERA_DEFAULT_POS;
@@ -16,7 +14,10 @@ fn main() -> anyhow::Result<()> {
     let rust_pos = Vec3::new(3.0, -0.15, 0.0);
     let toml_pos = Vec3::new(2.9, 0.15, 0.0);
 
-    let title_id = scene.add_tattva(Label::new("Re-imagined Code Blocks", 0.38).with_color(WHITE), Vec3::ZERO);
+    let title_id = scene.add_tattva(
+        Label::new("Re-imagined Code Blocks", 0.38).with_color(WHITE),
+        Vec3::ZERO,
+    );
     scene.to_edge(title_id, Direction::Up, 0.8);
 
     let subtitle_id = scene.add_tattva(
@@ -117,7 +118,7 @@ background = "slate"
         .move_to(rust_pos)
         .from_vec3(rust_pos + Vec3::new(0.0, -0.18, 0.0))
         .spawn();
-    
+
     // Switch to TOML after a pause
     timeline
         .animate(rust_id)
@@ -126,11 +127,13 @@ background = "slate"
         .ease(Ease::InOutCubic)
         .fade_to(0.0)
         .spawn();
-    
+
     timeline.call_at(5.8, move |scene| {
         if let Some(label) = scene.get_tattva_typed_mut::<Label>(heading_id) {
             label.state.text = "murali.toml".to_string();
-            label.mark_dirty(murali::frontend::DirtyFlags::GEOMETRY | murali::frontend::DirtyFlags::STYLE);
+            label.mark_dirty(
+                murali::frontend::DirtyFlags::GEOMETRY | murali::frontend::DirtyFlags::STYLE,
+            );
         }
     });
 
@@ -160,7 +163,7 @@ background = "slate"
         .typewrite_text()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
     // scene.camera_mut().set_view_width(8.0);
 

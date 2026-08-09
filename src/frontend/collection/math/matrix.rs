@@ -107,7 +107,7 @@ impl Matrix {
     }
 
     fn cell_width(&self, cell: &MatrixCell) -> f32 {
-        measure_label(&cell.text, self.cell_height * cell.scale.max(0.05))
+        measure_label(&cell.text, self.cell_height * cell.scale.max(0.05), None)
             .width
             .max(self.cell_height * cell.scale.max(0.05) * 0.7)
     }
@@ -202,6 +202,7 @@ impl Project for Matrix {
                 content: cell.text.clone(),
                 height: self.cell_height * cell.scale,
                 color,
+                font_name: None,
                 offset: cell.center,
                 rotation: 0.0,
             });

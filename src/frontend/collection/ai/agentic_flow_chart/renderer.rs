@@ -361,7 +361,8 @@ impl FlowRenderer {
                             })
                             .collect();
 
-                        let mesh = Mesh::from_tessellation(vertices, geometry.indices);
+                        let indices = geometry.indices.into_iter().map(u32::from).collect();
+                        let mesh = Mesh::from_tessellation(vertices, indices);
                         ctx.emit(RenderPrimitive::Mesh(mesh));
                     }
                 }
@@ -490,6 +491,7 @@ impl FlowRenderer {
                             content: text_content,
                             height: render_ctx.text_height * scale.min(1.08),
                             color: text_color,
+                            font_name: None,
                             offset: layout.center,
                             rotation: 0.0,
                         });
@@ -533,6 +535,7 @@ fn project_content_in_node(
 
     let mut subctx = ProjectionCtx::new(ctx.props.clone());
     content.project(&mut subctx);
+    ctx.diagnostics.append(&mut subctx.diagnostics);
     for primitive in subctx.primitives {
         emit_transformed_primitive(ctx, primitive, source_center, target_center, scale);
     }
@@ -631,6 +634,7 @@ fn emit_transformed_primitive(
             content,
             height,
             color,
+            font_name,
             offset,
             rotation,
         } => {
@@ -638,6 +642,7 @@ fn emit_transformed_primitive(
                 content,
                 height: height * scale,
                 color,
+                font_name,
                 offset: transform_vec3(offset, source_center, target_center, scale),
                 rotation,
             });

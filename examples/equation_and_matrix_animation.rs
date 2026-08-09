@@ -1,10 +1,8 @@
 use glam::Vec3;
 use murali::App;
 use murali::colors::*;
-use murali::engine::scene::DrawableProps;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
-use murali::frontend::DirtyFlags;
 use murali::frontend::animation::Ease;
 use murali::frontend::collection::math::equation::{EquationLayout, EquationPart};
 use murali::frontend::collection::math::matrix::Matrix;
@@ -59,12 +57,7 @@ fn main() -> anyhow::Result<()> {
         ),
         Vec3::new(0.0, 0.65, 0.0),
     );
-    if let Some(tattva) = scene.get_tattva_any_mut(target_equation_id) {
-        let mut props = DrawableProps::write(tattva.props());
-        props.visible = false;
-        drop(props);
-        tattva.mark_dirty(DirtyFlags::VISIBILITY);
-    }
+    scene.hide(target_equation_id);
 
     let equation_caption_id = scene.add_tattva(
         Label::new(
@@ -145,16 +138,6 @@ fn main() -> anyhow::Result<()> {
         .ease(Ease::InOutCubic)
         .equation_continuity_from(source_equation_id)
         .spawn();
-    timeline.call_at(4.66, move |scene| {
-        if let Some(tattva) = scene.get_tattva_any_mut(target_equation_id) {
-            let mut props = DrawableProps::write(tattva.props());
-            props.visible = true;
-            props.opacity = 1.0;
-            drop(props);
-            tattva.mark_dirty(DirtyFlags::VISIBILITY | DirtyFlags::STYLE);
-        }
-    });
-
     timeline
         .animate(matrix_heading_id)
         .at(4.8)
@@ -198,7 +181,7 @@ fn main() -> anyhow::Result<()> {
         .matrix_step_cells(vec![(0, 0), (1, 1), (2, 2)], GOLD_C, 0.24)
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
     scene.camera_mut().set_view_width(16.0);
 

@@ -136,7 +136,7 @@ fn main() -> anyhow::Result<()> {
         .zoom_to(1.28)
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
     scene.camera_mut().set_view_width(16.0);
 

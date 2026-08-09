@@ -5,9 +5,11 @@ use crate::frontend::animation::{
     FollowAnchor, HorizonEvolve, HorizonPhaseBy, HorizonPhaseTo, IndicateText, MatchTransform,
     MatrixStep, MorphGeometry, MorphObjects, MoveTo, NoiseEvolve, NoisePhaseBy, NoisePhaseTo,
     PerlinFieldEvolve, PerlinFieldPhaseBy, PerlinFieldPhaseTo, PropagateSignal, RevealText,
-    RevealTo, RotateTo, ScaleTo, StepwiseSignal, UnrevealText, UnwritePath, UnwriteSurface,
-    UnwriteTable, UnwriteText, WritePath, WriteSurface, WriteTable, WriteText,
+    RevealTo, RotateTo, ScaleTo, StepwiseSignal, TensorSelectionTransition, TensorTransition,
+    TransformerStageFocus, UnrevealText, UnwritePath, UnwriteSurface, UnwriteTable, UnwriteText,
+    WritePath, WriteSurface, WriteTable, WriteText,
 };
+use crate::frontend::collection::ai::tensor::{TensorSelector, TensorSnapshot};
 use crate::frontend::layout::Anchor;
 use glam::{Quat, Vec3, Vec4};
 
@@ -53,6 +55,15 @@ pub enum AnimKind {
         col: usize,
         highlight: Vec4,
         dim_opacity: f32,
+    },
+    TensorTo {
+        snapshot: TensorSnapshot,
+    },
+    TensorSelect {
+        selections: Vec<TensorSelector>,
+    },
+    TransformerFocus {
+        stage_id: Option<String>,
     },
     FollowAnchor {
         target_id: TattvaId,
@@ -271,6 +282,32 @@ impl<'a> AnimationBuilder<'a> {
             highlight,
             dim_opacity,
         });
+        self
+    }
+
+    /// Interpolate a semantic tensor view to another compatible snapshot.
+    pub fn tensor_to(mut self, snapshot: TensorSnapshot) -> Self {
+        self.spec.kind = Some(AnimKind::TensorTo { snapshot });
+        self
+    }
+
+    /// Crossfade a tensor view to a new semantic selection.
+    pub fn tensor_select(mut self, selections: Vec<TensorSelector>) -> Self {
+        self.spec.kind = Some(AnimKind::TensorSelect { selections });
+        self
+    }
+
+    /// Crossfades focus to one semantic stage in a transformer composition.
+    pub fn transformer_focus(mut self, stage_id: impl Into<String>) -> Self {
+        self.spec.kind = Some(AnimKind::TransformerFocus {
+            stage_id: Some(stage_id.into()),
+        });
+        self
+    }
+
+    /// Restores equal emphasis across all transformer stages.
+    pub fn transformer_clear_focus(mut self) -> Self {
+        self.spec.kind = Some(AnimKind::TransformerFocus { stage_id: None });
         self
     }
 
@@ -533,6 +570,15 @@ impl<'a> AnimationBuilder<'a> {
                 dim_opacity,
                 ease,
             )),
+            Some(AnimKind::TensorTo { snapshot }) => {
+                Box::new(TensorTransition::new(spec.target_id, snapshot, ease))
+            }
+            Some(AnimKind::TensorSelect { selections }) => Box::new(
+                TensorSelectionTransition::new(spec.target_id, selections, ease),
+            ),
+            Some(AnimKind::TransformerFocus { stage_id }) => {
+                Box::new(TransformerStageFocus::new(spec.target_id, stage_id, ease))
+            }
             Some(AnimKind::FollowAnchor {
                 target_id,
                 target_anchor,

@@ -14,21 +14,25 @@ This document defines standard terminology usage across all Murali documentation
   - Possessive: "tattva's properties"
 
 ### Scene
-- **Definition:** Container for all tattvas, timelines, and camera
+- **Definition:** Container for all tattvas, the global timeline, and camera
 - **Usage:**
   - Capitalize when referring to the concept: "The Scene owns all tattvas"
   - Lowercase in code: `let mut scene = Scene::new()`
   - Think of it as: "A stage in a theater"
 
 ### Timeline
-- **Definition:** Schedule of animations and callbacks over time
+- **Definition:** The scene's single global schedule of animations and callbacks over absolute time
 - **Usage:**
   - Capitalize when referring to the concept: "A Timeline defines how properties evolve"
   - Lowercase in code: `let mut timeline = Timeline::new()`
-  - Singular vs plural:
-    - "one timeline" (most common case)
-    - "multiple timelines" (advanced scheduling)
-    - "named timelines" (when using `play_named()`)
+
+### Clip
+- **Definition:** A reusable animation schedule authored from its own local time `0.0`
+- **Usage:**
+  - Capitalize when referring to the concept: "A Clip defines one locally timed section"
+  - Lowercase in code: `let mut clip = Clip::new()`
+  - Say "append a clip," "overlay a clip," or "place a clip"
+  - Do not describe clips as independent clocks; composition flattens them onto the timeline
 
 ### World Space
 - **Definition:** Coordinate system using mathematical units, not pixels
@@ -49,12 +53,13 @@ This document defines standard terminology usage across all Murali documentation
 
 ### Animation Methods
 
-#### play() vs play_named() vs set_timeline()
-- **`scene.play(timeline)`** - Recommended for single timeline (most common)
-- **`scene.play_named("name", timeline)`** - For multiple timelines
-- **`scene.set_timeline(timeline)`** - Low-level, advanced use only
+#### Timeline composition and playback
+- **`timeline.append(clip)`** - Place a clip at the composition cursor and advance it
+- **`timeline.overlay(clip)`** - Share the most recent append origin
+- **`timeline.place_at(time, clip)`** - Place a clip at an absolute scene time
+- **`scene.play(timeline)`** - Install the scene's global timeline
 
-**Recommendation in docs:** Always show `play()` first, mention `play_named()` for advanced cases.
+**Recommendation in docs:** Use direct timeline authoring for small scenes and clips for independently timed sections.
 
 ## Capitalization Rules
 
@@ -64,14 +69,16 @@ This document defines standard terminology usage across all Murali documentation
 - Lowercase when used as common nouns: "add tattvas to the scene"
 
 ### In Code Examples
-- Always use actual Rust casing: `Scene`, `Timeline`, `TattvaId`
-- Method names are lowercase: `add_tattva()`, `play()`, `animate()`
+- Always use actual Rust casing: `Scene`, `Timeline`, `Clip`, `TattvaId`
+- Method names are lowercase: `add_tattva()`, `append()`, `play()`, `animate()`
 
 ## Common Phrases
 
 ### Preferred
 - "add a tattva to the scene"
 - "build a timeline"
+- "author a clip from local time zero"
+- "compose clips onto the timeline"
 - "schedule animations"
 - "world-space coordinates"
 - "preview mode" / "export mode"
@@ -93,11 +100,11 @@ When linking between docs:
 ## Consistency Checklist
 
 When writing or reviewing docs, ensure:
-- [ ] Tattva/Scene/Timeline capitalized when introducing concepts
+- [ ] Tattva/Scene/Timeline/Clip capitalized when introducing concepts
 - [ ] Code examples use correct Rust casing
 - [ ] "preview" and "export" used consistently (not "render mode")
 - [ ] "world space" / "world units" used instead of "pixels"
-- [ ] `play()` shown before `play_named()` in examples
+- [ ] Clip examples distinguish local time from absolute timeline time
 - [ ] Links use consistent capitalization
 
 ## Examples
@@ -106,7 +113,7 @@ When writing or reviewing docs, ensure:
 ```markdown
 A **Tattva** is any visual object in your scene. You add tattvas using `scene.add_tattva()`.
 
-The **Scene** owns all tattvas and timelines. Create a scene with `Scene::new()`.
+The **Scene** owns all tattvas and its global timeline. Create a scene with `Scene::new()`.
 
 Use **preview mode** for development and **export mode** for final output.
 ```

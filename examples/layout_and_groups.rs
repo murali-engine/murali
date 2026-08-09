@@ -3,12 +3,12 @@ use murali::App;
 use murali::colors::*;
 use murali::engine::scene::{DrawableProps, Scene};
 use murali::engine::timeline::Timeline;
+use murali::frontend::TattvaId;
 use murali::frontend::animation::Ease;
 use murali::frontend::collection::layout::{Group, HStack, VStack};
 use murali::frontend::collection::primitives::{circle::Circle, square::Square};
 use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::{Anchor, Direction};
-use murali::frontend::TattvaId;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn position_of(scene: &Scene, id: TattvaId) -> Vec3 {
@@ -112,11 +112,20 @@ fn main() -> anyhow::Result<()> {
         Square::new(0.52, PURPLE_B).with_stroke(0.035, WHITE),
         Vec3::new(-2.35, -3.05, 0.0),
     );
-    let moving_group = Group::new(vec![group_square_id, group_circle_id, group_small_square_id]);
-    let group_start_positions =
-        capture_positions(&scene, &[group_square_id, group_circle_id, group_small_square_id]);
+    let moving_group = Group::new(vec![
+        group_square_id,
+        group_circle_id,
+        group_small_square_id,
+    ]);
+    let group_start_positions = capture_positions(
+        &scene,
+        &[group_square_id, group_circle_id, group_small_square_id],
+    );
     moving_group.move_to(&mut scene, vec2(3.15, -3.05));
-    let group_targets = capture_positions(&scene, &[group_square_id, group_circle_id, group_small_square_id]);
+    let group_targets = capture_positions(
+        &scene,
+        &[group_square_id, group_circle_id, group_small_square_id],
+    );
     for (&id, start) in [group_square_id, group_circle_id, group_small_square_id]
         .iter()
         .zip(group_start_positions.iter())
@@ -280,7 +289,7 @@ fn main() -> anyhow::Result<()> {
         .typewrite_text()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
     scene.camera_mut().position = CAMERA_DEFAULT_POS;
     scene.camera_mut().set_view_width(16.0);
 

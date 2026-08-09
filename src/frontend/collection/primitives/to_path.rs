@@ -4,8 +4,9 @@ use crate::frontend::collection::primitives::line::Line;
 use crate::frontend::collection::primitives::path::{Path, PathSegment};
 use crate::frontend::collection::primitives::polygon::Polygon;
 use crate::frontend::collection::primitives::rectangle::Rectangle;
+use crate::frontend::collection::primitives::rounded_rectangle::RoundedRectangle;
 use crate::frontend::collection::primitives::square::Square;
-use glam::vec2;
+use glam::{Vec2, vec2};
 
 pub trait ToPath {
     fn to_path(&self) -> Path;
@@ -27,6 +28,23 @@ impl ToPath for Rectangle {
             .line_to(vec2(w, -h))
             .close() // closes back to (w,0)
             .with_style(self.style.clone())
+    }
+}
+
+impl ToPath for RoundedRectangle {
+    fn to_path(&self) -> Path {
+        let outline =
+            rounded_rect_outline(self.width, self.height, self.radius, self.corner_segments);
+        let Some(first) = outline.first().copied() else {
+            return Path::new();
+        };
+
+        let mut path = Path::new().move_to(first);
+        for point in outline.into_iter().skip(1) {
+            path = path.line_to(point);
+        }
+
+        path.close().with_style(self.style.clone())
     }
 }
 
@@ -124,4 +142,31 @@ impl ToPath for Line {
             .line_to(self.end.truncate())
             .with_style(self.style.clone())
     }
+}
+
+fn rounded_rect_outline(width: f32, height: f32, radius: f32, corner_segments: usize) -> Vec<Vec2> {
+    let half = vec2(width.abs() * 0.5, height.abs() * 0.5);
+    let r = radius.abs().max(0.01).min(half.x.min(half.y));
+    let centers = [
+        vec2(half.x - r, half.y - r),
+        vec2(-(half.x - r), half.y - r),
+        vec2(-(half.x - r), -(half.y - r)),
+        vec2(half.x - r, -(half.y - r)),
+    ];
+    let ranges = [
+        (0.0, std::f32::consts::FRAC_PI_2),
+        (std::f32::consts::FRAC_PI_2, std::f32::consts::PI),
+        (std::f32::consts::PI, std::f32::consts::PI * 1.5),
+        (std::f32::consts::PI * 1.5, std::f32::consts::TAU),
+    ];
+
+    let mut points = Vec::new();
+    for (center, (start, end)) in centers.into_iter().zip(ranges) {
+        for step in 0..=corner_segments.max(1) {
+            let t = step as f32 / corner_segments.max(1) as f32;
+            let angle = start + (end - start) * t;
+            points.push(center + vec2(angle.cos() * r, angle.sin() * r));
+        }
+    }
+    points
 }

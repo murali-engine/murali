@@ -15,6 +15,7 @@ use crate::engine::Engine;
 use crate::engine::config::export_config::ExportConfig;
 use crate::engine::render::RenderOptions;
 use crate::engine::scene::Scene;
+use crate::engine::timeline::Timeline;
 use crate::frontend::theme::Theme;
 use crate::utils::project::find_project_root;
 
@@ -126,11 +127,27 @@ impl ExportSettings {
     }
 
     pub fn total_frames(&self) -> u32 {
-        ((self.duration_seconds.max(0.0) * self.fps.max(1) as f32).round() as u32).saturating_add(1)
+        let duration = self.duration_seconds.max(0.0);
+        if duration == 0.0 {
+            return 1;
+        }
+        let frame_intervals = duration * self.fps.max(1) as f32;
+        let rounded = frame_intervals.round();
+        let frame_intervals = if (frame_intervals - rounded).abs() <= 1e-4 {
+            rounded as u32
+        } else {
+            frame_intervals.ceil() as u32
+        }
+        .max(1);
+        frame_intervals.saturating_add(1)
     }
 
     pub fn frame_dt(&self) -> f32 {
         1.0 / self.fps.max(1) as f32
+    }
+
+    pub fn frame_time(&self, frame_index: u32) -> f32 {
+        (frame_index as f32 * self.frame_dt()).min(self.duration_seconds.max(0.0))
     }
 
     pub fn export_stem(&self) -> String {
@@ -261,15 +278,52 @@ mod tests {
         let resolved = resolve_config_artifact_dir(project_root, PathBuf::from("demo"));
         assert_eq!(resolved, project_root.join("rendered_output/demo"));
     }
+
+    #[test]
+    fn non_aligned_duration_gets_an_exact_terminal_frame() {
+        let settings = ExportSettings {
+            fps: 10,
+            duration_seconds: 1.04,
+            ..ExportSettings::default()
+        };
+
+        assert_eq!(settings.total_frames(), 12);
+        assert_eq!(settings.frame_time(10), 1.0);
+        assert_eq!(settings.frame_time(11), 1.04);
+    }
+
+    #[test]
+    fn aligned_duration_does_not_add_a_duplicate_terminal_frame() {
+        let settings = ExportSettings {
+            fps: 10,
+            duration_seconds: 1.0,
+            ..ExportSettings::default()
+        };
+
+        assert_eq!(settings.total_frames(), 11);
+        assert_eq!(settings.frame_time(10), 1.0);
+    }
+
+    #[test]
+    fn short_aligned_duration_is_stable_across_float_rounding() {
+        let settings = ExportSettings {
+            fps: 60,
+            duration_seconds: 0.1,
+            ..ExportSettings::default()
+        };
+
+        assert_eq!(settings.total_frames(), 7);
+        assert_eq!(settings.frame_time(6), 0.1);
+    }
 }
 
 pub fn infer_duration(scene: &Scene) -> f32 {
-    let max_timeline = scene
-        .timelines
-        .values()
-        .map(|timeline| timeline.end_time())
-        .fold(0.0, f32::max);
-    max_timeline.max(0.1)
+    scene
+        .timeline
+        .as_ref()
+        .map(Timeline::end_time)
+        .unwrap_or(0.0)
+        .max(0.1)
 }
 
 pub fn export_scene(scene: Scene, settings: &ExportSettings) -> Result<()> {
@@ -300,17 +354,16 @@ pub fn export_scene(scene: Scene, settings: &ExportSettings) -> Result<()> {
     };
 
     for next_frame in 0..settings.total_frames() {
-        let dt = if next_frame == 0 {
-            0.0
-        } else {
-            settings.frame_dt()
-        };
+        let target_time = settings.frame_time(next_frame);
+        let dt = (target_time - engine.scene.scene_time).max(0.0);
 
         let frame_start = Instant::now();
         if next_frame == 0 {
             eprintln!("Export frame 1: starting update");
         }
-        engine.update(dt);
+        engine
+            .update(dt)
+            .with_context(|| format!("Failed to update export frame {}", next_frame))?;
         if next_frame == 0 {
             eprintln!(
                 "Export frame 1: update finished in {:.2?}",

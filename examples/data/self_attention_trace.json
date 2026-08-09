@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "id": "self_attention.lesson.input",
+  "metadata": {
+    "model": "murali-teaching-transformer",
+    "framework": "framework-neutral",
+    "layer": "encoder.layer.0",
+    "head": "head.0",
+    "attributes": {
+      "purpose": "deterministic educational fixture"
+    }
+  },
+  "tokens": [
+    { "id": "token.0", "text": "AI", "index": 0, "byte_span": [0, 2] },
+    { "id": "token.1", "text": "learns", "index": 1, "byte_span": [3, 9] },
+    { "id": "token.2", "text": "by", "index": 2, "byte_span": [10, 12] }
+  ],
+  "tensors": [
+    {
+      "id": "embedding.query",
+      "shape": [3, 3],
+      "values": [1.0, 0.2, -0.1, 0.1, 1.0, 0.3, -0.2, 0.4, 1.0],
+      "axes": [
+        {
+          "id": "query",
+          "label": "Tokens",
+          "element_ids": ["token.0", "token.1", "token.2"],
+          "element_labels": ["AI", "learns", "by"]
+        },
+        {
+          "id": "input_feature",
+          "label": "Embedding",
+          "element_ids": ["feature.0", "feature.1", "feature.2"],
+          "element_labels": ["e0", "e1", "e2"]
+        }
+      ]
+    },
+    {
+      "id": "embedding.key",
+      "shape": [3, 3],
+      "values": [1.0, 0.2, -0.1, 0.1, 1.0, 0.3, -0.2, 0.4, 1.0],
+      "axes": [
+        {
+          "id": "key",
+          "label": "Tokens",
+          "element_ids": ["token.0", "token.1", "token.2"],
+          "element_labels": ["AI", "learns", "by"]
+        },
+        {
+          "id": "input_feature",
+          "label": "Embedding",
+          "element_ids": ["feature.0", "feature.1", "feature.2"],
+          "element_labels": ["e0", "e1", "e2"]
+        }
+      ]
+    },
+    {
+      "id": "weights.q",
+      "shape": [3, 3],
+      "values": [0.8, 0.1, -0.2, 0.0, 0.9, 0.2, 0.1, -0.1, 0.7],
+      "axes": [
+        {
+          "id": "input_feature",
+          "label": "Embedding",
+          "element_ids": ["feature.0", "feature.1", "feature.2"],
+          "element_labels": ["e0", "e1", "e2"]
+        },
+        {
+          "id": "head_feature",
+          "label": "Head",
+          "element_ids": ["head.0", "head.1", "head.2"],
+          "element_labels": ["h0", "h1", "h2"]
+        }
+      ]
+    },
+    {
+      "id": "weights.k",
+      "shape": [3, 3],
+      "values": [0.7, -0.1, 0.2, 0.2, 0.8, 0.0, -0.1, 0.2, 0.9],
+      "axes": [
+        {
+          "id": "input_feature",
+          "label": "Embedding",
+          "element_ids": ["feature.0", "feature.1", "feature.2"],
+          "element_labels": ["e0", "e1", "e2"]
+        },
+        {
+          "id": "head_feature",
+          "label": "Head",
+          "element_ids": ["head.0", "head.1", "head.2"],
+          "element_labels": ["h0", "h1", "h2"]
+        }
+      ]
+    },
+    {
+      "id": "weights.v",
+      "shape": [3, 3],
+      "values": [0.6, 0.2, 0.0, -0.1, 0.7, 0.3, 0.2, 0.0, 0.8],
+      "axes": [
+        {
+          "id": "input_feature",
+          "label": "Embedding",
+          "element_ids": ["feature.0", "feature.1", "feature.2"],
+          "element_labels": ["e0", "e1", "e2"]
+        },
+        {
+          "id": "head_feature",
+          "label": "Head",
+          "element_ids": ["head.0", "head.1", "head.2"],
+          "element_labels": ["h0", "h1", "h2"]
+        }
+      ]
+    },
+    {
+      "id": "weights.output",
+      "shape": [3, 4],
+      "values": [0.8, 0.1, -0.2, 0.3, 0.0, 0.7, 0.2, 0.5, -0.1, 0.2, 0.9, 0.6],
+      "axes": [
+        {
+          "id": "head_feature",
+          "label": "Head",
+          "element_ids": ["head.0", "head.1", "head.2"],
+          "element_labels": ["h0", "h1", "h2"]
+        },
+        {
+          "id": "vocabulary",
+          "label": "Next token",
+          "element_ids": ["vocab.patterns", "vocab.context", "vocab.examples", "vocab.clearly"],
+          "element_labels": ["patterns", "context", "examples", "clearly"]
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "tokens.ready",
+      "timestamp": 0.0,
+      "cue": "tokens",
+      "type": "tokens",
+      "token_ids": ["token.0", "token.1", "token.2"]
+    },
+    {
+      "id": "embeddings.ready",
+      "timestamp": 0.5,
+      "cue": "embeddings",
+      "type": "tensor",
+      "tensor_id": "embedding.query"
+    },
+    {
+      "id": "weights.ready",
+      "timestamp": 1.0,
+      "cue": "projections",
+      "type": "operation",
+      "operation": "load_projection_weights",
+      "inputs": [],
+      "outputs": ["weights.q", "weights.k", "weights.v", "weights.output"]
+    }
+  ]
+}

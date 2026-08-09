@@ -6,6 +6,7 @@ use crate::backend::renderer::vertex::text::TextVertex;
 use crate::frontend::layout::{Bounded, Bounds};
 use crate::projection::{Mesh, Project, ProjectionCtx, RenderPrimitive};
 use crate::resource::texture::TextureImage;
+use crate::validation::ValidationError;
 use std::path::Path;
 
 /// How to render the parametric surface
@@ -123,13 +124,64 @@ impl ParametricSurface {
         self
     }
 
+    fn validate_sampling(&self) -> Result<(), ValidationError> {
+        validate_sample_count("u_samples", self.u_samples)?;
+        validate_sample_count("v_samples", self.v_samples)?;
+        validate_range("u_range", self.u_range)?;
+        validate_range("v_range", self.v_range)?;
+        if !self.write_progress.is_finite() {
+            return Err(ValidationError::non_finite(
+                "ParametricSurface",
+                "write_progress",
+                self.write_progress,
+            ));
+        }
+        if !(0.0..=1.0).contains(&self.write_progress) {
+            return Err(ValidationError::OutOfRange {
+                component: "ParametricSurface",
+                field: "write_progress",
+                minimum: 0.0,
+                maximum: 1.0,
+                value: self.write_progress,
+            });
+        }
+        Ok(())
+    }
+
+    fn emit_solid(&self, ctx: &mut ProjectionCtx) -> Result<(), ValidationError> {
+        let mesh = if let Some(texture) = &self.texture {
+            let (vertices, indices) = self.generate_textured_mesh()?;
+            Mesh::from_textured_vertices(vertices, indices, texture.clone())
+        } else {
+            let (vertices, indices) = self.generate_mesh()?;
+            Mesh::from_tessellation(vertices, indices)
+        };
+        ctx.emit(RenderPrimitive::Mesh(mesh));
+        Ok(())
+    }
+
+    fn sample_position(&self, u: f32, v: f32) -> Result<Vec3, ValidationError> {
+        let position = (self.f)(u, v);
+        if !position.is_finite() {
+            return Err(ValidationError::NonFiniteVector3 {
+                component: "ParametricSurface",
+                field: "f",
+                x: position.x,
+                y: position.y,
+                z: position.z,
+            });
+        }
+        Ok(position)
+    }
+
     /// Generate mesh vertices and indices for the surface
-    fn generate_mesh(&self) -> (Vec<MeshVertex>, Vec<u16>) {
+    fn generate_mesh(&self) -> Result<(Vec<MeshVertex>, Vec<u32>), ValidationError> {
+        self.validate_sampling()?;
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
         if self.write_progress <= 0.0 {
-            return (vertices, indices); // Nothing to draw
+            return Ok((vertices, indices));
         }
 
         let u_step = (self.u_range.1 - self.u_range.0) / (self.u_samples - 1) as f32;
@@ -145,7 +197,7 @@ impl ParametricSurface {
             for j in 0..self.v_samples {
                 let u = self.u_range.0 + i as f32 * u_step;
                 let v = self.v_range.0 + j as f32 * v_step;
-                let pos = (self.f)(u, v);
+                let pos = self.sample_position(u, v)?;
                 let color = self.get_color_for_point(pos);
 
                 vertices.push(MeshVertex {
@@ -158,10 +210,10 @@ impl ParametricSurface {
         // Generate indices (triangles) only for complete rows
         for i in 0..(rows_to_draw.saturating_sub(1)) {
             for j in 0..(self.v_samples - 1) {
-                let a = (i * self.v_samples + j) as u16;
-                let b = (i * self.v_samples + j + 1) as u16;
-                let c = ((i + 1) * self.v_samples + j) as u16;
-                let d = ((i + 1) * self.v_samples + j + 1) as u16;
+                let a = (i * self.v_samples + j) as u32;
+                let b = (i * self.v_samples + j + 1) as u32;
+                let c = ((i + 1) * self.v_samples + j) as u32;
+                let d = ((i + 1) * self.v_samples + j + 1) as u32;
 
                 // First triangle
                 indices.push(a);
@@ -175,15 +227,16 @@ impl ParametricSurface {
             }
         }
 
-        (vertices, indices)
+        Ok((vertices, indices))
     }
 
-    fn generate_textured_mesh(&self) -> (Vec<TextVertex>, Vec<u16>) {
+    fn generate_textured_mesh(&self) -> Result<(Vec<TextVertex>, Vec<u32>), ValidationError> {
+        self.validate_sampling()?;
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
         if self.write_progress <= 0.0 {
-            return (vertices, indices);
+            return Ok((vertices, indices));
         }
 
         let u_step = (self.u_range.1 - self.u_range.0) / (self.u_samples - 1) as f32;
@@ -206,7 +259,7 @@ impl ParametricSurface {
                 };
                 let u = self.u_range.0 + i as f32 * u_step;
                 let v = self.v_range.0 + j as f32 * v_step;
-                let pos = (self.f)(u, v);
+                let pos = self.sample_position(u, v)?;
                 let mut uv_x = v_progress;
                 let mut uv_y = 1.0 - u_progress;
                 if self.texture_flip_x {
@@ -225,10 +278,10 @@ impl ParametricSurface {
 
         for i in 0..(rows_to_draw.saturating_sub(1)) {
             for j in 0..(self.v_samples - 1) {
-                let a = (i * self.v_samples + j) as u16;
-                let b = (i * self.v_samples + j + 1) as u16;
-                let c = ((i + 1) * self.v_samples + j) as u16;
-                let d = ((i + 1) * self.v_samples + j + 1) as u16;
+                let a = (i * self.v_samples + j) as u32;
+                let b = (i * self.v_samples + j + 1) as u32;
+                let c = ((i + 1) * self.v_samples + j) as u32;
+                let d = ((i + 1) * self.v_samples + j + 1) as u32;
 
                 indices.push(a);
                 indices.push(b);
@@ -240,11 +293,12 @@ impl ParametricSurface {
             }
         }
 
-        (vertices, indices)
+        Ok((vertices, indices))
     }
 
     /// Sample points on the surface for bounds calculation
-    fn sample_points(&self) -> Vec<Vec3> {
+    fn sample_points(&self) -> Result<Vec<Vec3>, ValidationError> {
+        self.validate_sampling()?;
         let mut pts = Vec::new();
         let u_step = (self.u_range.1 - self.u_range.0) / (self.u_samples - 1) as f32;
         let v_step = (self.v_range.1 - self.v_range.0) / (self.v_samples - 1) as f32;
@@ -253,17 +307,18 @@ impl ParametricSurface {
             for j in 0..self.v_samples {
                 let u = self.u_range.0 + i as f32 * u_step;
                 let v = self.v_range.0 + j as f32 * v_step;
-                pts.push((self.f)(u, v));
+                pts.push(self.sample_position(u, v)?);
             }
         }
 
-        pts
+        Ok(pts)
     }
 
     /// Emit wireframe grid lines with optional color mapping
-    fn emit_wireframe(&self, ctx: &mut ProjectionCtx) {
+    fn emit_wireframe(&self, ctx: &mut ProjectionCtx) -> Result<(), ValidationError> {
+        self.validate_sampling()?;
         if self.write_progress <= 0.0 {
-            return;
+            return Ok(());
         }
 
         let u_step = (self.u_range.1 - self.u_range.0) / (self.u_samples - 1) as f32;
@@ -280,7 +335,7 @@ impl ParametricSurface {
             for j in 0..self.v_samples {
                 let u = self.u_range.0 + i as f32 * u_step;
                 let v = self.v_range.0 + j as f32 * v_step;
-                let pos = (self.f)(u, v);
+                let pos = self.sample_position(u, v)?;
                 row.push(pos);
             }
             grid_points.push(row);
@@ -339,6 +394,7 @@ impl ParametricSurface {
                 }
             }
         }
+        Ok(())
     }
 
     /// Get color for a point based on color function or default color
@@ -354,38 +410,24 @@ impl ParametricSurface {
 
 impl Project for ParametricSurface {
     fn project(&self, ctx: &mut ProjectionCtx) {
-        match self.render_mode {
-            SurfaceRenderMode::Solid => {
-                let mesh = if let Some(texture) = &self.texture {
-                    let (vertices, indices) = self.generate_textured_mesh();
-                    Mesh::from_textured_vertices(vertices, indices, texture.clone())
-                } else {
-                    let (vertices, indices) = self.generate_mesh();
-                    Mesh::from_tessellation(vertices, indices)
-                };
-                ctx.emit(RenderPrimitive::Mesh(mesh));
-            }
-            SurfaceRenderMode::Wireframe => {
-                self.emit_wireframe(ctx);
-            }
+        let result = match self.render_mode {
+            SurfaceRenderMode::Solid => self.emit_solid(ctx),
+            SurfaceRenderMode::Wireframe => self.emit_wireframe(ctx),
             SurfaceRenderMode::SolidWithWireframe => {
-                let mesh = if let Some(texture) = &self.texture {
-                    let (vertices, indices) = self.generate_textured_mesh();
-                    Mesh::from_textured_vertices(vertices, indices, texture.clone())
-                } else {
-                    let (vertices, indices) = self.generate_mesh();
-                    Mesh::from_tessellation(vertices, indices)
-                };
-                ctx.emit(RenderPrimitive::Mesh(mesh));
-                self.emit_wireframe(ctx);
+                self.emit_solid(ctx).and_then(|()| self.emit_wireframe(ctx))
             }
+        };
+        if let Err(error) = result {
+            ctx.report(error);
         }
     }
 }
 
 impl Bounded for ParametricSurface {
     fn local_bounds(&self) -> Bounds {
-        let pts = self.sample_points();
+        let Ok(pts) = self.sample_points() else {
+            return Bounds::default();
+        };
         let mut min_xy = Vec2::splat(f32::INFINITY);
         let mut max_xy = Vec2::splat(f32::NEG_INFINITY);
         let mut min_z = f32::INFINITY;
@@ -402,5 +444,80 @@ impl Bounded for ParametricSurface {
 
         let z_pad = max_z.abs().max(min_z.abs()) * 0.15;
         Bounds::new(min_xy - vec2(z_pad, z_pad), max_xy + vec2(z_pad, z_pad))
+    }
+}
+
+fn validate_sample_count(field: &'static str, actual: usize) -> Result<(), ValidationError> {
+    if actual < 2 {
+        return Err(ValidationError::count_too_small(
+            "ParametricSurface",
+            field,
+            2,
+            actual,
+        ));
+    }
+    Ok(())
+}
+
+fn validate_range(field: &'static str, range: (f32, f32)) -> Result<(), ValidationError> {
+    if range.0.is_finite() && range.1.is_finite() && range.0 <= range.1 {
+        return Ok(());
+    }
+    Err(ValidationError::InvalidRange {
+        component: "ParametricSurface",
+        field,
+        start: range.0,
+        end: range.1,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn directly_mutated_sample_counts_are_rejected_without_invalid_bounds() {
+        let mut surface =
+            ParametricSurface::new((0.0, 1.0), (0.0, 1.0), |u, v| Vec3::new(u, v, 0.0));
+        surface.u_samples = 0;
+
+        assert_eq!(surface.local_bounds(), Bounds::default());
+        let mut ctx = ProjectionCtx::new(Default::default());
+        surface.project(&mut ctx);
+        assert!(matches!(
+            ctx.diagnostics[0],
+            ValidationError::CountTooSmall {
+                field: "u_samples",
+                ..
+            }
+        ));
+        assert!(ctx.primitives.is_empty());
+    }
+
+    #[test]
+    fn non_finite_surface_output_is_reported() {
+        let surface = ParametricSurface::new((0.0, 1.0), (0.0, 1.0), |_, _| Vec3::splat(f32::NAN));
+        let mut ctx = ProjectionCtx::new(Default::default());
+        surface.project(&mut ctx);
+        assert!(matches!(
+            ctx.diagnostics[0],
+            ValidationError::NonFiniteVector3 { field: "f", .. }
+        ));
+    }
+
+    #[test]
+    fn directly_mutated_non_finite_progress_is_reported() {
+        let mut surface =
+            ParametricSurface::new((0.0, 1.0), (0.0, 1.0), |u, v| Vec3::new(u, v, 0.0));
+        surface.write_progress = f32::NAN;
+        let mut ctx = ProjectionCtx::new(Default::default());
+        surface.project(&mut ctx);
+        assert!(matches!(
+            ctx.diagnostics[0],
+            ValidationError::NonFinite {
+                field: "write_progress",
+                ..
+            }
+        ));
     }
 }

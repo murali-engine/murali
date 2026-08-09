@@ -4,6 +4,7 @@
 
 use crate::frontend::layout::{Bounded, Bounds};
 use crate::projection::{Project, ProjectionCtx, RenderPrimitive};
+use crate::validation::ValidationError;
 use glam::{Vec2, Vec3, Vec4};
 use std::sync::Arc;
 
@@ -46,6 +47,16 @@ impl StreamLines {
         }
     }
 
+    /// Creates streamlines and validates authored seed and integration state.
+    pub fn try_new<F>(start_points: Vec<Vec2>, field_fn: F) -> Result<Self, ValidationError>
+    where
+        F: Fn(Vec2) -> Vec2 + Send + Sync + 'static,
+    {
+        let streamlines = Self::new(start_points, field_fn);
+        streamlines.validate()?;
+        Ok(streamlines)
+    }
+
     /// Create streamlines from a grid of starting points
     pub fn from_grid<F>(
         x_range: (f32, f32),
@@ -53,10 +64,15 @@ impl StreamLines {
         x_count: usize,
         y_count: usize,
         field_fn: F,
-    ) -> Self
+    ) -> Result<Self, ValidationError>
     where
         F: Fn(Vec2) -> Vec2 + Send + Sync + 'static,
     {
+        validate_count("x_count", x_count, 2)?;
+        validate_count("y_count", y_count, 2)?;
+        validate_range("x_range", x_range)?;
+        validate_range("y_range", y_range)?;
+
         let mut start_points = Vec::new();
         let dx = (x_range.1 - x_range.0) / (x_count - 1) as f32;
         let dy = (y_range.1 - y_range.0) / (y_count - 1) as f32;
@@ -69,7 +85,7 @@ impl StreamLines {
             }
         }
 
-        Self::new(start_points, field_fn)
+        Ok(Self::new(start_points, field_fn))
     }
 
     /// Set the color
@@ -121,13 +137,52 @@ impl StreamLines {
     }
 
     /// Trace a single streamline using Euler integration
-    fn trace_streamline(&self, start: Vec2) -> Vec<Vec2> {
+    fn validate(&self) -> Result<(), ValidationError> {
+        if self.start_points.is_empty() {
+            return Err(ValidationError::Empty {
+                component: "StreamLines",
+                field: "start_points",
+            });
+        }
+        validate_count("max_steps", self.max_steps, 1)?;
+        if !self.step_size.is_finite() {
+            return Err(ValidationError::non_finite(
+                "StreamLines",
+                "step_size",
+                self.step_size,
+            ));
+        }
+        if self.step_size <= 0.0 {
+            return Err(ValidationError::NonPositive {
+                component: "StreamLines",
+                field: "step_size",
+                value: self.step_size,
+            });
+        }
+        for point in &self.start_points {
+            validate_vec2("start_points", *point)?;
+        }
+        if let Some((min, max)) = self.bounds {
+            validate_bounds(min, max)?;
+        }
+        Ok(())
+    }
+
+    fn trace_streamline(&self, start: Vec2) -> Result<Vec<Vec2>, ValidationError> {
         let mut points = vec![start];
         let mut current = start;
 
         for _ in 0..self.max_steps {
             // Get the vector at the current position
             let vector = (self.field_fn)(current);
+            if !vector.is_finite() {
+                return Err(ValidationError::NonFiniteVector2 {
+                    component: "StreamLines",
+                    field: "field_fn",
+                    x: vector.x,
+                    y: vector.y,
+                });
+            }
             let magnitude = vector.length();
 
             // Stop if the vector is too small (stagnation point)
@@ -138,6 +193,14 @@ impl StreamLines {
             // Normalize and scale by step size
             let step = vector.normalize() * self.step_size;
             let next = current + step;
+            if !next.is_finite() {
+                return Err(ValidationError::NonFiniteVector2 {
+                    component: "StreamLines",
+                    field: "integrated_position",
+                    x: next.x,
+                    y: next.y,
+                });
+            }
 
             // Stop if we go out of bounds
             if !self.in_bounds(next) {
@@ -148,38 +211,49 @@ impl StreamLines {
             current = next;
         }
 
-        points
+        Ok(points)
     }
 }
 
 impl Bounded for StreamLines {
     fn local_bounds(&self) -> Bounds {
         if let Some((min, max)) = self.bounds {
-            Bounds::new(min, max)
-        } else {
-            // Calculate bounds from start points
-            let mut min_x = f32::INFINITY;
-            let mut max_x = f32::NEG_INFINITY;
-            let mut min_y = f32::INFINITY;
-            let mut max_y = f32::NEG_INFINITY;
-
-            for point in &self.start_points {
-                min_x = min_x.min(point.x);
-                max_x = max_x.max(point.x);
-                min_y = min_y.min(point.y);
-                max_y = max_y.max(point.y);
+            if validate_bounds(min, max).is_ok() {
+                Bounds::new(min, max)
+            } else {
+                Bounds::default()
             }
-
-            Bounds::new(Vec2::new(min_x, min_y), Vec2::new(max_x, max_y))
+        } else {
+            let mut finite_points = self
+                .start_points
+                .iter()
+                .copied()
+                .filter(|point| point.is_finite());
+            let Some(first) = finite_points.next() else {
+                return Bounds::default();
+            };
+            finite_points.fold(Bounds::new(first, first), |bounds, point| {
+                Bounds::new(bounds.min.min(point), bounds.max.max(point))
+            })
         }
     }
 }
 
 impl Project for StreamLines {
     fn project(&self, ctx: &mut ProjectionCtx) {
+        if let Err(error) = self.validate() {
+            ctx.report(error);
+            return;
+        }
         // Trace each streamline
         for start_point in &self.start_points {
-            let points = self.trace_streamline(*start_point);
+            let points = match self.trace_streamline(*start_point) {
+                Ok(points) => points,
+                Err(error) => {
+                    ctx.report(error);
+                    return;
+                }
+            };
 
             // Draw the streamline as connected line segments
             for i in 0..points.len().saturating_sub(1) {
@@ -210,17 +284,40 @@ impl Project for StreamLines {
 }
 
 /// Helper function to create evenly spaced starting points along a line
-pub fn line_start_points(start: Vec2, end: Vec2, count: usize) -> Vec<Vec2> {
+pub fn line_start_points(
+    start: Vec2,
+    end: Vec2,
+    count: usize,
+) -> Result<Vec<Vec2>, ValidationError> {
+    validate_count("count", count, 2)?;
+    validate_vec2("start", start)?;
+    validate_vec2("end", end)?;
     let mut points = Vec::new();
     for i in 0..count {
         let t = i as f32 / (count - 1) as f32;
         points.push(start.lerp(end, t));
     }
-    points
+    Ok(points)
 }
 
 /// Helper function to create starting points in a circle
-pub fn circle_start_points(center: Vec2, radius: f32, count: usize) -> Vec<Vec2> {
+pub fn circle_start_points(
+    center: Vec2,
+    radius: f32,
+    count: usize,
+) -> Result<Vec<Vec2>, ValidationError> {
+    validate_count("count", count, 1)?;
+    validate_vec2("center", center)?;
+    if !radius.is_finite() {
+        return Err(ValidationError::non_finite("StreamLines", "radius", radius));
+    }
+    if radius <= 0.0 {
+        return Err(ValidationError::NonPositive {
+            component: "StreamLines",
+            field: "radius",
+            value: radius,
+        });
+    }
     let mut points = Vec::new();
     for i in 0..count {
         let angle = (i as f32 / count as f32) * std::f32::consts::TAU;
@@ -228,5 +325,97 @@ pub fn circle_start_points(center: Vec2, radius: f32, count: usize) -> Vec<Vec2>
         let y = center.y + radius * angle.sin();
         points.push(Vec2::new(x, y));
     }
-    points
+    Ok(points)
+}
+
+fn validate_count(
+    field: &'static str,
+    actual: usize,
+    minimum: usize,
+) -> Result<(), ValidationError> {
+    if actual < minimum {
+        return Err(ValidationError::count_too_small(
+            "StreamLines",
+            field,
+            minimum,
+            actual,
+        ));
+    }
+    Ok(())
+}
+
+fn validate_vec2(field: &'static str, value: Vec2) -> Result<(), ValidationError> {
+    if !value.is_finite() {
+        return Err(ValidationError::NonFiniteVector2 {
+            component: "StreamLines",
+            field,
+            x: value.x,
+            y: value.y,
+        });
+    }
+    Ok(())
+}
+
+fn validate_range(field: &'static str, range: (f32, f32)) -> Result<(), ValidationError> {
+    if !range.0.is_finite() {
+        return Err(ValidationError::non_finite("StreamLines", field, range.0));
+    }
+    if !range.1.is_finite() {
+        return Err(ValidationError::non_finite("StreamLines", field, range.1));
+    }
+    if range.0 > range.1 {
+        return Err(ValidationError::InvalidRange {
+            component: "StreamLines",
+            field,
+            start: range.0,
+            end: range.1,
+        });
+    }
+    Ok(())
+}
+
+fn validate_bounds(min: Vec2, max: Vec2) -> Result<(), ValidationError> {
+    if min.is_finite() && max.is_finite() && min.cmple(max).all() {
+        return Ok(());
+    }
+    Err(ValidationError::InvalidBounds {
+        component: "StreamLines",
+        field: "bounds",
+        min_x: min.x,
+        min_y: min.y,
+        max_x: max.x,
+        max_y: max.y,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn grid_and_line_helpers_reject_counts_that_cannot_be_sampled() {
+        assert!(StreamLines::from_grid((0.0, 1.0), (0.0, 1.0), 1, 2, |_| Vec2::X).is_err());
+        assert!(line_start_points(Vec2::ZERO, Vec2::X, 1).is_err());
+        assert!(circle_start_points(Vec2::ZERO, 1.0, 0).is_err());
+    }
+
+    #[test]
+    fn empty_and_non_finite_state_has_finite_bounds_and_diagnostics() {
+        let empty = StreamLines::new(Vec::new(), |_| Vec2::X);
+        assert_eq!(empty.local_bounds(), Bounds::default());
+        let mut ctx = ProjectionCtx::new(Default::default());
+        empty.project(&mut ctx);
+        assert!(matches!(ctx.diagnostics[0], ValidationError::Empty { .. }));
+
+        let invalid = StreamLines::new(vec![Vec2::ZERO], |_| Vec2::splat(f32::NAN));
+        let mut ctx = ProjectionCtx::new(Default::default());
+        invalid.project(&mut ctx);
+        assert!(matches!(
+            ctx.diagnostics[0],
+            ValidationError::NonFiniteVector2 {
+                field: "field_fn",
+                ..
+            }
+        ));
+    }
 }

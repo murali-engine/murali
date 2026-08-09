@@ -1,10 +1,18 @@
 use crate::backend::renderer::mesh::MeshInstance;
 use crate::engine::scene::SharedProps;
+use crate::frontend::TattvaId;
 use glam::{Vec2, Vec3, Vec4};
 use std::sync::Arc;
 
 /// Wraps a GPU-uploaded mesh for the renderer.
 pub struct MeshComponent(pub Arc<MeshInstance>);
+
+/// Stable authored order retained independently of ECS entity allocation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RenderOrderComponent {
+    pub tattva_id: TattvaId,
+    pub primitive_index: u32,
+}
 
 /// Data for the instanced line renderer.
 pub struct LineComponent {

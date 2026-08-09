@@ -1,10 +1,10 @@
 [package]
 name = "murali"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2024"
 rust-version = "1.85"
 description = "A Rust animation engine for programmatic, timeline-driven mathematical, AI, and explainer visuals."
-license = "MIT OR Apache-2.0"
+license = "Apache-2.0"
 repository = "https://github.com/ravishankarkumar/murali"
 homepage = "https://muraliengine.com"
 documentation = "https://muraliengine.com"
@@ -32,13 +32,13 @@ typst_embedded = ["dep:typst", "dep:typst-as-lib", "dep:typst-svg"]
 
 [dependencies]
 winit = "0.30"
-wgpu = "0.20"
-env_logger = "0.10"
-glam = { version = "0.27", features = ["bytemuck"] }
+wgpu = "26.0.1"
+env_logger = "0.11"
+glam = { version = "0.33", features = ["bytemuck"] }
 tracing = "0.1"
 anyhow = "1"
 # bytemuck = "1.14"
-pollster = "0.3"
+pollster = "1"
 tokio = { version = "1", features = [
   "rt",
   "macros",
@@ -47,25 +47,26 @@ tokio = { version = "1", features = [
 typst = { version = "0.13.1", optional = true } # version may vary; required for embedded Typst
 typst-as-lib = { version = "0.13", optional = true, features = ["typst-kit-fonts", "typst-kit-embed-fonts"] } # optional helper; pick actual maintained wrapper
 typst-svg = { version = "0.13.1", optional = true } # if available; otherwise use typst APIs
-typst-kit = "0.13.0"
-lru = "0.8"
-sha2 = "0.10"
+typst-kit = "0.13.1"
+lru = "0.18"
+sha2 = "0.11"
 parking_lot = "0.12"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 indexmap = "2"
-toml = "0.9.10"
+toml = "1.1"
 twox-hash = "2.1.2"
-image = "0.24"
-bytemuck = { version = "1.19", features = ["derive"] }
-usvg = "0.45"
-resvg = "0.45"
-tiny-skia = "0.11"
-lyon_tessellation = "1.0.1"
-thiserror = "1.0"
+image = "=0.25.9"
+bytemuck = { version = "1.25", features = ["derive"] }
+usvg = "0.48.1"
+resvg = "0.48.1"
+tiny-skia = "0.12"
+lyon_tessellation = "1.0.20"
+thiserror = "2"
 
 # font rendering
-fontdue = "0.8"
-hecs = "0.9"
+fontdue = "0.9"
+hecs = "0.11"
 
 [dev-dependencies]
 proptest = "1"

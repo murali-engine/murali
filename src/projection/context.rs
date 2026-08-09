@@ -1,13 +1,17 @@
 // src/projection/context.rs
 use crate::engine::scene::SharedProps;
 use crate::projection::RenderPrimitive;
-use glam::{Vec3, Vec4};
+use crate::validation::ValidationError;
+use glam::Vec3;
 
 /// The Projection Context is the "Collector".
 /// Each Tattva is passed this context during the project() phase.
 pub struct ProjectionCtx {
     /// Primitives collected during this projection pass
     pub primitives: Vec<RenderPrimitive>,
+
+    /// Structured failures collected during this projection pass.
+    pub diagnostics: Vec<ValidationError>,
 
     /// Shared spatial properties of the parent Tattva
     pub props: SharedProps,
@@ -24,11 +28,17 @@ impl ProjectionCtx {
     pub fn new(props: SharedProps) -> Self {
         Self {
             primitives: Vec::new(),
+            diagnostics: Vec::new(),
             props,
             offset_stack: vec![Vec3::ZERO],
             alpha_stack: vec![1.0],
             scale_stack: vec![1.0],
         }
+    }
+
+    /// Reject the current projection pass with a structured diagnostic.
+    pub fn report(&mut self, error: ValidationError) {
+        self.diagnostics.push(error);
     }
 
     /// Emit a renderable primitive

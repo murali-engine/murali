@@ -91,7 +91,7 @@ impl EquationLayout {
     }
 
     fn part_width(&self, text: &str, scale: f32) -> f32 {
-        measure_label(text, self.world_height * scale.max(0.05))
+        measure_label(text, self.world_height * scale.max(0.05), None)
             .width
             .max(self.world_height * scale.max(0.05) * 0.4)
     }
@@ -137,6 +137,7 @@ impl Project for EquationLayout {
                 content: part.text,
                 height: part.height,
                 color,
+                font_name: None,
                 offset: part.center,
                 rotation: 0.0,
             });

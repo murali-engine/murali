@@ -1,8 +1,9 @@
 use anyhow::Result;
 use bytemuck::{Pod, Zeroable};
-use glam::Mat4;
+use glam::{Mat4, Vec3};
 use image::{ImageBuffer, RgbaImage};
 use std::borrow::Cow;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::num::NonZeroU64;
 use std::sync::Arc;
@@ -14,9 +15,10 @@ use crate::backend::renderer::device::{DepthTexture, DeviceManager};
 use crate::backend::renderer::mesh::{Drawable, MeshInstance, MeshPipelineKind};
 use crate::backend::renderer::vertex::mesh::MeshVertex;
 use crate::backend::renderer::vertex::text::TextVertex;
+use crate::engine::camera::Projection;
 use crate::engine::scene::Scene;
-use crate::frontend::props::DrawableProps;
 use crate::frontend::props::SharedProps;
+use crate::frontend::props::{DepthMode, DrawableProps};
 
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
@@ -36,20 +38,184 @@ impl Uniforms {
     }
 }
 
+const INITIAL_UNIFORM_CAPACITY: u64 = 1024;
+
+fn next_uniform_capacity(current: u64, required: u64, maximum: u64) -> Option<u64> {
+    if required > maximum {
+        return None;
+    }
+    let mut capacity = current.max(1).min(maximum);
+    while capacity < required {
+        let grown = capacity.saturating_mul(2).min(maximum);
+        if grown == capacity {
+            return None;
+        }
+        capacity = grown;
+    }
+    Some(capacity)
+}
+
+fn maximum_uniform_capacity(max_buffer_size: u64, slot_size: u64) -> u64 {
+    let buffer_capacity = max_buffer_size / slot_size;
+    let dynamic_offset_capacity = (u32::MAX as u64 / slot_size).saturating_add(1);
+    buffer_capacity.min(dynamic_offset_capacity)
+}
+
+fn create_uniform_resources(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    sampler: &wgpu::Sampler,
+    slot_size: u64,
+    capacity: u64,
+) -> (wgpu::Buffer, wgpu::BindGroup) {
+    let buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("Uniform Buffer"),
+        size: slot_size * capacity,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("uniform-bind-group"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                    buffer: &buffer,
+                    offset: 0,
+                    size: Some(NonZeroU64::new(slot_size).unwrap()),
+                }),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Sampler(sampler),
+            },
+        ],
+    });
+    (buffer, bind_group)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct RenderSortKey {
+    layer: i32,
+    tattva_id: usize,
+    primitive_index: u32,
+}
+
+enum DrawCommand {
+    Line {
+        key: RenderSortKey,
+        data: [f32; 16],
+        world_center: Vec3,
+        transparent: bool,
+        depth_mode: DepthMode,
+    },
+    Mesh {
+        key: RenderSortKey,
+        mesh: Arc<MeshInstance>,
+        model: Mat4,
+        bind_group: Option<Arc<wgpu::BindGroup>>,
+        alpha: f32,
+        world_center: Vec3,
+        transparent: bool,
+        depth_mode: DepthMode,
+    },
+}
+
+impl DrawCommand {
+    fn key(&self) -> RenderSortKey {
+        match self {
+            Self::Line { key, .. } | Self::Mesh { key, .. } => *key,
+        }
+    }
+
+    fn world_center(&self) -> Vec3 {
+        match self {
+            Self::Line { world_center, .. } | Self::Mesh { world_center, .. } => *world_center,
+        }
+    }
+
+    fn is_transparent(&self) -> bool {
+        match self {
+            Self::Line { transparent, .. } | Self::Mesh { transparent, .. } => *transparent,
+        }
+    }
+
+    fn depth_mode(&self) -> DepthMode {
+        match self {
+            Self::Line { depth_mode, .. } | Self::Mesh { depth_mode, .. } => *depth_mode,
+        }
+    }
+
+    fn phase_3d(&self) -> u8 {
+        match (self.depth_mode(), self.is_transparent()) {
+            (DepthMode::Overlay, _) => 2,
+            (DepthMode::World, false) => 0,
+            (DepthMode::World, true) => 1,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DepthPipelineMode {
+    Overlay,
+    OpaqueWorld,
+    TransparentWorld,
+}
+
+fn depth_pipeline_mode(command: &DrawCommand, perspective: bool) -> DepthPipelineMode {
+    if !perspective || command.depth_mode() == DepthMode::Overlay {
+        DepthPipelineMode::Overlay
+    } else if command.is_transparent() {
+        DepthPipelineMode::TransparentWorld
+    } else {
+        DepthPipelineMode::OpaqueWorld
+    }
+}
+
+fn compare_3d_commands(a: &DrawCommand, b: &DrawCommand, view: Mat4) -> Ordering {
+    let phase_order = a.phase_3d().cmp(&b.phase_3d());
+    if phase_order != Ordering::Equal {
+        return phase_order;
+    }
+
+    if a.phase_3d() == 1 {
+        let layer_order = a.key().layer.cmp(&b.key().layer);
+        if layer_order != Ordering::Equal {
+            return layer_order;
+        }
+        let a_depth = -view.transform_point3(a.world_center()).z;
+        let b_depth = -view.transform_point3(b.world_center()).z;
+        let depth_order = b_depth.total_cmp(&a_depth);
+        if depth_order != Ordering::Equal {
+            return depth_order;
+        }
+    }
+
+    a.key().cmp(&b.key())
+}
+
 pub struct Renderer {
     pub device_mgr: Arc<DeviceManager>, // Changed to Arc
     pub clear_color: wgpu::Color,
 
     mesh_pipeline: wgpu::RenderPipeline,
+    mesh_depth_pipeline: wgpu::RenderPipeline,
+    mesh_transparent_depth_pipeline: wgpu::RenderPipeline,
     text_pipeline: wgpu::RenderPipeline,
+    text_depth_write_pipeline: wgpu::RenderPipeline,
+    text_overlay_pipeline: wgpu::RenderPipeline,
     line_pipeline: wgpu::RenderPipeline,
+    line_depth_write_pipeline: wgpu::RenderPipeline,
+    line_overlay_pipeline: wgpu::RenderPipeline,
 
     pub depth: DepthTexture,
 
     uniform_buffer: wgpu::Buffer,
     uniform_bind_group: wgpu::BindGroup,
+    uniform_bind_group_layout: wgpu::BindGroupLayout,
     uniform_slot_size: u64,
-    max_drawables: u64,
+    uniform_capacity: u64,
 
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
@@ -69,23 +235,15 @@ impl Renderer {
     pub fn new(device_mgr: Arc<DeviceManager>) -> Self {
         let device = &device_mgr.device;
         // let config = &device_mgr.config;
-        let config = device_mgr.config.borrow();
+        let config = device_mgr.config.read();
 
         // 1. Create Depth Texture
         let depth = DepthTexture::create(device, &config);
 
         // 2. Setup Uniforms (MVP)
-        let max_drawables = 1000;
         let min_alignment = device.limits().min_uniform_buffer_offset_alignment as u64;
         let uniform_slot_size =
             (std::mem::size_of::<Uniforms>() as u64 + min_alignment - 1) & !(min_alignment - 1);
-
-        let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Uniform Buffer"),
-            size: uniform_slot_size * max_drawables,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
 
         // ===============================
         // 🔑 MISSING FIELD 1: Camera Buffer
@@ -220,130 +378,181 @@ impl Renderer {
             push_constant_ranges: &[],
         });
 
-        // ===============================
-        // Pipelines
-        // ===============================
-        let mesh_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("mesh-pipeline"),
-            layout: Some(&mesh_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &mesh_shader,
-                entry_point: "vs_main",
-                buffers: &[MeshVertex::desc()],
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &mesh_shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: depth.format,
-                depth_write_enabled: false,
-                depth_compare: wgpu::CompareFunction::Always,
-                // depth_write_enabled: true,
-                // depth_compare: wgpu::CompareFunction::Less,
-                // depth_compare: wgpu::CompareFunction::LessEqual,
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: Default::default(),
-            multiview: None,
-        });
+        let create_mesh_pipeline = |label, depth_write_enabled, depth_compare, blend| {
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some(label),
+                layout: Some(&mesh_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &mesh_shader,
+                    entry_point: Some("vs_main"),
+                    buffers: &[MeshVertex::desc()],
+                    compilation_options: Default::default(),
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &mesh_shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: config.format,
+                        blend,
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: Default::default(),
+                }),
+                primitive: wgpu::PrimitiveState::default(),
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: depth.format,
+                    depth_write_enabled,
+                    depth_compare,
+                    stencil: Default::default(),
+                    bias: Default::default(),
+                }),
+                multisample: Default::default(),
+                multiview: None,
+                cache: None,
+            })
+        };
+        let create_text_pipeline = |label, depth_write_enabled, depth_compare, blend| {
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some(label),
+                layout: Some(&text_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &text_shader,
+                    entry_point: Some("vs_main"),
+                    buffers: &[TextVertex::desc()],
+                    compilation_options: Default::default(),
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &text_shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: config.format,
+                        blend,
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: Default::default(),
+                }),
+                primitive: wgpu::PrimitiveState::default(),
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: depth.format,
+                    depth_write_enabled,
+                    depth_compare,
+                    stencil: Default::default(),
+                    bias: Default::default(),
+                }),
+                multisample: Default::default(),
+                multiview: None,
+                cache: None,
+            })
+        };
+        let create_line_pipeline = |label, depth_write_enabled, depth_compare, blend| {
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some(label),
+                layout: Some(&line_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &line_shader,
+                    entry_point: Some("vs_main"),
+                    buffers: &[],
+                    compilation_options: Default::default(),
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &line_shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: config.format,
+                        blend,
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: Default::default(),
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    ..Default::default()
+                },
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: depth.format,
+                    depth_write_enabled,
+                    depth_compare,
+                    stencil: Default::default(),
+                    bias: Default::default(),
+                }),
+                multisample: Default::default(),
+                multiview: None,
+                cache: None,
+            })
+        };
 
-        let text_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("text-pipeline"),
-            layout: Some(&text_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &text_shader,
-                entry_point: "vs_main",
-                buffers: &[TextVertex::desc()],
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &text_shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: depth.format,
-                depth_write_enabled: false,
-                depth_compare: wgpu::CompareFunction::LessEqual,
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: Default::default(),
-            multiview: None,
-        });
-
-        // 🔑 MISSING FIELD 4: Line Pipeline
-        let line_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("line-pipeline"),
-            layout: Some(&line_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &line_shader,
-                entry_point: "vs_main",
-                buffers: &[], // Lines are generated in shader from Storage Buffer
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &line_shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                ..Default::default()
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: depth.format,
-                depth_write_enabled: false,
-                depth_compare: wgpu::CompareFunction::LessEqual,
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: Default::default(),
-            multiview: None,
-        });
+        let alpha_blending = Some(wgpu::BlendState::ALPHA_BLENDING);
+        let mesh_pipeline = create_mesh_pipeline(
+            "mesh-overlay-pipeline",
+            false,
+            wgpu::CompareFunction::Always,
+            alpha_blending,
+        );
+        let mesh_depth_pipeline = create_mesh_pipeline(
+            "mesh-depth-write-pipeline",
+            true,
+            wgpu::CompareFunction::LessEqual,
+            None,
+        );
+        let mesh_transparent_depth_pipeline = create_mesh_pipeline(
+            "mesh-transparent-depth-pipeline",
+            false,
+            wgpu::CompareFunction::LessEqual,
+            alpha_blending,
+        );
+        let text_pipeline = create_text_pipeline(
+            "text-transparent-depth-pipeline",
+            false,
+            wgpu::CompareFunction::LessEqual,
+            alpha_blending,
+        );
+        let text_depth_write_pipeline = create_text_pipeline(
+            "text-depth-write-pipeline",
+            true,
+            wgpu::CompareFunction::LessEqual,
+            None,
+        );
+        let text_overlay_pipeline = create_text_pipeline(
+            "text-overlay-pipeline",
+            false,
+            wgpu::CompareFunction::Always,
+            alpha_blending,
+        );
+        let line_pipeline = create_line_pipeline(
+            "line-transparent-depth-pipeline",
+            false,
+            wgpu::CompareFunction::LessEqual,
+            alpha_blending,
+        );
+        let line_depth_write_pipeline = create_line_pipeline(
+            "line-depth-write-pipeline",
+            true,
+            wgpu::CompareFunction::LessEqual,
+            None,
+        );
+        let line_overlay_pipeline = create_line_pipeline(
+            "line-overlay-pipeline",
+            false,
+            wgpu::CompareFunction::Always,
+            alpha_blending,
+        );
 
         let default_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
 
-        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("uniform-bind-group"),
-            layout: &uniform_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    // resource: uniform_buffer.as_entire_binding(),
-                    resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                        buffer: &uniform_buffer,
-                        offset: 0,
-                        size: Some(NonZeroU64::new(uniform_slot_size).unwrap()),
-                    }),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&default_sampler),
-                },
-            ],
-        });
+        let maximum_uniform_capacity =
+            maximum_uniform_capacity(device.limits().max_buffer_size, uniform_slot_size);
+        assert!(
+            maximum_uniform_capacity > 0,
+            "GPU cannot allocate even one {uniform_slot_size}-byte mesh uniform slot"
+        );
+        let uniform_capacity = INITIAL_UNIFORM_CAPACITY.min(maximum_uniform_capacity);
+        let (uniform_buffer, uniform_bind_group) = create_uniform_resources(
+            device,
+            &uniform_bind_group_layout,
+            &default_sampler,
+            uniform_slot_size,
+            uniform_capacity,
+        );
 
         let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &camera_bind_group_layout,
@@ -373,17 +582,24 @@ impl Renderer {
                 a: 1.0,
             },
             mesh_pipeline,
+            mesh_depth_pipeline,
+            mesh_transparent_depth_pipeline,
             text_pipeline,
+            text_depth_write_pipeline,
+            text_overlay_pipeline,
             depth,
             uniform_buffer,
             uniform_bind_group,
+            uniform_bind_group_layout,
             uniform_slot_size,
-            max_drawables,
+            uniform_capacity,
             mesh_cache: HashMap::new(),
             texture_bind_group_layout,
             default_sampler,
             default_texture_bind_group,
             line_pipeline,
+            line_depth_write_pipeline,
+            line_overlay_pipeline,
             camera_buffer,
             camera_bind_group,
             line_bind_group_layout, // start_time: Instant::now(),
@@ -399,14 +615,14 @@ impl Renderer {
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                     label: Some("Murali Render Encoder"),
                 });
-        self.encode_scene_pass(scene, world, &view, &mut encoder, view_proj);
+        self.encode_scene_pass(scene, world, &view, &mut encoder, view_proj)?;
         self.device_mgr.queue.submit(Some(encoder.finish()));
         frame.present();
         Ok(())
     }
 
     pub fn render_to_image(&mut self, scene: &Scene, world: &hecs::World) -> Result<RgbaImage> {
-        let config = self.device_mgr.config.borrow().clone();
+        let config = self.device_mgr.config.read().clone();
         let width = config.width.max(1);
         let height = config.height.max(1);
         let device = &self.device_mgr.device;
@@ -444,17 +660,17 @@ impl Renderer {
             &target_view,
             &mut encoder,
             scene.camera.view_proj_matrix(),
-        );
+        )?;
         encoder.copy_texture_to_buffer(
-            wgpu::ImageCopyTexture {
+            wgpu::TexelCopyTextureInfo {
                 texture: &target,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            wgpu::ImageCopyBuffer {
+            wgpu::TexelCopyBufferInfo {
                 buffer: &output_buffer,
-                layout: wgpu::ImageDataLayout {
+                layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(padded_bytes_per_row),
                     rows_per_image: Some(height),
@@ -469,7 +685,7 @@ impl Renderer {
         let submission = self.device_mgr.queue.submit(Some(encoder.finish()));
         self.device_mgr
             .device
-            .poll(wgpu::Maintain::WaitForSubmissionIndex(submission));
+            .poll(wgpu::PollType::wait_for(submission))?;
 
         let slice = output_buffer.slice(..);
         let (tx, rx) = std::sync::mpsc::channel();
@@ -480,7 +696,7 @@ impl Renderer {
         let timeout = Duration::from_secs(10);
         let start = Instant::now();
         loop {
-            self.device_mgr.device.poll(wgpu::Maintain::Poll);
+            self.device_mgr.device.poll(wgpu::PollType::Poll)?;
 
             match rx.try_recv() {
                 Ok(result) => {
@@ -520,7 +736,7 @@ impl Renderer {
     pub fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
         self.device_mgr.resize(size);
         //
-        let config = self.device_mgr.config.borrow();
+        let config = self.device_mgr.config.read();
         self.depth = DepthTexture::create(&self.device_mgr.device, &config);
     }
 
@@ -550,14 +766,14 @@ impl Renderer {
         });
 
         queue.write_texture(
-            wgpu::ImageCopyTexture {
+            wgpu::TexelCopyTextureInfo {
                 texture: &texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
             rgba,
-            wgpu::ImageDataLayout {
+            wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * width),
                 rows_per_image: None,
@@ -607,6 +823,36 @@ impl Renderer {
         bg
     }
 
+    fn ensure_uniform_capacity(&mut self, required: u64) -> Result<()> {
+        if required <= self.uniform_capacity {
+            return Ok(());
+        }
+
+        let maximum = maximum_uniform_capacity(
+            self.device_mgr.device.limits().max_buffer_size,
+            self.uniform_slot_size,
+        );
+        let new_capacity = next_uniform_capacity(self.uniform_capacity, required, maximum)
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "scene requires {required} mesh uniforms, but this GPU supports at most \
+                     {maximum} with {}-byte aligned slots",
+                    self.uniform_slot_size
+                )
+            })?;
+        let (buffer, bind_group) = create_uniform_resources(
+            &self.device_mgr.device,
+            &self.uniform_bind_group_layout,
+            &self.default_sampler,
+            self.uniform_slot_size,
+            new_capacity,
+        );
+        self.uniform_buffer = buffer;
+        self.uniform_bind_group = bind_group;
+        self.uniform_capacity = new_capacity;
+        Ok(())
+    }
+
     fn encode_scene_pass(
         &mut self,
         scene: &Scene,
@@ -614,41 +860,105 @@ impl Renderer {
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         view_proj: Mat4,
-    ) {
-        let mut line_data = Vec::new();
-        let mut line_count = 0;
-        for (_, (line, color, props)) in world
-            .query::<(&LineComponent, &ColorComponent, &SharedProps)>()
-            .iter()
+    ) -> Result<()> {
+        let mut draw_commands = Vec::new();
         {
-            let props = DrawableProps::read(props);
-            if !props.visible || props.opacity <= 0.0 {
-                continue;
+            let mut query = world.query::<(
+                &LineComponent,
+                &ColorComponent,
+                &SharedProps,
+                &RenderOrderComponent,
+            )>();
+            for (line, color, props, order) in query.iter() {
+                let props = DrawableProps::read(props);
+                if !props.visible || props.opacity <= 0.0 {
+                    continue;
+                }
+
+                let model = props.model_matrix();
+                let start = model.transform_point3(line.start);
+                let end = model.transform_point3(line.end);
+                let alpha = color.0.w * props.opacity;
+                draw_commands.push(DrawCommand::Line {
+                    key: RenderSortKey {
+                        layer: props.layer,
+                        tattva_id: order.tattva_id,
+                        primitive_index: order.primitive_index,
+                    },
+                    data: [
+                        start.x,
+                        start.y,
+                        start.z,
+                        0.0,
+                        end.x,
+                        end.y,
+                        end.z,
+                        0.0,
+                        color.0.x,
+                        color.0.y,
+                        color.0.z,
+                        alpha,
+                        line.thickness,
+                        line.dash_length,
+                        line.gap_length,
+                        line.dash_offset,
+                    ],
+                    world_center: (start + end) * 0.5,
+                    transparent: alpha < 1.0,
+                    depth_mode: props.depth_mode,
+                });
             }
+        }
 
-            let model = props.model_matrix();
-            let start = model.transform_point3(line.start);
-            let end = model.transform_point3(line.end);
+        {
+            let mut query = world.query::<(&MeshComponent, &SharedProps, &RenderOrderComponent)>();
+            for (mesh_comp, props, order) in query.iter() {
+                let props = DrawableProps::read(props);
+                if !props.visible || props.opacity <= 0.0 {
+                    continue;
+                }
+                draw_commands.push(DrawCommand::Mesh {
+                    key: RenderSortKey {
+                        layer: props.layer,
+                        tattva_id: order.tattva_id,
+                        primitive_index: order.primitive_index,
+                    },
+                    mesh: mesh_comp.0.clone(),
+                    model: props.model_matrix(),
+                    bind_group: mesh_comp.0.bind_group.clone(),
+                    alpha: props.opacity,
+                    world_center: props
+                        .model_matrix()
+                        .transform_point3(mesh_comp.0.local_center),
+                    transparent: mesh_comp.0.has_transparency || props.opacity < 1.0,
+                    depth_mode: props.depth_mode,
+                });
+            }
+        }
 
-            line_data.extend_from_slice(bytemuck::cast_slice(&[
-                start.x,
-                start.y,
-                start.z,
-                0.0,
-                end.x,
-                end.y,
-                end.z,
-                0.0,
-                color.0.x,
-                color.0.y,
-                color.0.z,
-                color.0.w * props.opacity,
-                line.thickness,
-                line.dash_length,
-                line.gap_length,
-                line.dash_offset,
-            ]));
-            line_count += 1;
+        let perspective = matches!(scene.camera.projection, Projection::Perspective { .. });
+        if perspective {
+            let view = scene.camera.view_matrix();
+            draw_commands.sort_by(|a, b| compare_3d_commands(a, b, view));
+        } else {
+            draw_commands.sort_by_key(DrawCommand::key);
+        }
+
+        let mesh_count = draw_commands
+            .iter()
+            .filter(|command| matches!(command, DrawCommand::Mesh { .. }))
+            .count() as u64;
+        self.ensure_uniform_capacity(mesh_count)?;
+
+        let line_count = draw_commands
+            .iter()
+            .filter(|command| matches!(command, DrawCommand::Line { .. }))
+            .count();
+        let mut line_data = Vec::with_capacity(line_count * 16 * std::mem::size_of::<f32>());
+        for command in &draw_commands {
+            if let DrawCommand::Line { data, .. } = command {
+                line_data.extend_from_slice(bytemuck::cast_slice(data));
+            }
         }
 
         let line_resources = if line_count > 0 {
@@ -676,37 +986,18 @@ impl Renderer {
             None
         };
 
-        let draw_list: Vec<(Arc<MeshInstance>, Mat4, Option<Arc<wgpu::BindGroup>>, f32)> = {
-            let mut list = Vec::new();
-            let mut query = world.query::<(&MeshComponent, &SharedProps)>();
-            for (_, (mesh_comp, props)) in query.iter() {
-                let props = DrawableProps::read(props);
-                if !props.visible || props.opacity <= 0.0 {
-                    continue;
-                }
-                list.push((
-                    mesh_comp.0.clone(),
-                    props.model_matrix(),
-                    mesh_comp.0.bind_group.clone(),
-                    props.opacity,
-                ));
-            }
-            // Render opaque/shape-like mesh primitives before text primitives so
-            // label quads don't get overpainted by later background meshes when
-            // ECS iteration order changes.
-            list.sort_by_key(|(mesh, _, _, _)| match mesh.pipeline_kind {
-                MeshPipelineKind::Mesh => 0_u8,
-                MeshPipelineKind::Textured => 1_u8,
-                MeshPipelineKind::Text => 2_u8,
-            });
-            list
-        };
-
-        let _ = scene;
+        if line_resources.is_some() {
+            self.device_mgr.queue.write_buffer(
+                &self.camera_buffer,
+                0,
+                bytemuck::cast_slice(view_proj.as_ref()),
+            );
+        }
         let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Primary Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view,
+                depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(self.clear_color),
@@ -724,47 +1015,222 @@ impl Renderer {
             ..Default::default()
         });
 
-        if let Some((_, bg)) = &line_resources {
-            self.device_mgr.queue.write_buffer(
-                &self.camera_buffer,
-                0,
-                bytemuck::cast_slice(view_proj.as_ref()),
-            );
-            rpass.set_pipeline(&self.line_pipeline);
-            rpass.set_bind_group(0, bg, &[]);
-            rpass.set_bind_group(1, &self.camera_bind_group, &[]);
-            rpass.draw(0..6, 0..line_count as u32);
-        }
+        let mut line_index = 0_u32;
+        let mut mesh_index = 0_u64;
+        let mut command_index = 0;
+        while command_index < draw_commands.len() {
+            match &draw_commands[command_index] {
+                DrawCommand::Line { .. } => {
+                    let Some((_, bind_group)) = &line_resources else {
+                        break;
+                    };
+                    let pipeline_mode =
+                        depth_pipeline_mode(&draw_commands[command_index], perspective);
+                    let first_line = line_index;
+                    while command_index < draw_commands.len()
+                        && matches!(&draw_commands[command_index], DrawCommand::Line { .. })
+                        && depth_pipeline_mode(&draw_commands[command_index], perspective)
+                            == pipeline_mode
+                    {
+                        line_index += 1;
+                        command_index += 1;
+                    }
+                    let pipeline = match pipeline_mode {
+                        DepthPipelineMode::Overlay => &self.line_overlay_pipeline,
+                        DepthPipelineMode::OpaqueWorld => &self.line_depth_write_pipeline,
+                        DepthPipelineMode::TransparentWorld => &self.line_pipeline,
+                    };
+                    rpass.set_pipeline(pipeline);
+                    rpass.set_bind_group(0, bind_group, &[]);
+                    rpass.set_bind_group(1, &self.camera_bind_group, &[]);
+                    rpass.draw(0..6, first_line..line_index);
+                }
+                DrawCommand::Mesh {
+                    mesh,
+                    model,
+                    bind_group,
+                    alpha,
+                    transparent,
+                    depth_mode,
+                    ..
+                } => {
+                    let mvp = view_proj * *model;
+                    let offset = (mesh_index * self.uniform_slot_size) as u32;
+                    self.device_mgr.queue.write_buffer(
+                        &self.uniform_buffer,
+                        offset as u64,
+                        bytemuck::cast_slice(&[Uniforms::from_mat4_alpha(mvp, *alpha)]),
+                    );
 
-        for (draw_idx, (mesh, model, bind_group_opt, alpha)) in draw_list.iter().enumerate() {
-            if draw_idx as u64 >= self.max_drawables {
-                break;
+                    let pipeline_mode = if !perspective || *depth_mode == DepthMode::Overlay {
+                        DepthPipelineMode::Overlay
+                    } else if *transparent {
+                        DepthPipelineMode::TransparentWorld
+                    } else {
+                        DepthPipelineMode::OpaqueWorld
+                    };
+                    let pipeline = match (mesh.pipeline_kind, pipeline_mode) {
+                        (MeshPipelineKind::Mesh, DepthPipelineMode::Overlay) => &self.mesh_pipeline,
+                        (MeshPipelineKind::Mesh, DepthPipelineMode::OpaqueWorld) => {
+                            &self.mesh_depth_pipeline
+                        }
+                        (MeshPipelineKind::Mesh, DepthPipelineMode::TransparentWorld) => {
+                            &self.mesh_transparent_depth_pipeline
+                        }
+                        (
+                            MeshPipelineKind::Textured | MeshPipelineKind::Text,
+                            DepthPipelineMode::Overlay,
+                        ) => &self.text_overlay_pipeline,
+                        (
+                            MeshPipelineKind::Textured | MeshPipelineKind::Text,
+                            DepthPipelineMode::OpaqueWorld,
+                        ) => &self.text_depth_write_pipeline,
+                        (
+                            MeshPipelineKind::Textured | MeshPipelineKind::Text,
+                            DepthPipelineMode::TransparentWorld,
+                        ) => &self.text_pipeline,
+                    };
+                    rpass.set_pipeline(pipeline);
+                    rpass.set_bind_group(0, &self.uniform_bind_group, &[offset]);
+                    if let Some(bind_group) = bind_group.as_ref() {
+                        rpass.set_bind_group(1, bind_group.as_ref(), &[]);
+                    } else {
+                        rpass.set_bind_group(1, &self.default_texture_bind_group, &[]);
+                    }
+                    mesh.draw(&mut rpass);
+                    mesh_index += 1;
+                    command_index += 1;
+                }
             }
-
-            let mvp = view_proj * *model;
-            let offset = (draw_idx as u64 * self.uniform_slot_size) as u32;
-
-            self.device_mgr.queue.write_buffer(
-                &self.uniform_buffer,
-                offset as u64,
-                bytemuck::cast_slice(&[Uniforms::from_mat4_alpha(mvp, *alpha)]),
-            );
-
-            let pipeline = match mesh.pipeline_kind {
-                MeshPipelineKind::Mesh => &self.mesh_pipeline,
-                MeshPipelineKind::Textured => &self.text_pipeline,
-                MeshPipelineKind::Text => &self.text_pipeline,
-            };
-            rpass.set_pipeline(pipeline);
-            rpass.set_bind_group(0, &self.uniform_bind_group, &[offset]);
-
-            if let Some(bg) = bind_group_opt.as_ref() {
-                rpass.set_bind_group(1, bg, &[]);
-            } else {
-                rpass.set_bind_group(1, &self.default_texture_bind_group, &[]);
-            }
-
-            mesh.draw(&mut rpass);
         }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        DepthMode, DepthPipelineMode, DrawCommand, Mat4, RenderSortKey, Vec3, compare_3d_commands,
+        depth_pipeline_mode, maximum_uniform_capacity, next_uniform_capacity,
+    };
+
+    fn line_command(
+        tattva_id: usize,
+        world_center: Vec3,
+        transparent: bool,
+        depth_mode: DepthMode,
+    ) -> DrawCommand {
+        DrawCommand::Line {
+            key: RenderSortKey {
+                layer: 0,
+                tattva_id,
+                primitive_index: 0,
+            },
+            data: [0.0; 16],
+            world_center,
+            transparent,
+            depth_mode,
+        }
+    }
+
+    #[test]
+    fn painter_order_is_stable_across_primitive_kinds() {
+        let mut commands = vec![
+            (
+                "text",
+                RenderSortKey {
+                    layer: 0,
+                    tattva_id: 2,
+                    primitive_index: 1,
+                },
+            ),
+            (
+                "newer mesh",
+                RenderSortKey {
+                    layer: 0,
+                    tattva_id: 3,
+                    primitive_index: 0,
+                },
+            ),
+            (
+                "background mesh",
+                RenderSortKey {
+                    layer: -100,
+                    tattva_id: 9,
+                    primitive_index: 0,
+                },
+            ),
+            (
+                "line",
+                RenderSortKey {
+                    layer: 0,
+                    tattva_id: 2,
+                    primitive_index: 0,
+                },
+            ),
+        ];
+
+        commands.sort_by_key(|(_, key)| *key);
+
+        assert_eq!(
+            commands
+                .into_iter()
+                .map(|(kind, _)| kind)
+                .collect::<Vec<_>>(),
+            vec!["background mesh", "line", "text", "newer mesh"]
+        );
+    }
+
+    #[test]
+    fn perspective_order_draws_opaque_then_far_to_near_transparency_then_overlay() {
+        let mut commands = vec![
+            line_command(2, Vec3::new(0.0, 0.0, -2.0), true, DepthMode::World),
+            line_command(4, Vec3::ZERO, true, DepthMode::Overlay),
+            line_command(1, Vec3::new(0.0, 0.0, -3.0), false, DepthMode::World),
+            line_command(3, Vec3::new(0.0, 0.0, -10.0), true, DepthMode::World),
+        ];
+
+        commands.sort_by(|a, b| compare_3d_commands(a, b, Mat4::IDENTITY));
+
+        assert_eq!(
+            commands
+                .iter()
+                .map(|command| command.key().tattva_id)
+                .collect::<Vec<_>>(),
+            vec![1, 3, 2, 4]
+        );
+    }
+
+    #[test]
+    fn orthographic_commands_use_overlay_pipelines() {
+        let opaque_world = line_command(1, Vec3::ZERO, false, DepthMode::World);
+        let transparent_world = line_command(2, Vec3::ZERO, true, DepthMode::World);
+
+        assert_eq!(
+            depth_pipeline_mode(&opaque_world, false),
+            DepthPipelineMode::Overlay
+        );
+        assert_eq!(
+            depth_pipeline_mode(&transparent_world, true),
+            DepthPipelineMode::TransparentWorld
+        );
+    }
+
+    #[test]
+    fn uniform_capacity_grows_geometrically_without_a_fixed_mesh_limit() {
+        assert_eq!(next_uniform_capacity(1024, 1024, 16_384), Some(1024));
+        assert_eq!(next_uniform_capacity(1024, 1025, 16_384), Some(2048));
+        assert_eq!(next_uniform_capacity(1024, 5000, 16_384), Some(8192));
+        assert_eq!(next_uniform_capacity(8192, 12_000, 12_000), Some(12_000));
+        assert_eq!(next_uniform_capacity(8192, 12_001, 12_000), None);
+    }
+
+    #[test]
+    fn uniform_capacity_respects_buffer_and_dynamic_offset_limits() {
+        assert_eq!(maximum_uniform_capacity(4096, 256), 16);
+        assert_eq!(
+            maximum_uniform_capacity(u64::MAX, 256),
+            (u32::MAX as u64 / 256) + 1
+        );
     }
 }

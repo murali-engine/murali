@@ -101,8 +101,20 @@ fn build_scene(mode: LogoMode, capture_name: Option<&str>) -> Scene {
         let _ = vec![
             add_line(&mut scene, (left, bottom), (left, top), 0.06, palette.frame),
             add_line(&mut scene, (left, top), (right, top), 0.06, palette.frame),
-            add_line(&mut scene, (right, top), (right, bottom), 0.06, palette.frame),
-            add_line(&mut scene, (right, bottom), (left, bottom), 0.06, palette.frame),
+            add_line(
+                &mut scene,
+                (right, top),
+                (right, bottom),
+                0.06,
+                palette.frame,
+            ),
+            add_line(
+                &mut scene,
+                (right, bottom),
+                (left, bottom),
+                0.06,
+                palette.frame,
+            ),
         ];
     }
 
@@ -134,10 +146,34 @@ fn build_scene(mode: LogoMode, capture_name: Option<&str>) -> Scene {
     );
 
     let _ = vec![
-        add_line(&mut scene, (-2.45, -1.62), (-1.85, -1.05), 0.03, palette.handle),
-        add_line(&mut scene, (0.0, -0.72), (-0.92, -0.72), 0.03, palette.handle),
-        add_line(&mut scene, (0.0, -0.72), (0.92, -0.72), 0.03, palette.handle),
-        add_line(&mut scene, (2.45, -1.62), (1.85, -1.05), 0.03, palette.handle),
+        add_line(
+            &mut scene,
+            (-2.45, -1.62),
+            (-1.85, -1.05),
+            0.03,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (0.0, -0.72),
+            (-0.92, -0.72),
+            0.03,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (0.0, -0.72),
+            (0.92, -0.72),
+            0.03,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (2.45, -1.62),
+            (1.85, -1.05),
+            0.03,
+            palette.handle,
+        ),
     ];
 
     scene.add_tattva(
@@ -153,14 +189,56 @@ fn build_scene(mode: LogoMode, capture_name: Option<&str>) -> Scene {
     );
 
     let _ = vec![
-        add_line(&mut scene, (-2.55, -1.52), (-2.62, -0.18), 0.032, palette.handle),
-        add_line(&mut scene, (-1.72, 1.86), (-2.30, 1.52), 0.032, palette.handle),
-        add_line(&mut scene, (-1.72, 1.86), (-1.18, 2.12), 0.032, palette.handle),
-        add_line(&mut scene, (0.0, 0.08), (-0.58, 0.92), 0.032, palette.handle),
+        add_line(
+            &mut scene,
+            (-2.55, -1.52),
+            (-2.62, -0.18),
+            0.032,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (-1.72, 1.86),
+            (-2.30, 1.52),
+            0.032,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (-1.72, 1.86),
+            (-1.18, 2.12),
+            0.032,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (0.0, 0.08),
+            (-0.58, 0.92),
+            0.032,
+            palette.handle,
+        ),
         add_line(&mut scene, (0.0, 0.08), (0.58, 0.92), 0.032, palette.handle),
-        add_line(&mut scene, (1.72, 1.86), (1.18, 2.12), 0.032, palette.handle),
-        add_line(&mut scene, (1.72, 1.86), (2.30, 1.52), 0.032, palette.handle),
-        add_line(&mut scene, (2.55, -1.52), (2.62, -0.18), 0.032, palette.handle),
+        add_line(
+            &mut scene,
+            (1.72, 1.86),
+            (1.18, 2.12),
+            0.032,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (1.72, 1.86),
+            (2.30, 1.52),
+            0.032,
+            palette.handle,
+        ),
+        add_line(
+            &mut scene,
+            (2.55, -1.52),
+            (2.62, -0.18),
+            0.032,
+            palette.handle,
+        ),
     ];
 
     let _ = vec![

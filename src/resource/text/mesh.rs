@@ -9,9 +9,9 @@ use std::sync::Arc;
 /// This acts as the "Baker" for text geometry.
 pub fn build_label_mesh(layout: &LabelLayout, atlas: &GlyphAtlas, color: Vec4) -> Arc<Mesh> {
     let mut vertices: Vec<TextVertex> = Vec::new();
-    let mut indices: Vec<u16> = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
 
-    let mut index_offset: u16 = 0;
+    let mut index_offset: u32 = 0;
 
     for glyph in &layout.glyphs {
         let info = match atlas.glyphs.get(&glyph.ch) {

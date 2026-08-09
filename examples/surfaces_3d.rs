@@ -1,5 +1,4 @@
 use glam::{Vec3, Vec4};
-use murali::App;
 use murali::colors::*;
 use murali::engine::camera::Projection;
 use murali::engine::scene::Scene;
@@ -8,6 +7,7 @@ use murali::frontend::animation::Ease;
 use murali::frontend::collection::composite::axes3d::Axes3D;
 use murali::frontend::collection::graph::parametric_surface::ParametricSurface;
 use murali::frontend::collection::text::label::Label;
+use murali::{App, DepthMode};
 
 fn hill_surface(u: f32, v: f32) -> Vec3 {
     let x = u;
@@ -96,6 +96,9 @@ fn main() -> anyhow::Result<()> {
     };
     scene.camera_mut().position = Vec3::new(-5.6, 2.25, 8.2);
     scene.camera_mut().target = Vec3::new(0.0, 0.24, 0.0);
+    for id in [title_id, subtitle_id, footer_id] {
+        scene.set_depth_mode(id, DepthMode::Overlay);
+    }
 
     let mut timeline = Timeline::new();
     timeline
@@ -179,7 +182,7 @@ fn main() -> anyhow::Result<()> {
         .typewrite_text()
         .spawn();
 
-    scene.set_timeline("main", timeline);
+    scene.play(timeline)?;
 
     App::new()?.with_scene(scene).run_app()
 }

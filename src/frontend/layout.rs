@@ -1,4 +1,4 @@
-use glam::{Vec2, vec2};
+use glam::{Mat4, Vec2, Vec3, vec2};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Place {
@@ -80,6 +80,23 @@ impl Bounds {
             min: center - scaled_half,
             max: center + scaled_half,
         }
+    }
+
+    /// Returns the axis-aligned XY bounds after transforming the local corners.
+    pub fn transform_3d(&self, transform: Mat4) -> Self {
+        let corners = [
+            Vec3::new(self.min.x, self.min.y, 0.0),
+            Vec3::new(self.max.x, self.min.y, 0.0),
+            Vec3::new(self.max.x, self.max.y, 0.0),
+            Vec3::new(self.min.x, self.max.y, 0.0),
+        ];
+        let first = transform.transform_point3(corners[0]).truncate();
+        corners[1..]
+            .iter()
+            .fold(Self::new(first, first), |bounds, corner| {
+                let point = transform.transform_point3(*corner).truncate();
+                Self::new(bounds.min.min(point), bounds.max.max(point))
+            })
     }
 
     pub fn union(&self, other: &Self) -> Self {
