@@ -10,6 +10,7 @@ Use this checklist to publish a Murali crate and freeze matching Docusaurus docu
 - Run:
 
 ```bash
+scripts/check-release-metadata.sh
 cargo fmt --all -- --check
 cargo test --all-targets
 cargo check --no-default-features --all-targets
@@ -51,3 +52,4 @@ Pushing `main` deploys the site through `.github/workflows/deploy.yml`.
 - Verify the new crates.io version and a fresh dependency resolution.
 - Verify the deployed docs, version selector, and release post.
 - Confirm README installation instructions point to the released version.
+- Run `scripts/check-release-metadata.sh` once more against the tagged tree.

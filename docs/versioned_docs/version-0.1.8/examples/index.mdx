@@ -1,0 +1,137 @@
+---
+sidebar_position: 1
+---
+
+# Examples
+
+Murali's reference runnable examples live in the GitHub repository for Murali.
+
+If you are new to Murali, read [First Scene](../first-scene.md), [Which API Should I Use?](../which-api-should-i-use.md), and [Animations](../animations.md) first. Then come back here when you want concrete scenes to run and modify.
+
+## Running Examples
+
+Clone the repository and run any example locally:
+
+```bash
+cargo run --example hello_shapes
+```
+
+The full catalog lives in the repository at [`examples/README.md`](https://github.com/ravishankarkumar/murali/blob/main/examples/README.md).
+
+The published crate excludes `examples/**`, so these reference examples are available from the repository rather than from the crates.io package alone.
+
+## Quick Start Picks
+
+If you only want a few examples to begin with:
+
+- `hello_shapes` - a first scene with a square, circle, rectangle, and polygon
+- `motion_basics` - move, scale, rotate, and fade with clear pacing
+- `text_animation` - write, reveal, indicate, and simple draw semantics
+- `code_blocks` - syntax-highlighted code presented as a scene element
+- `graphs_2d` - axes, function plots, labels, and sampled points
+- `surfaces_3d` - a shaded form-first surface with camera movement
+- `murali_logo` - the brand mark as a polished visual/reference composition
+
+## By Intent
+
+### Foundations
+
+- `hello_shapes`
+  What to notice: primitive tattvas and simple authored placement
+- `layout_and_groups`
+  What to notice: `next_to`, `align_to`, `HStack`, `VStack`, and `Group.move_to`
+- `style_and_paths`
+  What to notice: fill, stroke, dashes, arrows, and authored paths
+- `motion_basics`
+  What to notice: the core motion verbs with calm timing
+
+### Text And Math
+
+- `text_animation`
+  What to notice: `draw`, `undraw`, `typewrite_text`, `reveal_text`, and `indicate`
+- `code_blocks`
+  What to notice: syntax-highlighted code as a first-class tattva with layout and pacing
+- `latex_and_typst`
+  What to notice: static LaTeX and Typst rendering plus a compact renderer-crossing morph
+- `equation_and_matrix_animation`
+  What to notice: equation continuity and matrix-step highlighting
+- `tables`
+  What to notice: one table example that writes in, pauses, and unwrites cleanly
+
+### Graphs And Fields
+
+- `graphs_2d`
+  What to notice: axes, number plane, one function graph, and sampled points
+- `curves_3d`
+  What to notice: one parametric space curve with 3D framing
+- `streamlines`
+  What to notice: seeded flow trajectories without mixing in arrow fields
+
+### Dynamics And Systems
+
+- `force_fields`
+  What to notice: updater-driven electric fields responding to moving charges
+- `particles`
+  What to notice: one orbital belt with cinematic motion
+- `traced_paths`
+  What to notice: a rolling wheel whose chosen point leaves behind a cycloid
+- `neural_networks`
+  What to notice: network structure and signal playback
+- `transformer_attention`
+  What to notice: tokens, attention relationships, and transformer-style block composition
+- `tensor_semantics`
+  What to notice: computed self-attention with named axes, stable element identity, and semantic selection
+- `tensor_operations`
+  What to notice: named-axis reshape, split/merge, and semantic broadcasting
+- `tensor_slicing`
+  What to notice: explicit rank-4 slicing into an animated token-by-feature view
+- `self_attention_lesson`
+  What to notice: a versioned JSON trace feeding computed attention, residual, logits, and sampling stages
+- `stepwise_storytelling`
+  What to notice: staged reveal flow and routed narrative transitions
+
+### Three D
+
+- `surfaces_3d`
+  What to notice: one translucent surface whose form is explained through color and camera framing
+- `wireframe_surfaces`
+  What to notice: wireframe-specific curvature reading
+- `textured_surface`
+  What to notice: UV texture mapping on a parametric globe
+
+### Brand And Demos
+
+- `murali_logo`
+  What to notice: a reference brand composition built from authored guides and bezier curves
+- `murali_logo_transparent`
+  What to notice: export-oriented logo capture with transparent background and simple scene flags
+- `fourier_formula_trace`
+  What to notice: Fourier coefficients reordered into epicycles that rebuild a Typst formula outline
+- `map_projection_morph`
+  What to notice: the Earth texture bending through multiple map projections
+
+## Choosing An Example
+
+Use this rough mapping when you are not sure where to start:
+
+- learning scene structure: start with `hello_shapes` and `layout_and_groups`
+- learning animation vocabulary: start with `motion_basics` and `text_animation`
+- learning text, equations, or tables: start with `latex_and_typst`, `equation_and_matrix_animation`, and `tables`
+- learning graphs and fields: start with `graphs_2d` and `streamlines`
+- learning updater-driven motion: start with `force_fields`, `particles`, and `traced_paths`
+- learning 3D camera and surface work: start with `curves_3d`, `surfaces_3d`, and `textured_surface`
+- learning story-first scenes: start with `stepwise_storytelling`
+- learning AI diagrams: start with `neural_networks` and `transformer_attention`
+- learning semantic AI computation: start with `tensor_semantics`, `tensor_operations`, `tensor_slicing`, and `self_attention_lesson`
+- learning branding study scenes: start with `murali_logo`
+- learning branding export scenes: start with `murali_logo_transparent`
+
+## Related Docs
+
+- [Animations](../animations.md)
+- [Timelines](../timelines.md)
+- [Scene and App](../scene-and-app.md)
+- [Text](../tattvas/text.md)
+- [Graphs](../tattvas/graphs.md)
+- [Math](../tattvas/math.md)
+- [Export and Capture](../export-and-capture.md)

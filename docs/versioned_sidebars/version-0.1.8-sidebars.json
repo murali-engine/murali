@@ -1,0 +1,84 @@
+{
+  "tutorialSidebar": [
+    "intro",
+    "installation",
+    "visual-foundations",
+    "first-scene",
+    "mental-model",
+    "which-api-should-i-use",
+    "common-first-mistakes",
+    "coordinate-system",
+    {
+      "type": "category",
+      "label": "Tattvas",
+      "link": {
+        "type": "doc",
+        "id": "tattvas/index"
+      },
+      "items": [
+        "tattvas/properties",
+        "tattvas/primitives",
+        "tattvas/text",
+        "tattvas/tables",
+        "tattvas/composite",
+        "tattvas/graphs",
+        "tattvas/math",
+        "tattvas/layout",
+        "tattvas/storytelling",
+        "tattvas/ai",
+        "tattvas/utility"
+      ]
+    },
+    "animations",
+    "timelines",
+    "scene-and-app",
+    "export-and-capture",
+    "camera",
+    "updaters",
+    {
+      "type": "category",
+      "label": "Examples",
+      "link": {
+        "type": "doc",
+        "id": "examples/index"
+      },
+      "items": [
+        "examples/showcase",
+        "examples/reference-videos",
+        "examples/basics",
+        "examples/text_and_math",
+        "examples/animation",
+        "examples/three_d",
+        "examples/graphs_and_fields",
+        "examples/dynamics"
+      ]
+    },
+    "useful-features",
+    "roadmap",
+    {
+      "type": "category",
+      "label": "Architecture",
+      "items": [
+        "architecture/overview",
+        "architecture/architecture",
+        "architecture/scene-timeline",
+        "architecture/tattva",
+        "architecture/dirty-flags",
+        "architecture/projection",
+        "architecture/ecs",
+        "architecture/renderer",
+        "architecture/text-and-latex",
+        "architecture/end-to-end-flow"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Feature Internals",
+      "items": [
+        "feature-internals/overview",
+        "feature-internals/stepwise",
+        "feature-internals/neural-network"
+      ]
+    }
+  ]
+}

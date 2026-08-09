@@ -30,6 +30,9 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
 
+      - name: Check release metadata consistency
+        run: scripts/check-release-metadata.sh
+
       - name: Check formatting
         run: cargo fmt --all --check
 

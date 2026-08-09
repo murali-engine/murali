@@ -2,6 +2,17 @@
 
 All notable changes to Murali are recorded here.
 
+## 0.1.8 - 2026-08-09
+
+### Fixed
+
+- Restored the intended `MIT OR Apache-2.0` dual-license declaration and included both canonical
+  license texts in the repository and published package.
+- Corrected the documentation release metadata so `0.1.8` is the explicit stable version across
+  the version selector, installation snippets, and frozen documentation.
+- Added a CI release-metadata check to keep crate, lockfile, documentation, and license signals in
+  sync.
+
 ## 0.1.7 - 2026-08-09
 
 ### Added
@@ -29,4 +40,4 @@ All notable changes to Murali are recorded here.
 ### Changed
 
 - Upgraded the rendering and supporting dependency stack.
-- Aligned release documentation with Rust 1.85, `glam` 0.33, and Apache-2.0 licensing.
+- Declared the package metadata as Apache-2.0 to match the repository's existing license file.

@@ -41,7 +41,7 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-murali = "0.1.7"
+murali = "0.1.8"
 anyhow = "1"
 glam = "0.33"
 ```
@@ -112,4 +112,4 @@ Murali is under active development. The repository already includes:
 
 ## License
 
-Murali is licensed under the Apache License, Version 2.0.
+Murali is dual-licensed under either the MIT License or the Apache License, Version 2.0.
