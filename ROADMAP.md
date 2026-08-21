@@ -26,8 +26,9 @@ not in the plan.
   semantic IDs, trace events, and the boundary between imported data and authored visuals.
 - Add a general 2D image tattva and image-grid composition for datasets, feature maps, and
   multimodal lessons.
-- Add semantic transformer internals for residual streams, KV caches, normalization, MLPs, and
-  mixture-of-experts routing.
+- Add semantic transformer internals for residual streams, MLPs, and mixture-of-experts routing.
+- Add an autoregressive-generation composition that connects successive next-token distributions,
+  selected tokens, appended context, and the repeat-until-stop streaming cycle.
 - Add computation-graph state with deterministic forward and reverse-mode playback.
 - Add parameter, gradient, loss-series, optimizer-step, embedding, activation, feature-map, and
   attribution views.

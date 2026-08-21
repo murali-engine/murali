@@ -9,7 +9,6 @@ Murali is a Rust-based animation engine for semantic graphics and mathematical s
 - Internal architecture: [Architecture Overview](https://muraliengine.com/docs/architecture/overview)
 - Youtube showcase [Murali Youtube Channel](https://www.youtube.com/@muraliengine)
 - Reference examples in this repo: [examples/README.md](./examples/README.md)
-- Creative showcase repo: [murali-examples](https://github.com/ravishankarkumar/murali-examples)
 
 
 ## Goals
@@ -19,6 +18,21 @@ Murali is a Rust-based animation engine for semantic graphics and mathematical s
 - Clear separation between authored scene state and render/runtime state
 - A modern GPU path built on `wgpu`
 
+## Building Blocks And Comfort Tattvas
+
+Murali is primarily a framework of building blocks. The stable core should make primitives, text,
+timelines, layouts, camera movement, and rendering expressive enough that users can assemble most
+visual elements on the fly.
+
+Murali also intentionally includes a small number of opinionated composite tattvas. These are
+comfort tattvas: higher-level components that make common video-making scenes easier to author,
+especially for AI explainers, mathematical storytelling, and reusable visual UI.
+
+That convenience has a cost. Too many composites can make the library bloated or too prescriptive,
+so new opinionated components usually live in beta first. They may change quickly, move, be renamed,
+or be removed while their ergonomics and visual language are tested in real productions. Components
+are promoted into stable sections only after they prove mature and broadly useful.
+
 ## Current Shape
 
 - `src/frontend/` contains user-facing tattvas, animations, layout helpers, and scene authoring APIs
@@ -27,7 +41,6 @@ Murali is a Rust-based animation engine for semantic graphics and mathematical s
 - `src/engine/` contains scene ownership, app lifecycle, timeline stepping, export, and config
 - `docs/` contains the longer-form documentation site
 - `examples/` contains the reference runnable examples for the crate
-- `murali-examples/` lives in a dedicated companion repository for more creative showcases
 
 ## Getting Started
 
@@ -41,7 +54,7 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-murali = "0.2.0"
+murali = "0.2.1"
 anyhow = "1"
 glam = "0.33"
 ```
@@ -56,13 +69,22 @@ cargo run --example hello_shapes
 
 The published crate excludes `examples/**`, so reference examples are available from the repository rather than from the crates.io package alone.
 
+Quickly inspect a GLB/GLTF asset before using it in a scene:
+
+```bash
+cargo run --example model_inspector -- demo-apple
+cargo run --example model_inspector -- /absolute/path/to/model.glb --rot-x -20
+```
+
+The inspector centers and frames the model automatically. Pass `--help` to see scale, rotation,
+camera, and continuous-preview controls.
+
 Some useful places to start:
 
 - [Documentation](https://muraliengine.com/docs/intro)
 - [Landscape, portrait, and square video formats](https://muraliengine.com/docs/video-formats)
 - [Reference examples catalog](./examples/README.md)
 - [Future roadmap](./ROADMAP.md)
-- [Creative showcase repository](https://github.com/ravishankarkumar/murali-examples)
 - [YouTube showcase](https://www.youtube.com/@muraliengine)
 
 ## Who It's For
@@ -118,6 +140,7 @@ Murali is under active development. The repository already includes:
 - primitives, layout helpers, tables, graph tattvas, and utility tattvas
 - write/unwrite, transform, text, and surface animation building blocks
 - semantic tensor snapshots, operations, slicing, transitions, and versioned AI trace ingestion
+- context-window, next-token sampling, KV-cache, and LayerNorm/RMSNorm teaching views
 
 ## License
 

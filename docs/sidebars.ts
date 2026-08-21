@@ -13,6 +13,15 @@ const sidebars: SidebarsConfig = {
     'video-formats',
     {
       type: 'category',
+      label: '3D',
+      collapsed: false,
+      items: [
+        'examples/three_d',
+        '3d-prop-assets',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Tattvas',
       link: {type: 'doc', id: 'tattvas/index'},
       items: [
@@ -21,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'tattvas/text',
         'tattvas/tables',
         'tattvas/composite',
+        'tattvas/opening',
         'tattvas/graphs',
         'tattvas/math',
         'tattvas/layout',
@@ -31,6 +41,7 @@ const sidebars: SidebarsConfig = {
     },
     'animations',
     'timelines',
+    'scene-views',
     'scene-and-app',
     'export-and-capture',
     'camera',
@@ -45,9 +56,16 @@ const sidebars: SidebarsConfig = {
         'examples/basics',
         'examples/text_and_math',
         'examples/animation',
-        'examples/three_d',
         'examples/graphs_and_fields',
         'examples/dynamics'
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Beta & Experimental',
+      link: {type: 'doc', id: 'beta/index'},
+      items: [
+        'beta/chat-input-box',
       ],
     },
     'useful-features',

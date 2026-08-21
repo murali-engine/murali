@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Text
 
-Text is essential for mathematical animation, teaching visuals, and explanatory content. Murali provides four text tattvas, each optimized for different use cases.
+Text is essential for mathematical animation, teaching visuals, and explanatory content. Murali provides several text tattvas, each optimized for different use cases.
 
 All text tattvas live under `murali::frontend::collection::text`.
 
@@ -18,6 +18,8 @@ If you are choosing between text systems for a real scene, start here and then r
 | Mathematical equations | `Latex` or `Typst` | Industry standard (Latex) or modern (Typst) |
 | Rich formatted text | `Typst` | Modern typesetting, no external tools |
 | Syntax-highlighted code | `CodeBlock` | Built-in highlighting, monospace |
+| Extruded capital letters | `Letter3D` | True depth, texture mapping, and independent 3D transforms |
+| Letter-shaped dissolve | `LetterParticles3D` | Deterministic particles sampled from the glyph interior |
 
 ## Which Text Tattva Should I Pick?
 
@@ -28,6 +30,9 @@ Use `Latex` when you want standard academic math rendering and are comfortable d
 Use `Typst` when you want richer formatting, modern typesetting, or math/text content without leaning on a full LaTeX install.
 
 Use `CodeBlock` when the code itself is part of the visual explanation and syntax highlighting matters.
+
+Use `Letter3D` when a capital letter needs to behave as a real 3D object. Pair it with
+`LetterParticles3D` when the solid glyph should dissolve into a seekable particle effect.
 
 The most common beginner mistake is overusing `Latex` for everything. For titles, annotations, and short labels, `Label` is usually the better tool.
 
@@ -195,6 +200,100 @@ Label is the fastest text option:
 - `typewrite_text()` when a left-to-right typing feel matters
 
 ---
+
+## Letter3D
+
+`Letter3D` extrudes a font outline into front, back, and side faces. Holes in letters such as `A`,
+`P`, `Q`, and `R` remain open. The initial API intentionally accepts only ASCII capital letters
+`A` through `Z`.
+
+```rust
+use glam::{Quat, Vec3, Vec4};
+use murali::frontend::collection::text::letter3d::Letter3D;
+use murali::{BuiltinTexture, TextureImage};
+
+let letter = Letter3D::new('K', 2.6, 0.72)?
+    .with_texture(TextureImage::builtin(BuiltinTexture::WhiteMarble))
+    .with_face_colors(
+        Vec4::new(1.0, 0.98, 0.91, 1.0),
+        Vec4::new(0.58, 0.55, 0.49, 1.0),
+        Vec4::new(0.42, 0.39, 0.34, 1.0),
+    );
+
+let letter_id = scene.add_tattva(letter, Vec3::new(0.0, 4.0, 12.0));
+scene.set_rotation(letter_id, Quat::from_rotation_y(0.8));
+```
+
+The constructor parameters are `(character, world_height, extrusion_depth)`. Add letters
+separately when each character needs its own fall, tumble, impact timing, or final position.
+
+The embedded Inter font is used by `Letter3D::new`. Use `Letter3D::from_font_path` to build a
+capital from another TrueType or OpenType font:
+
+```rust
+let letter = Letter3D::from_font_path('K', 2.6, 0.72, "assets/fonts/brand.ttf")?;
+```
+
+Use a perspective camera and `DepthMode::World` when the extrusion and rotations should read as
+3D. Image textures use planar UVs on the front and back and perimeter UVs on the side walls.
+Without a texture, the configured face colors render directly.
+
+### Falling Letters
+
+`Letter3D` uses ordinary Tattva transforms, so no special motion API is required:
+
+```rust
+timeline
+    .animate(letter_id)
+    .at(0.4)
+    .for_duration(1.4)
+    .ease(Ease::InCubic)
+    .move_to(Vec3::new(0.0, -0.4, 0.0))
+    .spawn();
+timeline
+    .animate(letter_id)
+    .at(0.4)
+    .for_duration(1.4)
+    .ease(Ease::InOutCubic)
+    .rotate_to(Quat::IDENTITY)
+    .spawn();
+```
+
+Starting beyond the camera position lets the letter enter from behind the viewer. Keep the camera
+far plane large enough to include the initial position.
+
+### Letter Particles
+
+`LetterParticles3D` samples a deterministic particle volume from the same glyph silhouette:
+
+```rust
+use murali::frontend::collection::text::letter3d::LetterParticles3D;
+
+let particles = LetterParticles3D::new('K', 2.6, 0.72, 260)?
+    .with_motion(4.8, 2.35, 1.0)
+    .with_particle_size(0.028)
+    .with_color(Vec4::new(0.78, 0.79, 0.77, 0.88))
+    .with_palette([TEAL, BLUE, PINK, GOLD]);
+let particles_id = scene.add_tattva(particles, final_position);
+
+timeline
+    .animate(particles_id)
+    .at(4.5)
+    .for_duration(2.8)
+    .ease(Ease::InOutCubic)
+    .scatter_letter_particles()
+    .spawn();
+```
+
+At scatter `0.0`, the particles occupy the solid glyph silhouette. A common transition is to show
+the particle tattva and quickly fade the solid `Letter3D` at the same timestamp. The scatter verb
+is deterministic and supports seeking and export. Use `.letter_particle_scatter_to(value)` for a
+partial or reversible-looking state.
+
+For the reusable drop, shake, particle, and tagline choreography, see the beta
+[`Opening`](./composite#opening) composite and the `kavriq_opening` example. Place its scene in a
+`SceneView` only when the complete opening needs an independent clock or must transform as one
+object inside a parent scene.
 
 ## Latex
 

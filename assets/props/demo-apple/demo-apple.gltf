@@ -1,0 +1,222 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Murali demo fixture"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "Demo Apple"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Demo Apple",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0,
+          "mode": 4
+        },
+        {
+          "attributes": {
+            "POSITION": 2
+          },
+          "indices": 3,
+          "material": 1,
+          "mode": 4
+        },
+        {
+          "attributes": {
+            "POSITION": 4
+          },
+          "indices": 5,
+          "material": 2,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "Apple skin",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.86,
+          0.08,
+          0.05,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.72
+      }
+    },
+    {
+      "name": "Stem",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.34,
+          0.18,
+          0.08,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.8
+      }
+    },
+    {
+      "name": "Leaf",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.12,
+          0.48,
+          0.18,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.65
+      }
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "demo-apple.bin",
+      "byteLength": 8856
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 4320,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 4320,
+      "byteLength": 3744,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8064,
+      "byteLength": 360,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8424,
+      "byteLength": 336,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8760,
+      "byteLength": 60,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8820,
+      "byteLength": 36,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 360,
+      "type": "VEC3",
+      "min": [
+        -0.9,
+        -1.05,
+        -0.82
+      ],
+      "max": [
+        0.9,
+        0.8522242325889626,
+        0.82
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 1872,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        359
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 30,
+      "type": "VEC3",
+      "min": [
+        -0.039999999999999994,
+        0.8299999999999998,
+        -0.08774351209636415
+      ],
+      "max": [
+        0.2268,
+        1.45,
+        0.08774351209636412
+      ]
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 168,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        29
+      ]
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 5,
+      "type": "VEC3",
+      "min": [
+        0.12,
+        1.35,
+        -0.02
+      ],
+      "max": [
+        0.82,
+        1.56,
+        0.04
+      ]
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 18,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        4
+      ]
+    }
+  ]
+}

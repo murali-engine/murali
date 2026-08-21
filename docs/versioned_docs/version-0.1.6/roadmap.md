@@ -165,7 +165,7 @@ We should continue to:
 
 - keep the reference set curated and non-redundant
 - use this repository for official reference-quality examples
-- use `murali-examples` for more creative, experimental, or stylistically exploratory scenes
+- publish selected creative and exploratory results through the video showcase
 
 The reference examples should answer:
 

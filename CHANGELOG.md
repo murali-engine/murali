@@ -2,6 +2,50 @@
 
 All notable changes to Murali are recorded here.
 
+## 0.2.1 - 2026-08-22
+
+### Added
+
+- `SceneView`, an independently timed child scene that renders as one transformable parent object
+  with playback modes, backgrounds, borders, rounded corners, and configurable resolution.
+- A `scene_view` reference example and dedicated guide covering child-scene construction, local
+  time mapping, playback lifecycle, parent animation, and current compositing limits.
+- `Letter3D` support for extruded ASCII capitals with hole-aware font tessellation, independent
+  face colors, custom font loading, and image textures.
+- `LetterParticles3D` and seekable scatter animations for deterministic glyph-to-particle
+  transitions, including configurable destination palettes.
+- The beta `composite::beta::opening::Opening` temporal composite for configurable 3D title drops,
+  shake-and-burst choreography, particle dissolves, and tagline reveals.
+- A `kavriq_opening` example that customizes the beta opening through Rust constants and exports
+  it directly as a standalone scene.
+- An `opening_scene_view` example that keeps the opening on an independent perspective child scene
+  and fades it into continuing orthographic parent content.
+- `ChatBubble`, a single-outline message-bubble primitive with configurable left or right tips, and
+  the beta `ChatInputBox` composite with typewriter-ready text and an optional send button.
+- `Prop3D` support for static local `.glb` and `.gltf` assets, including scene transforms,
+  base-color materials and textures, local-space bounds, checked-in demo props, and reference
+  examples for both formats.
+- A `model_inspector` utility example with automatic centering and framing, continuous rotation,
+  orbit and zoom controls, camera and fit options, and repository shorthand for bundled demo props.
+- `TextureImage::builtin` and `BuiltinTexture::{BlackMarble, WhiteMarble}` for path-free access to
+  Murali's embedded marble textures. `Letter3D` and the beta opening composite accept these reusable
+  in-memory textures.
+- `ContextWindow`, a role-aware semantic view of assembled model context with token budgets and
+  explicit per-block truncation.
+- `NextTokenDistribution`, a deterministic next-token teaching view with temperature, top-k, top-p,
+  renormalization, and authored unit-interval sampling.
+- `KvCacheView` for key/value cache occupancy backed by semantic tensors, plus the seekable
+  `kv_cache_fill_to` timeline animation.
+- `TensorSnapshot::try_normalized` with LayerNorm and RMSNorm operations, and `NormalizationView`
+  for visualizing their input, output, and per-group statistics.
+- Runnable examples and Docusaurus guides for the new conversational, 3D prop, opening, SceneView,
+  and semantic AI APIs.
+
+### Fixed
+
+- Orbit camera controls now synchronize with the authored camera before interaction, preventing a
+  jump on the first drag and keeping scroll zoom centered on the current target.
+
 ## 0.2.0 - 2026-08-09
 
 ### Added

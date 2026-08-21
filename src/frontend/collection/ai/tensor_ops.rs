@@ -16,6 +16,13 @@ pub enum TensorElementwiseOp {
     Maximum,
 }
 
+/// Non-affine normalization applied along one named tensor axis.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TensorNormalization {
+    LayerNorm,
+    RmsNorm,
+}
+
 /// One deterministic choice from a categorical tensor slice.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TensorSample {
@@ -665,6 +672,70 @@ impl TensorSnapshot {
         Ok(scaled)
     }
 
+    /// Normalizes each slice along a named axis while preserving semantic axes and element IDs.
+    ///
+    /// This operation is intentionally non-affine. Learned scale and bias tensors can be applied
+    /// afterward with [`TensorSnapshot::try_elementwise`].
+    pub fn try_normalized(
+        &self,
+        output_id: impl Into<String>,
+        axis_id: &str,
+        normalization: TensorNormalization,
+        epsilon: f32,
+    ) -> Result<Self, ValidationError> {
+        self.validate()?;
+        let axis = self.axis_index(axis_id, "normalization axis")?;
+        if !epsilon.is_finite() {
+            return Err(ValidationError::NonFinite {
+                component: COMPONENT,
+                field: "normalization epsilon",
+                value: epsilon,
+            });
+        }
+        if epsilon <= 0.0 {
+            return Err(ValidationError::NonPositive {
+                component: COMPONENT,
+                field: "normalization epsilon",
+                value: epsilon,
+            });
+        }
+
+        let axis_length = self.shape[axis];
+        let inner = self.shape[(axis + 1)..].iter().product::<usize>();
+        let outer = self.values.len() / (axis_length * inner);
+        let mut values = self.values.clone();
+        for outer_index in 0..outer {
+            for inner_index in 0..inner {
+                let index = |axis_index: usize| {
+                    outer_index * axis_length * inner + axis_index * inner + inner_index
+                };
+                let mean = (0..axis_length)
+                    .map(|axis_index| self.values[index(axis_index)])
+                    .sum::<f32>()
+                    / axis_length as f32;
+                let square_mean = (0..axis_length)
+                    .map(|axis_index| {
+                        let value = self.values[index(axis_index)];
+                        match normalization {
+                            TensorNormalization::LayerNorm => (value - mean).powi(2),
+                            TensorNormalization::RmsNorm => value.powi(2),
+                        }
+                    })
+                    .sum::<f32>()
+                    / axis_length as f32;
+                let divisor = (square_mean + epsilon).sqrt();
+                for axis_index in 0..axis_length {
+                    let input = self.values[index(axis_index)];
+                    values[index(axis_index)] = match normalization {
+                        TensorNormalization::LayerNorm => (input - mean) / divisor,
+                        TensorNormalization::RmsNorm => input / divisor,
+                    };
+                }
+            }
+        }
+        Self::try_new(output_id, self.shape.clone(), values, self.axes.clone())
+    }
+
     /// Replaces entries above the rank-2 causal diagonal with a finite mask value.
     pub fn try_causal_masked(&self, masked_value: f32) -> Result<Self, ValidationError> {
         self.validate()?;
@@ -1149,6 +1220,65 @@ mod tests {
         assert_close(result.values[3], 0.5);
         assert_close(result.values[0] + result.values[1], 1.0);
         assert_close(result.values[2] + result.values[3], 1.0);
+    }
+
+    #[test]
+    fn layer_norm_and_rms_norm_follow_named_axis_semantics() {
+        let tensor = TensorSnapshot::try_new(
+            "residual",
+            vec![2, 3],
+            vec![1.0, 2.0, 3.0, 2.0, 4.0, 6.0],
+            vec![
+                axis("token", &[("t0", "A"), ("t1", "B")]),
+                axis("feature", &[("f0", "x"), ("f1", "y"), ("f2", "z")]),
+            ],
+        )
+        .unwrap();
+
+        let layer = tensor
+            .try_normalized(
+                "layer_norm",
+                "feature",
+                TensorNormalization::LayerNorm,
+                1e-5,
+            )
+            .unwrap();
+        assert_close(layer.values[0] + layer.values[1] + layer.values[2], 0.0);
+        assert_close(layer.values[3] + layer.values[4] + layer.values[5], 0.0);
+        assert_eq!(layer.axes, tensor.axes);
+
+        let rms = tensor
+            .try_normalized("rms_norm", "feature", TensorNormalization::RmsNorm, 1e-5)
+            .unwrap();
+        let first_square_mean = rms.values[..3]
+            .iter()
+            .map(|value| value * value)
+            .sum::<f32>()
+            / 3.0;
+        assert_close(first_square_mean, 1.0);
+        assert!(rms.values.iter().all(|value| *value > 0.0));
+    }
+
+    #[test]
+    fn normalization_rejects_unknown_axes_and_invalid_epsilon() {
+        let tensor = TensorSnapshot::try_new(
+            "residual",
+            vec![2],
+            vec![1.0, 2.0],
+            vec![axis("feature", &[("f0", "x"), ("f1", "y")])],
+        )
+        .unwrap();
+        assert!(matches!(
+            tensor.try_normalized("out", "missing", TensorNormalization::LayerNorm, 1e-5),
+            Err(ValidationError::UnknownIdentifier { .. })
+        ));
+        assert!(matches!(
+            tensor.try_normalized("out", "feature", TensorNormalization::LayerNorm, 0.0),
+            Err(ValidationError::NonPositive {
+                field: "normalization epsilon",
+                ..
+            })
+        ));
     }
 
     #[test]

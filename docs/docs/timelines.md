@@ -6,6 +6,10 @@ sidebar_position: 6
 
 A **Timeline** is the scene's single global time axis. A **Clip** is a reusable group of animations authored from its own local time `0.0` and placed onto that timeline.
 
+When content needs a genuinely independent runtime clock rather than clip-local authoring, put it
+in a child scene and present it with [`SceneView`](./scene-views). A clip is flattened onto this
+scene's timeline; a SceneView retains the child scene's own timeline and local time.
+
 ## What is a Timeline?
 
 Think of the timeline as the editing surface for the complete animation. Clips are the sections arranged on it: an introduction, a model explanation, a background motion sequence, or an outro.

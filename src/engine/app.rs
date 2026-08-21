@@ -140,6 +140,9 @@ impl<'a> ApplicationHandler for App {
         let mut engine =
             pollster::block_on(async { Engine::new_with_scene(arc_window.clone(), scene).await });
 
+        self.camera_controller
+            .sync_from_camera(&engine.scene.camera);
+
         // let bg = Theme::global().background;
         engine.set_clear_color(Theme::global().background);
 
@@ -240,8 +243,9 @@ impl<'a> ApplicationHandler for App {
             WindowEvent::KeyboardInput { event, .. } if event.state == ElementState::Pressed => {
                 match event.physical_key {
                     PhysicalKey::Code(KeyCode::KeyO) => {
-                        self.camera_controller =
-                            ActiveCameraController::Orbit(OrbitCameraController::new(10.0))
+                        let mut controller = OrbitCameraController::new(10.0);
+                        controller.sync_from_camera(&engine.scene.camera);
+                        self.camera_controller = ActiveCameraController::Orbit(controller);
                     }
                     PhysicalKey::Code(KeyCode::KeyP) => {
                         self.camera_controller =

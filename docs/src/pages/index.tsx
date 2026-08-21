@@ -60,15 +60,10 @@ const highlights: Card[] = [
 ];
 
 const resources: Card[] = [
-  // {
-  //   title: 'Canonical examples',
-  //   description: 'Runnable examples for reference-quality scene code.',
-  //   href: 'https://github.com/ravishankarkumar/murali/blob/main/examples/README.md',
-  // },
   {
-    title: 'Example code snippets',
-    description: 'Runnable Murali examples in a dedicated GitHub repository.',
-    href: 'https://github.com/ravishankarkumar/murali-examples',
+    title: 'Reference examples',
+    description: 'Runnable, maintained examples for learning Murali scene construction.',
+    href: 'https://github.com/ravishankarkumar/murali/blob/main/examples/README.md',
     label: 'Examples',
   },
   {
@@ -292,7 +287,7 @@ export default function Home(): ReactNode {
               <SectionIntro
                 eyebrow="Explore"
                 title="Documentation, internals, examples, and showcase videos"
-                body="Murali includes storytelling primitives, architecture notes, a companion examples repository, and showcase videos so you can move from concept to scene quickly."
+                body="Murali includes storytelling primitives, architecture notes, maintained reference examples, and showcase videos so you can move from concept to scene quickly."
               />
               <div className={styles.note}>
                 <p className={styles.noteTitle}>Suggested reading order</p>

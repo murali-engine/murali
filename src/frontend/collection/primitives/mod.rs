@@ -1,4 +1,5 @@
 pub mod arrow;
+pub mod chat_bubble;
 pub mod circle;
 pub mod cube;
 pub mod ellipse;
@@ -8,6 +9,7 @@ pub mod noisy_horizon;
 pub mod particle_belt;
 pub mod path;
 pub mod polygon;
+pub mod prop3d;
 pub mod rectangle;
 pub mod rounded_rectangle;
 pub mod square;

@@ -1,11 +1,15 @@
 /target
 /rendered_output
+/local-resources
 
 # Docusaurus
 docs/node_modules
 docs/.docusaurus
 docs/build
 murali.toml
+
+# Brand fonts with licenses that do not permit repository redistribution.
+/assets/fonts/private/*
 
 .windsurf
 .vscode

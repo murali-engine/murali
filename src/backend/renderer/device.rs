@@ -184,9 +184,13 @@ impl DepthTexture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth24Plus;
 
     pub fn create(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> Self {
+        Self::create_sized(device, config.width, config.height)
+    }
+
+    pub fn create_sized(device: &wgpu::Device, width: u32, height: u32) -> Self {
         let size = wgpu::Extent3d {
-            width: config.width,
-            height: config.height,
+            width: width.max(1),
+            height: height.max(1),
             depth_or_array_layers: 1,
         };
 

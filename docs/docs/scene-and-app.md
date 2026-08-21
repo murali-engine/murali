@@ -16,7 +16,7 @@ Use lower-level access only when you need type-specific mutation or generic scen
 
 ## Scene
 
-`Scene` is the authoritative source of truth for your animation. It owns all tattvas, the global timeline, camera state, and scene time.
+`Scene` is the authoritative source of truth for your animation. It owns all tattvas, the global timeline, camera state, scene time, and any child scenes presented through `SceneView`.
 
 ```rust
 use murali::engine::scene::Scene;
@@ -30,6 +30,7 @@ let mut scene = Scene::new();
 - Scene time (current playback position)
 - Camera configuration
 - Updaters (frame-by-frame callbacks)
+- Child `SceneView`s
 
 ## Adding Tattvas
 
@@ -264,6 +265,31 @@ scene.play(timeline)?;
 Both clips use local time `0.0`; `append` converts those local times into one flat absolute schedule. Use `overlay` for concurrent clips and `place_at` for explicit global placement.
 
 For composition semantics and examples, see the [Timelines and Clips](./timelines) guide.
+
+## Child Scenes With SceneView
+
+Use `SceneView` when part of the composition needs its own scene, timeline, camera, or updaters.
+The parent receives one `TattvaId` for the complete child and can animate that handle with normal
+move, scale, rotate, fade, layout, and layer APIs.
+
+```rust
+let view_id = scene.add_scene_view(
+    SceneView::new(child_scene)
+        .size(glam::vec2(6.0, 3.4))
+        .corner_radius(0.2)
+        .playback(SceneViewPlayback::Loop { duration: 3.0 }),
+    glam::Vec3::new(4.5, 2.5, 0.0),
+);
+```
+
+The child clock starts from local time zero by default and can loop, pause, stop on its final
+frame, or continue independently. See [SceneView](./scene-views) for the full timing model,
+styling controls, lifecycle behavior, and limitations.
+
+A full-frame SceneView can also isolate a perspective beta [`Opening`](./tattvas/opening) from an
+orthographic parent scene. The view owns the opening background and fades as one parent object,
+while the continuing scene keeps its own camera and timeline. See
+[Full-Screen Opening Handoff](./scene-views#full-screen-opening-handoff).
 
 ## Capture Helpers
 

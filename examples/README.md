@@ -10,6 +10,26 @@ A first scene with a square, circle, rectangle, and polygon placed by hand.
 `cargo run --example layout_and_groups`
 Placement helpers like `next_to`, `align_to`, `HStack`, `VStack`, and `Group.move_to`.
 
+`cargo run --example scene_view`
+A hand-built transformer running on its own looping child timeline while the complete view docks,
+tilts, scales, and returns inside a separate parent composition.
+
+`cargo run --example kavriq_opening`
+Extruded, bone-textured capital letters fall through a perspective scene, settle into KAVRIQ,
+burst into glyph-shaped particles, and dissolve to reveal a stable tagline end card. It demonstrates
+the beta `Opening` composite and keeps the title, tagline, font, texture, colors, particle count,
+and timing choices as Rust constants at the top of the script.
+
+```bash
+cargo run --release --example kavriq_opening
+```
+
+`cargo run --example opening_scene_view`
+The beta `Opening` runs in a full-frame perspective `SceneView`, including its own background. The
+parent remains orthographic and reveals an ongoing inference-flow scene as the complete opening
+view fades away. This is the reference for continuing into Murali-authored content without changing
+the parent camera or flattening both sequences onto one projection.
+
 `cargo run --example portrait_video`
 An intentional 9:16 composition demonstrating portrait preview, export, and frame-relative layout.
 
@@ -21,6 +41,26 @@ Move, scale, rotate, and fade with small readable easing examples.
 
 `cargo run --example text_animation`
 Typewriter text, centered reveal, indicate pulses, and one simple path draw/undraw.
+
+`cargo run --example chat_input_box`
+The beta `ChatInputBox` composite with left/right bottom tips, optional send button, and
+typewriter-ready prompt text.
+
+`cargo run --example context_window`
+A semantic model-context view with role-tagged instructions, history, retrieval, tool output,
+token-budget usage, and explicit history truncation.
+
+`cargo run --example next_token_distribution`
+A computed next-token decision showing logits, model probabilities, temperature, top-k and top-p
+filtering, a deterministic sample, and the selected token.
+
+`cargo run --example kv_cache`
+A semantic key/value cache backed by two token-feature tensors, with empty future slots and
+deterministic row-by-row cache growth.
+
+`cargo run --example normalization`
+A computed LayerNorm view showing residual values before and after normalization together with the
+mean and standard deviation used for each token.
 
 `cargo run --example code_blocks`
 Syntax-highlighted code snippets placed and paced as first-class scene elements.
@@ -48,6 +88,18 @@ One wireframe saddle surface where the mesh itself explains the curvature.
 
 `cargo run --example textured_surface`
 One textured globe that teaches image wrapping on a parametric surface.
+
+`cargo run --example prop3d_glb`
+A local faceted `.glb` prop loaded as a `Prop3D`, then moved and rotated with ordinary timeline
+transforms.
+
+`cargo run --example prop3d_gltf`
+A loose `.gltf` apple prop loaded with its sibling `.bin` file, then moved and rotated with ordinary
+timeline transforms.
+
+`cargo run --example model_inspector -- demo-apple`
+A quick 3D asset inspection scene that automatically resolves, centers, frames, and continuously
+rotates a GLB/GLTF model. Use `--help` for scale, orientation, camera, and preview controls.
 
 `cargo run --example streamlines`
 Seeded flow trajectories through one field, taught without mixing in vector arrows.

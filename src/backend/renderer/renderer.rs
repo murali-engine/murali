@@ -1,6 +1,6 @@
 use anyhow::Result;
 use bytemuck::{Pod, Zeroable};
-use glam::{Mat4, Vec3};
+use glam::{Mat4, Vec2, Vec3, Vec4};
 use image::{ImageBuffer, RgbaImage};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -26,6 +26,45 @@ pub struct Uniforms {
     pub mvp: [[f32; 4]; 4],
     pub alpha: f32,
     pub _padding: [f32; 3],
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Pod, Zeroable)]
+struct SceneViewUniforms {
+    mvp: [[f32; 4]; 4],
+    size: [f32; 2],
+    opacity: f32,
+    corner_radius: f32,
+    background: [f32; 4],
+    border_color: [f32; 4],
+    border_width: f32,
+    _padding: [f32; 3],
+}
+
+pub struct SceneRenderTarget {
+    pub texture: wgpu::Texture,
+    pub view: wgpu::TextureView,
+    pub depth: DepthTexture,
+    pub texture_bind_group: Arc<wgpu::BindGroup>,
+    pub width: u32,
+    pub height: u32,
+}
+
+pub struct SceneViewPass<'a> {
+    pub scene: &'a Scene,
+    pub world: &'a hecs::World,
+    pub target: &'a SceneRenderTarget,
+}
+
+pub struct SceneViewComposite {
+    pub tattva_id: usize,
+    pub props: SharedProps,
+    pub texture_bind_group: Arc<wgpu::BindGroup>,
+    pub size: Vec2,
+    pub background: Option<Vec4>,
+    pub corner_radius: f32,
+    pub border_width: f32,
+    pub border_color: Vec4,
 }
 
 impl Uniforms {
@@ -95,6 +134,33 @@ fn create_uniform_resources(
     (buffer, bind_group)
 }
 
+fn create_scene_view_uniform_resources(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    slot_size: u64,
+    capacity: u64,
+) -> (wgpu::Buffer, wgpu::BindGroup) {
+    let buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("SceneView Uniform Buffer"),
+        size: slot_size * capacity,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("scene-view-uniform-bind-group"),
+        layout,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                buffer: &buffer,
+                offset: 0,
+                size: Some(NonZeroU64::new(slot_size).unwrap()),
+            }),
+        }],
+    });
+    (buffer, bind_group)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct RenderSortKey {
     layer: i32,
@@ -120,30 +186,43 @@ enum DrawCommand {
         transparent: bool,
         depth_mode: DepthMode,
     },
+    SceneView {
+        key: RenderSortKey,
+        model: Mat4,
+        bind_group: Arc<wgpu::BindGroup>,
+        uniforms: SceneViewUniforms,
+        world_center: Vec3,
+        depth_mode: DepthMode,
+    },
 }
 
 impl DrawCommand {
     fn key(&self) -> RenderSortKey {
         match self {
-            Self::Line { key, .. } | Self::Mesh { key, .. } => *key,
+            Self::Line { key, .. } | Self::Mesh { key, .. } | Self::SceneView { key, .. } => *key,
         }
     }
 
     fn world_center(&self) -> Vec3 {
         match self {
-            Self::Line { world_center, .. } | Self::Mesh { world_center, .. } => *world_center,
+            Self::Line { world_center, .. }
+            | Self::Mesh { world_center, .. }
+            | Self::SceneView { world_center, .. } => *world_center,
         }
     }
 
     fn is_transparent(&self) -> bool {
         match self {
             Self::Line { transparent, .. } | Self::Mesh { transparent, .. } => *transparent,
+            Self::SceneView { .. } => true,
         }
     }
 
     fn depth_mode(&self) -> DepthMode {
         match self {
-            Self::Line { depth_mode, .. } | Self::Mesh { depth_mode, .. } => *depth_mode,
+            Self::Line { depth_mode, .. }
+            | Self::Mesh { depth_mode, .. }
+            | Self::SceneView { depth_mode, .. } => *depth_mode,
         }
     }
 
@@ -208,6 +287,8 @@ pub struct Renderer {
     line_pipeline: wgpu::RenderPipeline,
     line_depth_write_pipeline: wgpu::RenderPipeline,
     line_overlay_pipeline: wgpu::RenderPipeline,
+    scene_view_pipeline: wgpu::RenderPipeline,
+    scene_view_overlay_pipeline: wgpu::RenderPipeline,
 
     pub depth: DepthTexture,
 
@@ -217,6 +298,12 @@ pub struct Renderer {
     uniform_slot_size: u64,
     uniform_capacity: u64,
 
+    scene_view_uniform_buffer: wgpu::Buffer,
+    scene_view_uniform_bind_group: wgpu::BindGroup,
+    scene_view_uniform_bind_group_layout: wgpu::BindGroupLayout,
+    scene_view_uniform_slot_size: u64,
+    scene_view_uniform_capacity: u64,
+
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
 
@@ -225,6 +312,7 @@ pub struct Renderer {
 
     default_sampler: wgpu::Sampler,
     default_texture_bind_group: wgpu::BindGroup,
+    scene_view_quad: MeshInstance,
 
     mesh_cache: HashMap<usize, Arc<MeshInstance>>,
 }
@@ -244,6 +332,9 @@ impl Renderer {
         let min_alignment = device.limits().min_uniform_buffer_offset_alignment as u64;
         let uniform_slot_size =
             (std::mem::size_of::<Uniforms>() as u64 + min_alignment - 1) & !(min_alignment - 1);
+        let scene_view_uniform_slot_size =
+            (std::mem::size_of::<SceneViewUniforms>() as u64 + min_alignment - 1)
+                & !(min_alignment - 1);
 
         // ===============================
         // 🔑 MISSING FIELD 1: Camera Buffer
@@ -271,6 +362,13 @@ impl Renderer {
         let line_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("line-shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shaders/line.wgsl"))),
+        });
+
+        let scene_view_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("scene-view-shader"),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!(
+                "shaders/scene_view.wgsl"
+            ))),
         });
 
         // ===============================
@@ -320,6 +418,23 @@ impl Renderer {
                         count: None,
                     },
                 ],
+            });
+
+        let scene_view_uniform_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("scene-view-uniform-bind-group-layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: true,
+                        min_binding_size: Some(
+                            NonZeroU64::new(scene_view_uniform_slot_size).unwrap(),
+                        ),
+                    },
+                    count: None,
+                }],
             });
 
         // 🔑 MISSING FIELD 2: Camera Bind Group Layout
@@ -377,6 +492,16 @@ impl Renderer {
             bind_group_layouts: &[&line_bind_group_layout, &camera_bind_group_layout],
             push_constant_ranges: &[],
         });
+
+        let scene_view_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("scene-view-pipeline-layout"),
+                bind_group_layouts: &[
+                    &scene_view_uniform_bind_group_layout,
+                    &texture_bind_group_layout,
+                ],
+                push_constant_ranges: &[],
+            });
 
         let create_mesh_pipeline = |label, depth_write_enabled, depth_compare, blend| {
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -480,6 +605,39 @@ impl Renderer {
                 cache: None,
             })
         };
+        let create_scene_view_pipeline = |label, depth_compare| {
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some(label),
+                layout: Some(&scene_view_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &scene_view_shader,
+                    entry_point: Some("vs_main"),
+                    buffers: &[TextVertex::desc()],
+                    compilation_options: Default::default(),
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &scene_view_shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: config.format,
+                        blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: Default::default(),
+                }),
+                primitive: wgpu::PrimitiveState::default(),
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: depth.format,
+                    depth_write_enabled: false,
+                    depth_compare,
+                    stencil: Default::default(),
+                    bias: Default::default(),
+                }),
+                multisample: Default::default(),
+                multiview: None,
+                cache: None,
+            })
+        };
 
         let alpha_blending = Some(wgpu::BlendState::ALPHA_BLENDING);
         let mesh_pipeline = create_mesh_pipeline(
@@ -536,16 +694,24 @@ impl Renderer {
             wgpu::CompareFunction::Always,
             alpha_blending,
         );
+        let scene_view_pipeline = create_scene_view_pipeline(
+            "scene-view-depth-pipeline",
+            wgpu::CompareFunction::LessEqual,
+        );
+        let scene_view_overlay_pipeline = create_scene_view_pipeline(
+            "scene-view-overlay-pipeline",
+            wgpu::CompareFunction::Always,
+        );
 
         let default_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
 
-        let maximum_uniform_capacity =
+        let maximum_mesh_uniform_capacity =
             maximum_uniform_capacity(device.limits().max_buffer_size, uniform_slot_size);
         assert!(
-            maximum_uniform_capacity > 0,
+            maximum_mesh_uniform_capacity > 0,
             "GPU cannot allocate even one {uniform_slot_size}-byte mesh uniform slot"
         );
-        let uniform_capacity = INITIAL_UNIFORM_CAPACITY.min(maximum_uniform_capacity);
+        let uniform_capacity = INITIAL_UNIFORM_CAPACITY.min(maximum_mesh_uniform_capacity);
         let (uniform_buffer, uniform_bind_group) = create_uniform_resources(
             device,
             &uniform_bind_group_layout,
@@ -553,6 +719,19 @@ impl Renderer {
             uniform_slot_size,
             uniform_capacity,
         );
+        let maximum_scene_view_uniform_capacity = maximum_uniform_capacity(
+            device.limits().max_buffer_size,
+            scene_view_uniform_slot_size,
+        );
+        let scene_view_uniform_capacity =
+            INITIAL_UNIFORM_CAPACITY.min(maximum_scene_view_uniform_capacity);
+        let (scene_view_uniform_buffer, scene_view_uniform_bind_group) =
+            create_scene_view_uniform_resources(
+                device,
+                &scene_view_uniform_bind_group_layout,
+                scene_view_uniform_slot_size,
+                scene_view_uniform_capacity,
+            );
 
         let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &camera_bind_group_layout,
@@ -573,6 +752,40 @@ impl Renderer {
             1,
         );
 
+        let scene_view_vertices = [
+            TextVertex {
+                position: [-0.5, -0.5, 0.0],
+                uv: [0.0, 1.0],
+                color: [1.0; 4],
+            },
+            TextVertex {
+                position: [0.5, -0.5, 0.0],
+                uv: [1.0, 1.0],
+                color: [1.0; 4],
+            },
+            TextVertex {
+                position: [0.5, 0.5, 0.0],
+                uv: [1.0, 0.0],
+                color: [1.0; 4],
+            },
+            TextVertex {
+                position: [-0.5, 0.5, 0.0],
+                uv: [0.0, 0.0],
+                color: [1.0; 4],
+            },
+        ];
+        let scene_view_indices = [0_u32, 1, 2, 0, 2, 3];
+        let scene_view_quad = MeshInstance::new(
+            device,
+            bytemuck::cast_slice(&scene_view_vertices),
+            bytemuck::cast_slice(&scene_view_indices),
+            scene_view_indices.len() as u32,
+            None,
+            MeshPipelineKind::Textured,
+            Vec3::ZERO,
+            true,
+        );
+
         Self {
             device_mgr: device_mgr.clone(),
             clear_color: wgpu::Color {
@@ -587,16 +800,24 @@ impl Renderer {
             text_pipeline,
             text_depth_write_pipeline,
             text_overlay_pipeline,
+            scene_view_pipeline,
+            scene_view_overlay_pipeline,
             depth,
             uniform_buffer,
             uniform_bind_group,
             uniform_bind_group_layout,
             uniform_slot_size,
             uniform_capacity,
+            scene_view_uniform_buffer,
+            scene_view_uniform_bind_group,
+            scene_view_uniform_bind_group_layout,
+            scene_view_uniform_slot_size,
+            scene_view_uniform_capacity,
             mesh_cache: HashMap::new(),
             texture_bind_group_layout,
             default_sampler,
             default_texture_bind_group,
+            scene_view_quad,
             line_pipeline,
             line_depth_write_pipeline,
             line_overlay_pipeline,
@@ -607,25 +828,77 @@ impl Renderer {
     }
 
     pub fn render_scene(&mut self, scene: &Scene, world: &hecs::World) -> Result<()> {
+        self.render_scene_with_views(scene, world, &[], &[])
+    }
+
+    pub fn render_scene_with_views(
+        &mut self,
+        scene: &Scene,
+        world: &hecs::World,
+        child_passes: &[SceneViewPass<'_>],
+        composites: &[SceneViewComposite],
+    ) -> Result<()> {
         let (frame, view) = self.device_mgr.acquire_frame()?;
         let view_proj = scene.camera.view_proj_matrix();
+        for child in child_passes {
+            let mut child_encoder =
+                self.device_mgr
+                    .device
+                    .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                        label: Some("Murali SceneView Render Encoder"),
+                    });
+            self.encode_scene_pass(
+                child.scene,
+                child.world,
+                &child.target.view,
+                &child.target.depth.view,
+                &mut child_encoder,
+                child.scene.camera.view_proj_matrix(),
+                wgpu::Color::TRANSPARENT,
+                &[],
+            )?;
+            self.device_mgr.queue.submit(Some(child_encoder.finish()));
+        }
         let mut encoder =
             self.device_mgr
                 .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                     label: Some("Murali Render Encoder"),
                 });
-        self.encode_scene_pass(scene, world, &view, &mut encoder, view_proj)?;
+        let parent_depth_view = self
+            .depth
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        self.encode_scene_pass(
+            scene,
+            world,
+            &view,
+            &parent_depth_view,
+            &mut encoder,
+            view_proj,
+            self.clear_color,
+            composites,
+        )?;
         self.device_mgr.queue.submit(Some(encoder.finish()));
         frame.present();
         Ok(())
     }
 
     pub fn render_to_image(&mut self, scene: &Scene, world: &hecs::World) -> Result<RgbaImage> {
+        self.render_to_image_with_views(scene, world, &[], &[])
+    }
+
+    pub fn render_to_image_with_views(
+        &mut self,
+        scene: &Scene,
+        world: &hecs::World,
+        child_passes: &[SceneViewPass<'_>],
+        composites: &[SceneViewComposite],
+    ) -> Result<RgbaImage> {
         let config = self.device_mgr.config.read().clone();
         let width = config.width.max(1);
         let height = config.height.max(1);
-        let device = &self.device_mgr.device;
+        let device = self.device_mgr.device.clone();
 
         let target = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("export-target"),
@@ -651,15 +924,39 @@ impl Renderer {
             mapped_at_creation: false,
         });
 
+        for child in child_passes {
+            let mut child_encoder =
+                device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("Murali SceneView Export Encoder"),
+                });
+            self.encode_scene_pass(
+                child.scene,
+                child.world,
+                &child.target.view,
+                &child.target.depth.view,
+                &mut child_encoder,
+                child.scene.camera.view_proj_matrix(),
+                wgpu::Color::TRANSPARENT,
+                &[],
+            )?;
+            self.device_mgr.queue.submit(Some(child_encoder.finish()));
+        }
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Murali Export Encoder"),
         });
+        let parent_depth_view = self
+            .depth
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
         self.encode_scene_pass(
             scene,
             world,
             &target_view,
+            &parent_depth_view,
             &mut encoder,
             scene.camera.view_proj_matrix(),
+            self.clear_color,
+            composites,
         )?;
         encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfo {
@@ -823,6 +1120,50 @@ impl Renderer {
         bg
     }
 
+    pub fn create_scene_render_target(&self, width: u32, height: u32) -> SceneRenderTarget {
+        let width = width.max(1);
+        let height = height.max(1);
+        let device = &self.device_mgr.device;
+        let format = self.device_mgr.config.read().format;
+        let texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("scene-view-target"),
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        });
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let texture_bind_group = Arc::new(device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("scene-view-texture-bind-group"),
+            layout: &self.texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&self.default_sampler),
+                },
+            ],
+        }));
+        SceneRenderTarget {
+            texture,
+            view,
+            depth: DepthTexture::create_sized(device, width, height),
+            texture_bind_group,
+            width,
+            height,
+        }
+    }
+
     fn ensure_uniform_capacity(&mut self, required: u64) -> Result<()> {
         if required <= self.uniform_capacity {
             return Ok(());
@@ -853,13 +1194,39 @@ impl Renderer {
         Ok(())
     }
 
+    fn ensure_scene_view_uniform_capacity(&mut self, required: u64) -> Result<()> {
+        if required <= self.scene_view_uniform_capacity {
+            return Ok(());
+        }
+        let maximum = maximum_uniform_capacity(
+            self.device_mgr.device.limits().max_buffer_size,
+            self.scene_view_uniform_slot_size,
+        );
+        let new_capacity =
+            next_uniform_capacity(self.scene_view_uniform_capacity, required, maximum)
+                .ok_or_else(|| anyhow::anyhow!("scene requires too many SceneView uniforms"))?;
+        let (buffer, bind_group) = create_scene_view_uniform_resources(
+            &self.device_mgr.device,
+            &self.scene_view_uniform_bind_group_layout,
+            self.scene_view_uniform_slot_size,
+            new_capacity,
+        );
+        self.scene_view_uniform_buffer = buffer;
+        self.scene_view_uniform_bind_group = bind_group;
+        self.scene_view_uniform_capacity = new_capacity;
+        Ok(())
+    }
+
     fn encode_scene_pass(
         &mut self,
         scene: &Scene,
         world: &hecs::World,
         view: &wgpu::TextureView,
+        depth_view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         view_proj: Mat4,
+        clear_color: wgpu::Color,
+        composites: &[SceneViewComposite],
     ) -> Result<()> {
         let mut draw_commands = Vec::new();
         {
@@ -936,6 +1303,36 @@ impl Renderer {
             }
         }
 
+        for composite in composites {
+            let props = DrawableProps::read(&composite.props);
+            if !props.visible || props.opacity <= 0.0 {
+                continue;
+            }
+            let model = props.model_matrix()
+                * Mat4::from_scale(Vec3::new(composite.size.x, composite.size.y, 1.0));
+            draw_commands.push(DrawCommand::SceneView {
+                key: RenderSortKey {
+                    layer: props.layer,
+                    tattva_id: composite.tattva_id,
+                    primitive_index: 0,
+                },
+                model,
+                bind_group: composite.texture_bind_group.clone(),
+                uniforms: SceneViewUniforms {
+                    mvp: Mat4::IDENTITY.to_cols_array_2d(),
+                    size: composite.size.to_array(),
+                    opacity: props.opacity,
+                    corner_radius: composite.corner_radius,
+                    background: composite.background.unwrap_or(Vec4::ZERO).to_array(),
+                    border_color: composite.border_color.to_array(),
+                    border_width: composite.border_width,
+                    _padding: [0.0; 3],
+                },
+                world_center: props.position,
+                depth_mode: props.depth_mode,
+            });
+        }
+
         let perspective = matches!(scene.camera.projection, Projection::Perspective { .. });
         if perspective {
             let view = scene.camera.view_matrix();
@@ -949,6 +1346,11 @@ impl Renderer {
             .filter(|command| matches!(command, DrawCommand::Mesh { .. }))
             .count() as u64;
         self.ensure_uniform_capacity(mesh_count)?;
+        let scene_view_count = draw_commands
+            .iter()
+            .filter(|command| matches!(command, DrawCommand::SceneView { .. }))
+            .count() as u64;
+        self.ensure_scene_view_uniform_capacity(scene_view_count)?;
 
         let line_count = draw_commands
             .iter()
@@ -1000,12 +1402,12 @@ impl Renderer {
                 depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(self.clear_color),
+                    load: wgpu::LoadOp::Clear(clear_color),
                     store: wgpu::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &self.depth.view,
+                view: depth_view,
                 depth_ops: Some(wgpu::Operations {
                     load: wgpu::LoadOp::Clear(1.0),
                     store: wgpu::StoreOp::Store,
@@ -1017,6 +1419,7 @@ impl Renderer {
 
         let mut line_index = 0_u32;
         let mut mesh_index = 0_u64;
+        let mut scene_view_index = 0_u64;
         let mut command_index = 0;
         while command_index < draw_commands.len() {
             match &draw_commands[command_index] {
@@ -1101,6 +1504,33 @@ impl Renderer {
                     mesh_index += 1;
                     command_index += 1;
                 }
+                DrawCommand::SceneView {
+                    model,
+                    bind_group,
+                    uniforms,
+                    depth_mode,
+                    ..
+                } => {
+                    let mut uniforms = *uniforms;
+                    uniforms.mvp = (view_proj * *model).to_cols_array_2d();
+                    let offset = (scene_view_index * self.scene_view_uniform_slot_size) as u32;
+                    self.device_mgr.queue.write_buffer(
+                        &self.scene_view_uniform_buffer,
+                        offset as u64,
+                        bytemuck::cast_slice(&[uniforms]),
+                    );
+                    let pipeline = if !perspective || *depth_mode == DepthMode::Overlay {
+                        &self.scene_view_overlay_pipeline
+                    } else {
+                        &self.scene_view_pipeline
+                    };
+                    rpass.set_pipeline(pipeline);
+                    rpass.set_bind_group(0, &self.scene_view_uniform_bind_group, &[offset]);
+                    rpass.set_bind_group(1, bind_group.as_ref(), &[]);
+                    self.scene_view_quad.draw(&mut rpass);
+                    scene_view_index += 1;
+                    command_index += 1;
+                }
             }
         }
         Ok(())
@@ -1110,9 +1540,29 @@ impl Renderer {
 #[cfg(test)]
 mod tests {
     use super::{
-        DepthMode, DepthPipelineMode, DrawCommand, Mat4, RenderSortKey, Vec3, compare_3d_commands,
-        depth_pipeline_mode, maximum_uniform_capacity, next_uniform_capacity,
+        DepthMode, DepthPipelineMode, DrawCommand, Mat4, RenderSortKey, SceneViewUniforms, Vec3,
+        compare_3d_commands, depth_pipeline_mode, maximum_uniform_capacity, next_uniform_capacity,
     };
+
+    #[test]
+    fn scene_view_shader_is_valid_wgsl() {
+        let source = include_str!("shaders/scene_view.wgsl");
+        let module = naga::front::wgsl::parse_str(source).expect("SceneView shader should parse");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("SceneView shader should validate");
+    }
+
+    #[test]
+    fn scene_view_uniform_layout_matches_wgsl_offsets() {
+        assert_eq!(std::mem::size_of::<SceneViewUniforms>(), 128);
+        assert_eq!(std::mem::offset_of!(SceneViewUniforms, background), 80);
+        assert_eq!(std::mem::offset_of!(SceneViewUniforms, border_color), 96);
+        assert_eq!(std::mem::offset_of!(SceneViewUniforms, border_width), 112);
+    }
 
     fn line_command(
         tattva_id: usize,

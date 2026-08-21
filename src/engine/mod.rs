@@ -8,14 +8,17 @@ pub mod export;
 pub mod frame;
 pub mod render;
 pub mod scene;
+pub mod scene_view;
 pub mod timeline;
 
 use crate::backend::Backend;
+use crate::backend::renderer::renderer::{SceneRenderTarget, SceneViewComposite, SceneViewPass};
 use crate::backend::sync::SyncBoundary;
 use crate::engine::scene::Scene;
 use crate::engine::timeline::SeekError;
 use crate::validation::ValidationError;
 
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use winit::window::Window;
 
@@ -26,6 +29,13 @@ pub struct Engine {
     pub scene: Scene,
     pub backend: Backend,
     sync_boundary: SyncBoundary,
+    scene_view_runtimes: HashMap<crate::frontend::TattvaId, SceneViewRuntime>,
+}
+
+struct SceneViewRuntime {
+    world: hecs::World,
+    sync_boundary: SyncBoundary,
+    target: SceneRenderTarget,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -44,6 +54,7 @@ impl Engine {
             scene: Scene::new(),
             backend,
             sync_boundary: SyncBoundary::new(),
+            scene_view_runtimes: HashMap::new(),
         }
     }
 
@@ -92,15 +103,105 @@ impl Engine {
                 tattva.as_mut(),
             )?;
         }
+
+        let active_ids = self
+            .scene
+            .scene_views
+            .keys()
+            .copied()
+            .collect::<HashSet<_>>();
+        self.scene_view_runtimes
+            .retain(|id, _| active_ids.contains(id));
+
+        let config = self.backend.renderer.device_mgr.config.read().clone();
+        let view_ids = self.scene.scene_views.keys().copied().collect::<Vec<_>>();
+        for id in view_ids {
+            let view = self
+                .scene
+                .scene_views
+                .get(&id)
+                .expect("SceneView disappeared");
+            let (width, height) = scene_view_target_dimensions(
+                view,
+                config.width,
+                config.height,
+                self.backend.renderer.device_mgr.max_texture_size(),
+            );
+            if let Some(runtime) = self.scene_view_runtimes.get(&id) {
+                if runtime.target.width != width || runtime.target.height != height {
+                    let target = self
+                        .backend
+                        .renderer
+                        .create_scene_render_target(width, height);
+                    self.scene_view_runtimes
+                        .get_mut(&id)
+                        .expect("SceneView runtime disappeared")
+                        .target = target;
+                }
+            } else {
+                let target = self
+                    .backend
+                    .renderer
+                    .create_scene_render_target(width, height);
+                self.scene_view_runtimes.insert(
+                    id,
+                    SceneViewRuntime {
+                        world: hecs::World::new(),
+                        sync_boundary: SyncBoundary::new(),
+                        target,
+                    },
+                );
+            }
+
+            let view = self
+                .scene
+                .scene_views
+                .get_mut(&id)
+                .expect("SceneView disappeared");
+            let runtime = self
+                .scene_view_runtimes
+                .get_mut(&id)
+                .expect("SceneView runtime was not created");
+            sync_scene_state(
+                &mut view.scene,
+                &mut runtime.world,
+                &mut runtime.sync_boundary,
+                &self.backend.renderer,
+            )?;
+        }
         Ok(())
     }
 
     /// Draw the current state of the Backend ECS World.
     pub fn render(&mut self) -> Result<(), anyhow::Error> {
         self.scene.enforce_camera_frame_aspect();
-        self.backend
+        let Engine {
+            scene,
+            backend,
+            scene_view_runtimes,
+            ..
+        } = self;
+        let (child_passes, composites) = scene_view_render_data(scene, scene_view_runtimes);
+        backend
             .renderer
-            .render_scene(&self.scene, &self.backend.world)
+            .render_scene_with_views(scene, &backend.world, &child_passes, &composites)
+    }
+
+    pub fn render_to_image(&mut self) -> Result<image::RgbaImage, anyhow::Error> {
+        self.scene.enforce_camera_frame_aspect();
+        let Engine {
+            scene,
+            backend,
+            scene_view_runtimes,
+            ..
+        } = self;
+        let (child_passes, composites) = scene_view_render_data(scene, scene_view_runtimes);
+        backend.renderer.render_to_image_with_views(
+            scene,
+            &backend.world,
+            &child_passes,
+            &composites,
+        )
     }
 
     pub async fn new_with_scene(window: Arc<winit::window::Window>, scene: Scene) -> Self {
@@ -110,6 +211,7 @@ impl Engine {
             scene,
             backend,
             sync_boundary: SyncBoundary::new(),
+            scene_view_runtimes: HashMap::new(),
         }
     }
 
@@ -124,6 +226,81 @@ impl Engine {
             scene,
             backend,
             sync_boundary: SyncBoundary::new(),
+            scene_view_runtimes: HashMap::new(),
         })
     }
+}
+
+fn scene_view_render_data<'a>(
+    scene: &'a Scene,
+    runtimes: &'a HashMap<crate::frontend::TattvaId, SceneViewRuntime>,
+) -> (Vec<SceneViewPass<'a>>, Vec<SceneViewComposite>) {
+    let mut passes = Vec::new();
+    let mut composites = Vec::new();
+    for (id, view) in &scene.scene_views {
+        let Some(runtime) = runtimes.get(id) else {
+            continue;
+        };
+        let Some(tattva) = scene.get_tattva_any(*id) else {
+            continue;
+        };
+        passes.push(SceneViewPass {
+            scene: &view.scene,
+            world: &runtime.world,
+            target: &runtime.target,
+        });
+        composites.push(SceneViewComposite {
+            tattva_id: *id,
+            props: tattva.props().clone(),
+            texture_bind_group: runtime.target.texture_bind_group.clone(),
+            size: view.size,
+            background: view.background,
+            corner_radius: view.corner_radius,
+            border_width: view.border_width,
+            border_color: view.border_color,
+        });
+    }
+    (passes, composites)
+}
+
+fn sync_scene_state(
+    scene: &mut Scene,
+    world: &mut hecs::World,
+    sync_boundary: &mut SyncBoundary,
+    renderer: &crate::backend::renderer::Renderer,
+) -> Result<(), ValidationError> {
+    for tattva_id in scene.take_removed_tattva_ids() {
+        sync_boundary.remove_tattva(world, tattva_id);
+    }
+    let device = &renderer.device_mgr.device;
+    for (_id, tattva) in scene.tattvas_iter_mut() {
+        sync_boundary.sync_tattva(world, device, renderer, tattva.as_mut())?;
+    }
+    Ok(())
+}
+
+fn scene_view_target_dimensions(
+    view: &crate::engine::scene_view::SceneView,
+    parent_width: u32,
+    parent_height: u32,
+    maximum: u32,
+) -> (u32, u32) {
+    if let Some((width, height)) = view.resolution {
+        return (width.min(maximum).max(1), height.min(maximum).max(1));
+    }
+
+    let aspect = view.scene.frame().aspect_ratio();
+    let mut width = parent_width.max(1) as f32;
+    let mut height = width / aspect;
+    if height > parent_height.max(1) as f32 {
+        height = parent_height.max(1) as f32;
+        width = height * aspect;
+    }
+    let limit_scale = (maximum as f32 / width)
+        .min(maximum as f32 / height)
+        .min(1.0);
+    (
+        (width * limit_scale).round().max(1.0) as u32,
+        (height * limit_scale).round().max(1.0) as u32,
+    )
 }

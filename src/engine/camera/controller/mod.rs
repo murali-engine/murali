@@ -30,9 +30,7 @@ impl ActiveCameraController {
     pub fn handle_scroll(&mut self, delta: f32, cam: &mut Camera) {
         match self {
             ActiveCameraController::Orbit(ctrl) => {
-                // optional: dolly for orbit (later)
-                let dir = cam.forward();
-                cam.position += dir * delta * 0.1;
+                ctrl.zoom(delta, cam);
             }
             ActiveCameraController::PanZoom(ctrl) => {
                 ctrl.zoom(delta, cam);
@@ -44,6 +42,12 @@ impl ActiveCameraController {
         match self {
             ActiveCameraController::Orbit(_) => "Orbit (3D)",
             ActiveCameraController::PanZoom(_) => "Pan + Zoom (2D)",
+        }
+    }
+
+    pub fn sync_from_camera(&mut self, cam: &Camera) {
+        if let ActiveCameraController::Orbit(ctrl) = self {
+            ctrl.sync_from_camera(cam);
         }
     }
 }

@@ -246,8 +246,11 @@ fn resolve_config_artifact_dir(project_root: &Path, path: PathBuf) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{ExportSettings, resolve_config_artifact_dir};
+    use super::{ExportSettings, infer_duration, resolve_config_artifact_dir};
     use crate::engine::scene::Scene;
+    use crate::engine::scene_view::SceneView;
+    use crate::engine::timeline::Timeline;
+    use glam::Vec3;
     use std::path::{Path, PathBuf};
 
     #[test]
@@ -344,14 +347,35 @@ mod tests {
         };
         assert!(settings.pixel_dimensions(&Scene::new()).is_err());
     }
+
+    #[test]
+    fn child_timeline_contributes_to_inferred_export_duration() {
+        let mut child = Scene::new();
+        let mut child_timeline = Timeline::new();
+        child_timeline.wait_until(3.0);
+        child.play(child_timeline).unwrap();
+
+        let mut parent = Scene::new();
+        parent.add_scene_view(
+            SceneView::new(child).start_at(2.0).time_scale(0.5),
+            Vec3::ZERO,
+        );
+
+        assert!((infer_duration(&parent) - 8.0).abs() < 1e-6);
+    }
 }
 
 pub fn infer_duration(scene: &Scene) -> f32 {
-    scene
+    let parent_end = scene
         .timeline
         .as_ref()
         .map(Timeline::end_time)
-        .unwrap_or(0.0)
+        .unwrap_or(0.0);
+    scene
+        .scene_views
+        .values()
+        .filter_map(|view| view.inferred_parent_end_time())
+        .fold(parent_end, f32::max)
         .max(0.1)
 }
 
@@ -400,9 +424,7 @@ pub fn export_scene(scene: Scene, settings: &ExportSettings) -> Result<()> {
 
         let render_start = Instant::now();
         let image = engine
-            .backend
-            .renderer
-            .render_to_image(&engine.scene, &engine.backend.world)
+            .render_to_image()
             .with_context(|| format!("Failed to render export frame {}", next_frame))?;
         if next_frame == 0 {
             eprintln!(

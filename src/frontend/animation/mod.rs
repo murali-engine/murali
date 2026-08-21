@@ -8,6 +8,7 @@ use std::collections::HashMap;
 
 use crate::engine::scene::Scene;
 use crate::frontend::collection::ai::agentic_flow_chart::AgenticFlowChart;
+use crate::frontend::collection::ai::kv_cache::KvCacheView;
 use crate::frontend::collection::ai::signal_flow::SignalFlow;
 use crate::frontend::collection::ai::tensor::{
     TensorSelectionFrame, TensorSelector, TensorSnapshot, TensorTransitionFrame, TensorView,
@@ -32,6 +33,7 @@ use crate::frontend::collection::primitives::rounded_rectangle::RoundedRectangle
 use crate::frontend::collection::primitives::square::Square;
 use crate::frontend::collection::primitives::to_path::ToPath;
 use crate::frontend::collection::storytelling::stepwise::Stepwise;
+use crate::frontend::collection::text::letter3d::LetterParticles3D;
 use crate::frontend::layout::{Anchor, Bounded, Bounds};
 use crate::frontend::props::DrawableProps;
 use crate::frontend::tattva_trait::TattvaTrait;
@@ -102,6 +104,63 @@ pub trait Animation: Send + Sync {
     }
 }
 
+pub struct LetterParticleScatterTo {
+    pub target_id: TattvaId,
+    pub to: f32,
+    pub duration: f32,
+    pub ease: Ease,
+    from: Option<f32>,
+    phase_from: Option<f32>,
+}
+
+impl LetterParticleScatterTo {
+    pub fn new(target_id: TattvaId, to: f32, duration: f32, ease: Ease) -> Self {
+        Self {
+            target_id,
+            to: to.clamp(0.0, 1.0),
+            duration,
+            ease,
+            from: None,
+            phase_from: None,
+        }
+    }
+
+    fn mark_changed(particles: &mut Tattva<LetterParticles3D>) {
+        particles.mark_dirty(DirtyFlags::GEOMETRY | DirtyFlags::BOUNDS | DirtyFlags::STYLE);
+    }
+}
+
+impl Animation for LetterParticleScatterTo {
+    fn on_start(&mut self, scene: &mut Scene) {
+        if let Some(particles) = scene.get_tattva_typed::<LetterParticles3D>(self.target_id) {
+            self.from = Some(particles.state.scatter);
+            self.phase_from = Some(particles.state.phase);
+        }
+    }
+
+    fn apply_at(&mut self, scene: &mut Scene, t: f32) {
+        let progress = self.ease.eval(t);
+        let from = self.from.unwrap_or(0.0);
+        if let Some(particles) = scene.get_tattva_typed_mut::<LetterParticles3D>(self.target_id) {
+            particles.state.scatter = from + (self.to - from) * progress;
+            particles.state.phase = self.phase_from.unwrap_or(0.0) + self.duration * progress;
+            Self::mark_changed(particles);
+        }
+    }
+
+    fn on_finish(&mut self, scene: &mut Scene) {
+        self.apply_at(scene, 1.0);
+    }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        if let Some(particles) = scene.get_tattva_typed_mut::<LetterParticles3D>(self.target_id) {
+            particles.state.scatter = self.from.unwrap_or(0.0);
+            particles.state.phase = self.phase_from.unwrap_or(0.0);
+            Self::mark_changed(particles);
+        }
+    }
+}
+
 pub struct TensorTransition {
     pub target_id: TattvaId,
     pub target: TensorSnapshot,
@@ -121,6 +180,84 @@ pub struct TransformerStageFocus {
     pub target_stage_id: Option<String>,
     pub ease: Ease,
     source_stage_id: Option<Option<String>>,
+}
+
+/// A seekable animation that reveals occupied rows in a semantic KV-cache view.
+pub struct KvCacheFill {
+    pub target_id: TattvaId,
+    pub occupied_tokens: usize,
+    pub ease: Ease,
+    source_occupancy: Option<f32>,
+}
+
+impl KvCacheFill {
+    pub fn new(target_id: TattvaId, occupied_tokens: usize, ease: Ease) -> Self {
+        Self {
+            target_id,
+            occupied_tokens,
+            ease,
+            source_occupancy: None,
+        }
+    }
+
+    fn mark_changed(cache: &mut Tattva<KvCacheView>) {
+        cache.mark_dirty(DirtyFlags::GEOMETRY | DirtyFlags::STYLE | DirtyFlags::TEXT_LAYOUT);
+    }
+}
+
+impl Animation for KvCacheFill {
+    fn validate(&self, scene: &Scene) -> Result<(), crate::validation::ValidationError> {
+        let Some(tattva) = scene.get_tattva_any(self.target_id) else {
+            return Err(crate::validation::ValidationError::MissingTarget {
+                component: "KvCacheFill",
+                target_id: self.target_id,
+            });
+        };
+        let Some(cache) = tattva.as_any().downcast_ref::<Tattva<KvCacheView>>() else {
+            return Err(crate::validation::ValidationError::TargetTypeMismatch {
+                component: "KvCacheFill",
+                target_id: self.target_id,
+                expected: "KvCacheView",
+            });
+        };
+        let mut terminal = cache.state.clone();
+        terminal.occupancy = self.occupied_tokens as f32;
+        terminal.validate()
+    }
+
+    fn on_start(&mut self, scene: &mut Scene) {
+        if let Some(cache) = scene.get_tattva_typed::<KvCacheView>(self.target_id) {
+            self.source_occupancy = Some(cache.state.occupancy);
+        }
+    }
+
+    fn apply_at(&mut self, scene: &mut Scene, t: f32) {
+        let Some(source) = self.source_occupancy else {
+            return;
+        };
+        let progress = self.ease.eval(t);
+        if let Some(cache) = scene.get_tattva_typed_mut::<KvCacheView>(self.target_id) {
+            cache.state.occupancy = source + (self.occupied_tokens as f32 - source) * progress;
+            Self::mark_changed(cache);
+        }
+    }
+
+    fn on_finish(&mut self, scene: &mut Scene) {
+        self.apply_at(scene, 1.0);
+    }
+
+    fn reset(&mut self, scene: &mut Scene) {
+        if let Some(source) = self.source_occupancy {
+            if let Some(cache) = scene.get_tattva_typed_mut::<KvCacheView>(self.target_id) {
+                cache.state.occupancy = source;
+                Self::mark_changed(cache);
+            }
+        }
+    }
+
+    fn reapplies_terminal_state(&self) -> bool {
+        true
+    }
 }
 
 impl TransformerStageFocus {

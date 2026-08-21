@@ -9,6 +9,7 @@ use std::path::PathBuf;
 
 use crate::engine::camera::Camera;
 use crate::engine::frame::Frame;
+use crate::engine::scene_view::{SceneView, SceneViewProxy};
 use crate::engine::timeline::{SeekError, Timeline};
 use crate::frontend::layout::{Anchor, Bounds, Direction, anchor_for_direction, opposite_anchor};
 use crate::frontend::props::DepthMode;
@@ -103,6 +104,9 @@ pub struct Scene {
     frame: Frame,
     pub global_model: Mat4,
 
+    /// Independently animated child scenes presented as parent-scene objects.
+    pub(crate) scene_views: HashMap<TattvaId, SceneView>,
+
     /// Identity bookkeeping
     next_tattva_id: TattvaId,
     removed_tattva_ids: Vec<TattvaId>,
@@ -120,6 +124,7 @@ impl Scene {
             camera: Camera::for_frame(Frame::default()),
             frame: Frame::default(),
             global_model: Mat4::IDENTITY,
+            scene_views: HashMap::new(),
             next_tattva_id: 1,
             removed_tattva_ids: Vec::new(),
         }
@@ -280,6 +285,22 @@ impl Scene {
         Ok(self.add_tattva(surface, position))
     }
 
+    /// Adds an independently animated child scene and returns its parent-facing ID.
+    pub fn add_scene_view(&mut self, view: SceneView, position: Vec3) -> TattvaId {
+        let size = view.view_size();
+        let id = self.add_tattva(SceneViewProxy::new(size), position);
+        self.scene_views.insert(id, view);
+        id
+    }
+
+    pub fn scene_view(&self, id: TattvaId) -> Option<&SceneView> {
+        self.scene_views.get(&id)
+    }
+
+    pub fn scene_view_mut(&mut self, id: TattvaId) -> Option<&mut SceneView> {
+        self.scene_views.get_mut(&id)
+    }
+
     /// Retrieves a Tattva for internal mutation with explicit dirty-flag handling.
     pub(crate) fn get_tattva_any_mut(
         &mut self,
@@ -341,6 +362,10 @@ impl Scene {
         let updaters = std::mem::take(&mut self.updaters);
         updaters.update_all(self, dt);
         self.updaters = updaters;
+
+        for view in self.scene_views.values_mut() {
+            view.update_from_parent(self.scene_time)?;
+        }
         Ok(())
     }
 
@@ -368,6 +393,9 @@ impl Scene {
             let result = timeline.seek_to(scene_time, self);
             self.timeline = Some(timeline);
             result?;
+        }
+        for view in self.scene_views.values_mut() {
+            view.seek_from_parent(scene_time)?;
         }
         self.scene_time = scene_time;
         Ok(())
@@ -617,6 +645,7 @@ impl Scene {
         self.screenshot_captures.clear();
         self.gif_captures.clear();
         self.updaters.clear();
+        self.scene_views.clear();
         self.scene_time = 0.0;
         self.next_tattva_id = 1;
         self.camera = Camera::for_frame(self.frame);
@@ -646,6 +675,7 @@ impl Scene {
     /// Removes a tattva from the scene and records its ID so the backend can
     /// despawn any cached render entities tied to it.
     pub fn remove_tattva(&mut self, id: TattvaId) -> Option<Box<dyn TattvaTrait>> {
+        self.scene_views.remove(&id);
         let removed = self.tattvas.remove(&id);
         if removed.is_some() {
             self.removed_tattva_ids.push(id);

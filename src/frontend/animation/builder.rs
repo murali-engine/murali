@@ -2,12 +2,12 @@ use crate::engine::timeline::Timeline;
 use crate::frontend::TattvaId;
 use crate::frontend::animation::{
     Animation, BeltEvolve, BeltPhaseBy, BeltPhaseTo, Create, Ease, EquationContinuity, FadeTo,
-    FollowAnchor, HorizonEvolve, HorizonPhaseBy, HorizonPhaseTo, IndicateText, MatchTransform,
-    MatrixStep, MorphGeometry, MorphObjects, MoveTo, NoiseEvolve, NoisePhaseBy, NoisePhaseTo,
-    PerlinFieldEvolve, PerlinFieldPhaseBy, PerlinFieldPhaseTo, PropagateSignal, RevealText,
-    RevealTo, RotateTo, ScaleTo, StepwiseSignal, TensorSelectionTransition, TensorTransition,
-    TransformerStageFocus, UnrevealText, UnwritePath, UnwriteSurface, UnwriteTable, UnwriteText,
-    WritePath, WriteSurface, WriteTable, WriteText,
+    FollowAnchor, HorizonEvolve, HorizonPhaseBy, HorizonPhaseTo, IndicateText, KvCacheFill,
+    LetterParticleScatterTo, MatchTransform, MatrixStep, MorphGeometry, MorphObjects, MoveTo,
+    NoiseEvolve, NoisePhaseBy, NoisePhaseTo, PerlinFieldEvolve, PerlinFieldPhaseBy,
+    PerlinFieldPhaseTo, PropagateSignal, RevealText, RevealTo, RotateTo, ScaleTo, StepwiseSignal,
+    TensorSelectionTransition, TensorTransition, TransformerStageFocus, UnrevealText, UnwritePath,
+    UnwriteSurface, UnwriteTable, UnwriteText, WritePath, WriteSurface, WriteTable, WriteText,
 };
 use crate::frontend::collection::ai::tensor::{TensorSelector, TensorSnapshot};
 use crate::frontend::layout::Anchor;
@@ -65,6 +65,9 @@ pub enum AnimKind {
     TransformerFocus {
         stage_id: Option<String>,
     },
+    KvCacheFill {
+        occupied_tokens: usize,
+    },
     FollowAnchor {
         target_id: TattvaId,
         target_anchor: Anchor,
@@ -88,6 +91,9 @@ pub enum AnimKind {
     },
     BeltEvolve {
         speed: Option<f32>,
+    },
+    LetterParticleScatterTo {
+        to: f32,
     },
     HorizonPhaseTo {
         to: f32,
@@ -311,6 +317,12 @@ impl<'a> AnimationBuilder<'a> {
         self
     }
 
+    /// Reveals key/value cache slots through the requested occupied-token count.
+    pub fn kv_cache_fill_to(mut self, occupied_tokens: usize) -> Self {
+        self.spec.kind = Some(AnimKind::KvCacheFill { occupied_tokens });
+        self
+    }
+
     pub fn follow_anchor(
         mut self,
         target_id: TattvaId,
@@ -369,6 +381,20 @@ impl<'a> AnimationBuilder<'a> {
 
     pub fn belt_evolve_with_speed(mut self, speed: f32) -> Self {
         self.spec.kind = Some(AnimKind::BeltEvolve { speed: Some(speed) });
+        self
+    }
+
+    /// Scatter a glyph-derived `LetterParticles3D` cloud to its full extent.
+    pub fn scatter_letter_particles(mut self) -> Self {
+        self.spec.kind = Some(AnimKind::LetterParticleScatterTo { to: 1.0 });
+        self
+    }
+
+    /// Interpolate a `LetterParticles3D` cloud to a specific scatter amount.
+    pub fn letter_particle_scatter_to(mut self, to: f32) -> Self {
+        self.spec.kind = Some(AnimKind::LetterParticleScatterTo {
+            to: to.clamp(0.0, 1.0),
+        });
         self
     }
 
@@ -579,6 +605,9 @@ impl<'a> AnimationBuilder<'a> {
             Some(AnimKind::TransformerFocus { stage_id }) => {
                 Box::new(TransformerStageFocus::new(spec.target_id, stage_id, ease))
             }
+            Some(AnimKind::KvCacheFill { occupied_tokens }) => {
+                Box::new(KvCacheFill::new(spec.target_id, occupied_tokens, ease))
+            }
             Some(AnimKind::FollowAnchor {
                 target_id,
                 target_anchor,
@@ -609,6 +638,9 @@ impl<'a> AnimationBuilder<'a> {
             Some(AnimKind::BeltEvolve { speed }) => {
                 Box::new(BeltEvolve::new(spec.target_id, spec.duration, speed, ease))
             }
+            Some(AnimKind::LetterParticleScatterTo { to }) => Box::new(
+                LetterParticleScatterTo::new(spec.target_id, to, spec.duration, ease),
+            ),
             Some(AnimKind::HorizonPhaseTo { to }) => {
                 Box::new(HorizonPhaseTo::new(spec.target_id, to, ease))
             }

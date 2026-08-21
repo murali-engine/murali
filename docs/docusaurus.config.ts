@@ -36,7 +36,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/ravishankarkumar/murali/tree/main/docs/',
-          lastVersion: '0.2.0',
+          lastVersion: '0.2.1',
           versions: {
             current: {
               label: 'Next 🚧',
@@ -83,7 +83,7 @@ const config: Config = {
           label: 'Docs',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
-        {href: 'https://github.com/ravishankarkumar/murali-examples', label: 'Examples', position: 'left'},
+        {href: 'https://github.com/ravishankarkumar/murali/blob/main/examples/README.md', label: 'Examples', position: 'left'},
         {href: 'https://www.youtube.com/@muraliengine', label: 'Showcase', position: 'left'},
         {
           type: 'docsVersionDropdown',
