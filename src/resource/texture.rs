@@ -72,7 +72,10 @@ mod tests {
         ] {
             let image = TextureImage::builtin(texture);
 
-            assert_eq!(image.rgba.len(), image.width as usize * image.height as usize * 4);
+            assert_eq!(
+                image.rgba.len(),
+                image.width as usize * image.height as usize * 4
+            );
         }
     }
 }

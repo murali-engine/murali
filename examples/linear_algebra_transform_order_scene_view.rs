@@ -16,11 +16,7 @@ fn alpha(color: Vec4, opacity: f32) -> Vec4 {
     Vec4::new(color.x, color.y, color.z, opacity)
 }
 
-fn add_transform_layer(
-    scene: &mut Scene,
-    matrix: Mat2,
-    color: Vec4,
-) -> murali::frontend::TattvaId {
+fn add_transform_layer(scene: &mut Scene, matrix: Mat2, color: Vec4) -> murali::frontend::TattvaId {
     let mut grid = TransformableGrid2D::new(matrix)
         .with_range((-2.4, 2.4), (-1.8, 1.8))
         .with_step(0.6)
@@ -41,10 +37,7 @@ fn add_transform_step(
     label_pos: Vec3,
     color: Vec4,
 ) -> (TattvaId, TattvaId) {
-    let id = scene.add_tattva(
-        Label::new(label, 0.17).with_color(color),
-        label_pos,
-    );
+    let id = scene.add_tattva(Label::new(label, 0.17).with_color(color), label_pos);
     (add_transform_layer(scene, matrix, color), id)
 }
 
@@ -59,10 +52,12 @@ fn transform_sequence_scene(
     let composed = second * first;
     let input = vec2(1.0, 1.0);
 
-    scene.add_tattva(Label::new(title, 0.28).with_color(WHITE), vec3(0.0, 2.25, 0.0));
     scene.add_tattva(
-        Label::new(format!("{first_name} first, then {second_name}"), 0.16)
-            .with_color(GRAY_B),
+        Label::new(title, 0.28).with_color(WHITE),
+        vec3(0.0, 2.25, 0.0),
+    );
+    scene.add_tattva(
+        Label::new(format!("{first_name} first, then {second_name}"), 0.16).with_color(GRAY_B),
         vec3(0.0, 1.9, 0.0),
     );
 
@@ -144,10 +139,8 @@ fn main() -> anyhow::Result<()> {
     let scale_x = Mat2::from_cols(vec2(1.45, 0.0), vec2(0.0, 1.0));
     let shear = Mat2::from_cols(vec2(1.0, 0.0), vec2(0.65, 1.0));
 
-    let first_view_scene =
-        transform_sequence_scene("Path 1", "A", "B", scale_x, shear)?;
-    let second_view_scene =
-        transform_sequence_scene("Path 2", "B", "A", shear, scale_x)?;
+    let first_view_scene = transform_sequence_scene("Path 1", "A", "B", scale_x, shear)?;
+    let second_view_scene = transform_sequence_scene("Path 2", "B", "A", shear, scale_x)?;
 
     let mut scene = Scene::new();
     let path_one = scene.add_scene_view(

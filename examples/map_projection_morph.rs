@@ -8,9 +8,9 @@ use murali::frontend::animation::Ease;
 use murali::frontend::collection::graph::parametric_surface::ParametricSurface;
 use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::{Bounded, Bounds, Direction};
-use murali::{BuiltinTexture, TextureImage};
 use murali::positions::CAMERA_DEFAULT_POS;
 use murali::projection::{Project, ProjectionCtx, RenderPrimitive};
+use murali::{BuiltinTexture, TextureImage};
 use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI, SQRT_2, TAU};
 use std::sync::{Arc, Mutex};
 

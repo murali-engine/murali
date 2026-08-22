@@ -45,21 +45,30 @@ fn main() -> anyhow::Result<()> {
 
     let scale_x = Mat2::from_cols(vec2(1.45, 0.0), vec2(0.0, 1.0));
     let shear = Mat2::from_cols(vec2(1.0, 0.0), vec2(0.65, 1.0));
-    scene.add_tattva(Label::new("A then B", 0.2).with_color(GRAY_B), vec3(-3.7, 0.9, 0.0));
+    scene.add_tattva(
+        Label::new("A then B", 0.2).with_color(GRAY_B),
+        vec3(-3.7, 0.9, 0.0),
+    );
     add_matrix_case(&mut scene, "A", scale_x, vec3(-2.2, 0.55, 0.0));
     add_matrix_case(&mut scene, "B", shear, vec3(0.0, 0.55, 0.0));
     add_matrix_case(&mut scene, "BA", shear * scale_x, vec3(2.2, 0.55, 0.0));
     add_operator_labels(&mut scene, 0.55);
 
-    scene.add_tattva(Label::new("B then A", 0.2).with_color(GRAY_B), vec3(-3.7, -1.15, 0.0));
+    scene.add_tattva(
+        Label::new("B then A", 0.2).with_color(GRAY_B),
+        vec3(-3.7, -1.15, 0.0),
+    );
     add_matrix_case(&mut scene, "B", shear, vec3(-2.2, -1.5, 0.0));
     add_matrix_case(&mut scene, "A", scale_x, vec3(0.0, -1.5, 0.0));
     add_matrix_case(&mut scene, "AB", scale_x * shear, vec3(2.2, -1.5, 0.0));
     add_operator_labels(&mut scene, -1.5);
 
     scene.add_tattva(
-        Label::new("BA and AB are different here, so transform order matters.", 0.18)
-            .with_color(TEAL_C),
+        Label::new(
+            "BA and AB are different here, so transform order matters.",
+            0.18,
+        )
+        .with_color(TEAL_C),
         vec3(0.0, -2.55, 0.0),
     );
 
