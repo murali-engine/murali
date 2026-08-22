@@ -69,6 +69,20 @@ cargo run --example hello_shapes
 
 The published crate excludes `examples/**`, so reference examples are available from the repository rather than from the crates.io package alone.
 
+Some in-progress APIs are feature-gated. For example, the linear-algebra visual toolkit currently
+requires the `experimental` feature:
+
+```toml
+[dependencies]
+murali = { version = "0.2.1", features = ["experimental"] }
+```
+
+Repository examples that use that API should be run with the feature enabled:
+
+```bash
+cargo run --features experimental --example linear_algebra_vectors
+```
+
 Quickly inspect a GLB/GLTF asset before using it in a scene:
 
 ```bash

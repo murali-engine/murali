@@ -10,6 +10,17 @@ Use this family when the scene needs mathematical structure rather than just ren
 
 For general text choices, read [Text](./text) first. For motion and continuity, also see [Animations](../animations) and [Examples](../examples/showcase).
 
+The evolving linear-algebra toolkit lives at
+`murali::frontend::collection::math::linear_algebra`, but it is currently experimental and gated
+behind the `experimental` Cargo feature:
+
+```toml
+[dependencies]
+murali = { version = "0.2.1", features = ["experimental"] }
+```
+
+See [Experimental Features](../beta/experimental-features.md) before depending on that module.
+
 ## Quick Decision Guide
 
 | Need | Use | Why |

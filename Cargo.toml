@@ -28,6 +28,7 @@ exclude = [
 
 [features]
 default = ["typst_embedded"]
+experimental = []
 typst_embedded = ["dep:typst", "dep:typst-as-lib", "dep:typst-svg"]
 
 [dependencies]
@@ -73,3 +74,43 @@ hecs = "0.11"
 [dev-dependencies]
 naga = { version = "26", features = ["wgsl-in"] }
 proptest = "1"
+
+[[example]]
+name = "linear_algebra_basis_change"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_column_combination"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_composition"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_transform_order_scene_view"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_determinant"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_dot_product"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_matrix_transform"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_matrix_vector"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_span"
+required-features = ["experimental"]
+
+[[example]]
+name = "linear_algebra_vectors"
+required-features = ["experimental"]

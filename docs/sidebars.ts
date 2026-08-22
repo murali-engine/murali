@@ -65,6 +65,7 @@ const sidebars: SidebarsConfig = {
       label: 'Beta & Experimental',
       link: {type: 'doc', id: 'beta/index'},
       items: [
+        'beta/experimental-features',
         'beta/chat-input-box',
       ],
     },

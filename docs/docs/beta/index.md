@@ -57,7 +57,25 @@ use murali::frontend::collection::composite::beta::ChatInputBox;
 Avoid depending on beta APIs for long-lived public libraries unless you are comfortable updating
 your code as Murali evolves.
 
+Some experimental APIs are also hidden behind Cargo feature flags. For example, the current
+linear-algebra toolkit requires the `experimental` feature:
+
+```toml
+[dependencies]
+murali = { version = "0.2.1", features = ["experimental"] }
+```
+
+Repository examples that use those APIs should be run with the same feature:
+
+```bash
+cargo run --features experimental --example linear_algebra_vectors
+```
+
+See [Experimental Features](./experimental-features.md) for the current feature-gated surfaces.
+
 ## Current Beta Components
 
+- [Experimental Features](./experimental-features.md) - feature-gated APIs such as the evolving
+  linear-algebra toolkit.
 - [Chat Input Box](./chat-input-box.md) - a prompt/chat bubble composite with configurable bottom tip.
 - [Opening](../tattvas/opening.md) - an opinionated 3D title-opening composite.

@@ -74,6 +74,38 @@ Static LaTeX and Typst rendering plus one compact vector morph sequence.
 `cargo run --example equation_and_matrix_animation`
 Equation continuity and matrix highlight steps in one staged math-semantics example.
 
+`cargo run --features experimental --example linear_algebra_vectors`
+Vector arrows, labels, coordinate readouts, and a compact feature-list readout.
+
+`cargo run --features experimental --example linear_algebra_span`
+Linear combinations, span regions, and basis-vector intuition on a number plane.
+
+`cargo run --features experimental --example linear_algebra_dot_product`
+Angle arcs, projection shadows, orthogonality marking, and dot/cosine readout.
+
+`cargo run --features experimental --example linear_algebra_basis_change`
+One vector shown against the standard grid and a custom basis grid, with both coordinate readouts.
+
+`cargo run --features experimental --example linear_algebra_matrix_transform`
+A transformed grid, colored basis-vector images, a linked 2x2 matrix panel, and one sample input
+vector mapped to `Ax`.
+
+`cargo run --features experimental --example linear_algebra_matrix_vector`
+A compact `A x = b` computation view beside the geometric input and output vectors.
+
+`cargo run --features experimental --example linear_algebra_column_combination`
+Columns of `A` scaled by the entries of `x`, summed geometrically, with an optional target `b`.
+
+`cargo run --features experimental --example linear_algebra_determinant`
+Three determinant cases: area scaling, orientation flip, and collapse to a line.
+
+`cargo run --features experimental --example linear_algebra_composition`
+Side-by-side transform composition showing `A` then `B` as `BA`, with an order comparison.
+
+`cargo run --features experimental --example linear_algebra_transform_order_scene_view`
+SceneView-based transform-order demo: play `A` then `B`, shrink it aside, then compare with `B`
+then `A`.
+
 `cargo run --example tables`
 One readable table that writes in, stays on screen briefly, and unwrites cleanly.
 
@@ -160,6 +192,26 @@ Clone the repository and run examples locally:
 
 ```bash
 cargo run --example hello_shapes
+```
+
+Preview or export marked subsets:
+
+```bash
+./preview_all.sh --tag linear-algebra --auto
+./export_all.sh --tag linear-algebra --release
+./preview_all.sh --example linear_algebra_span --auto
+./preview_all.sh --tag linear-algebra --dry-run
+./preview_all.sh --list-tags
+```
+
+The linear-algebra examples use the feature-gated experimental API. Running one directly requires
+`--features experimental`; the helper scripts add that feature automatically for examples tagged
+`linear-algebra`.
+
+Mark an example by adding a top-level comment:
+
+```rust
+// murali-example-tags: linear-algebra,math,reference
 ```
 
 Use this README as the full catalog, and use the top-level project README for a smaller curated subset.

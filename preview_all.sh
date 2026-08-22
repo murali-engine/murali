@@ -8,10 +8,19 @@ AUTO_CLOSE=false
 START_NO=1
 END_NO=""
 START_SET=false
+DRY_RUN=false
+INCLUDE_TAGS=()
+EXCLUDE_TAGS=()
+EXAMPLE_NAMES=()
+LIST_TAGS=false
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "$SCRIPT_DIR/scripts/example_filter.sh"
 
 usage() {
-    echo "Usage: $0 [--auto] [--start N] [--end N]"
+    echo "Usage: $0 [--auto] [--dry-run] [--tag TAG] [--skip-tag TAG] [--example NAME] [--start N] [--end N]"
     echo "       $0 [--auto] [START] [END]"
+    echo "       $0 --list-tags"
 }
 
 is_positive_int() {
@@ -22,6 +31,10 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
         --auto)
             AUTO_CLOSE=true
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=true
             shift
             ;;
         --start)
@@ -42,6 +55,37 @@ while [ "$#" -gt 0 ]; do
             fi
             END_NO="$2"
             shift 2
+            ;;
+        --tag)
+            if [ "$#" -lt 2 ]; then
+                echo "Error: --tag requires a tag."
+                usage
+                exit 2
+            fi
+            INCLUDE_TAGS+=("$2")
+            shift 2
+            ;;
+        --skip-tag)
+            if [ "$#" -lt 2 ]; then
+                echo "Error: --skip-tag requires a tag."
+                usage
+                exit 2
+            fi
+            EXCLUDE_TAGS+=("$2")
+            shift 2
+            ;;
+        --example)
+            if [ "$#" -lt 2 ]; then
+                echo "Error: --example requires an example name without .rs."
+                usage
+                exit 2
+            fi
+            EXAMPLE_NAMES+=("$2")
+            shift 2
+            ;;
+        --list-tags)
+            LIST_TAGS=true
+            shift
             ;;
         -h|--help)
             usage
@@ -87,8 +131,26 @@ if [ "$total_examples" -eq 0 ]; then
     exit 1
 fi
 
+if [ "$LIST_TAGS" = true ]; then
+    list_example_tags "${examples[@]}"
+    exit 0
+fi
+
+selected_examples=()
+for f in "${examples[@]}"; do
+    if example_matches_filters "$f"; then
+        selected_examples+=("$f")
+    fi
+done
+total_selected=${#selected_examples[@]}
+
+if [ "$total_selected" -eq 0 ]; then
+    echo "Error: no examples matched the selected filters."
+    exit 1
+fi
+
 if [ -z "$END_NO" ]; then
-    END_NO="$total_examples"
+    END_NO="$total_selected"
 fi
 
 if [ "$START_NO" -gt "$END_NO" ]; then
@@ -96,11 +158,10 @@ if [ "$START_NO" -gt "$END_NO" ]; then
     exit 2
 fi
 
-echo "Previewing examples $START_NO-$END_NO of $total_examples."
+echo "Previewing selected examples $START_NO-$END_NO of $total_selected ($total_examples total)."
 
-# Find all .rs files in the examples directory
 sequence_no=0
-for f in "${examples[@]}"; do
+for f in "${selected_examples[@]}"; do
     sequence_no=$((sequence_no + 1))
     if [ "$sequence_no" -lt "$START_NO" ] || [ "$sequence_no" -gt "$END_NO" ]; then
         continue
@@ -110,24 +171,35 @@ for f in "${examples[@]}"; do
     example_name=$(basename "$f" .rs)
     
     echo "===================================================="
-    echo "▶ Running Example $sequence_no/$total_examples: $example_name"
+    echo "▶ Running Example $sequence_no/$total_selected: $example_name"
     echo "===================================================="
+
+    if [ "$DRY_RUN" = true ]; then
+        echo "DRY RUN Would preview $example_name"
+        continue
+    fi
     
+    cargo_cmd=(cargo run)
+    if example_requires_experimental "$f"; then
+        cargo_cmd+=(--features experimental)
+    fi
+    cargo_cmd+=(--example "$example_name" -- --preview)
+
     # Run the example with the preview flag.
     if [ "$AUTO_CLOSE" = true ]; then
-        cargo run --example "$example_name" -- --preview --auto-close
-    else
-        cargo run --example "$example_name" -- --preview
+        cargo_cmd+=(--auto-close)
     fi
+
+    "${cargo_cmd[@]}"
     
     # Check if the process was interrupted
     status=$?
     if [ $status -ne 0 ]; then
-        echo "Example $sequence_no/$total_examples ($example_name) exited with status $status. Stopping."
+        echo "Example $sequence_no/$total_selected ($example_name) exited with status $status. Stopping."
         exit $status
     fi
 
-    echo "OK Completed $sequence_no/$total_examples: $example_name"
+    echo "OK Completed $sequence_no/$total_selected: $example_name"
 done
 
 echo "Done! Selected examples have been previewed."

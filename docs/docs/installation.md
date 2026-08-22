@@ -61,6 +61,27 @@ Important packaging note:
 - the reference examples are available in the GitHub repository
 - the crates.io package gives you the library surface, not the full example catalog
 
+## Feature-Gated APIs
+
+Some APIs are available only when a Cargo feature is enabled. The current linear-algebra visual
+toolkit is experimental and requires the `experimental` feature:
+
+```toml
+[dependencies]
+murali = { version = "0.2.1", features = ["experimental"] }
+anyhow = "1"
+glam = "0.33"
+```
+
+Repository examples that use `murali::frontend::collection::math::linear_algebra` should be run
+with the same feature:
+
+```bash
+cargo run --features experimental --example linear_algebra_vectors
+```
+
+See [Experimental Features](./beta/experimental-features.md) for the current feature-gated APIs.
+
 ## Preview Vs Export Dependencies
 
 Preview mode:

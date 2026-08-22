@@ -20,6 +20,16 @@ The full catalog lives in the repository at [`examples/README.md`](https://githu
 
 The published crate excludes `examples/**`, so these reference examples are available from the repository rather than from the crates.io package alone.
 
+Some examples use experimental APIs. For example, the linear-algebra examples require the
+`experimental` Cargo feature:
+
+```bash
+cargo run --features experimental --example linear_algebra_vectors
+```
+
+The repository helper scripts enable that feature automatically for examples tagged
+`linear-algebra`.
+
 ## Quick Start Picks
 
 If you only want a few examples to begin with:
@@ -75,6 +85,45 @@ If you only want a few examples to begin with:
   What to notice: equation continuity and matrix-step highlighting
 - `tables`
   What to notice: one table example that writes in, pauses, and unwrites cleanly
+
+### Experimental Linear Algebra
+
+These examples use `murali::frontend::collection::math::linear_algebra`, which is currently gated
+behind the `experimental` Cargo feature.
+
+- `linear_algebra_vectors`
+  What to notice: vectors as arrows, labels, coordinates, and feature-list readouts
+- `linear_algebra_span`
+  What to notice: linear combinations, span regions, and basis-vector intuition
+- `linear_algebra_dot_product`
+  What to notice: angle arcs, projection shadows, orthogonality, and dot/cosine readouts
+- `linear_algebra_basis_change`
+  What to notice: one vector shown against standard and custom basis coordinates
+- `linear_algebra_matrix_transform`
+  What to notice: transformed grids, basis-column colors, and a linked matrix panel
+- `linear_algebra_matrix_vector`
+  What to notice: compact `A x = b` flow beside input and output vectors
+- `linear_algebra_column_combination`
+  What to notice: columns of `A` scaled by entries of `x` and summed geometrically
+- `linear_algebra_determinant`
+  What to notice: area scaling, orientation flip, and collapse to a line
+- `linear_algebra_composition`
+  What to notice: clean matrix-only comparison for `A` then `B` versus `B` then `A`
+- `linear_algebra_transform_order_scene_view`
+  What to notice: SceneView replay of each transform order before comparing the final outcomes
+
+Run one directly with:
+
+```bash
+cargo run --features experimental --example linear_algebra_matrix_vector
+```
+
+Or run the tagged group through the repository scripts:
+
+```bash
+./preview_all.sh --tag linear-algebra --auto
+./export_all.sh --tag linear-algebra --release
+```
 
 ### Graphs And Fields
 
