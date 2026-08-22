@@ -5,10 +5,11 @@ use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::DirtyFlags;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::graph::vector_field::VectorField;
-use murali::frontend::collection::primitives::circle::Circle;
-use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
+use murali::frontend::sangrah::ganit::calculus::vector_field::VectorField;
+use murali::frontend::sangrah::ganit::optimization::OptimizationPath2D;
+use murali::frontend::sangrah::primitives::circle::Circle;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use std::sync::{Arc, Mutex};
 
@@ -80,6 +81,19 @@ fn main() -> anyhow::Result<()> {
     let negative_label_id = scene.add_tattva(
         Label::new("-", 0.18).with_color(WHITE),
         Vec3::new(initial_negative.x, initial_negative.y - 0.05, 0.0),
+    );
+    let optimization_path_id = scene.add_tattva(
+        OptimizationPath2D::new(vec![
+            vec2(-2.7, -1.45),
+            vec2(-1.9, -1.15),
+            vec2(-1.2, -0.92),
+            vec2(-0.55, -0.78),
+            vec2(-0.05, -0.72),
+        ])
+        .with_color(GOLD_C)
+        .with_thickness(0.025)
+        .with_point_size(0.07),
+        Vec3::new(0.0, -0.05, 0.0),
     );
 
     let footer_id = scene.add_tattva(
@@ -162,6 +176,13 @@ fn main() -> anyhow::Result<()> {
         .for_duration(0.4)
         .ease(Ease::Linear)
         .typewrite_text()
+        .spawn();
+    timeline
+        .animate(optimization_path_id)
+        .at(2.55)
+        .for_duration(0.6)
+        .ease(Ease::OutCubic)
+        .appear()
         .spawn();
     timeline
         .animate(footer_id)

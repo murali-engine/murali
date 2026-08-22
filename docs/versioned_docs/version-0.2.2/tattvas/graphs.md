@@ -4,9 +4,14 @@ sidebar_position: 4
 
 # Graphs
 
-Graph tattvas live under `murali::frontend::collection::graph`.
+Graphing tattvas live under their subject owners:
+`murali::frontend::sangrah::ganit::calculus` for continuous curves, fields, and surfaces, and
+`murali::frontend::sangrah::ganit::data_geometry` for sampled point data. Graph-specific helpers
+such as legends live under `murali::frontend::sangrah::ganit::graph`.
 
-Use this family when the scene is primarily about curves, fields, surfaces, or geometric data. If you are teaching calculus, vector fields, geometry, or 3D surfaces, this is usually the right section to start from.
+Use these families when the scene is primarily about curves, fields, surfaces, or geometric data.
+If you are teaching calculus, vector fields, geometry, or 3D surfaces, start with `calculus`. If
+you are teaching sampled data, embeddings, or point clouds, start with `data_geometry`.
 
 If you need text, labels, or formulas around the graph, pair this page with [Text](./text.md), [Math](./math.md), [Camera](../camera.md), and [Examples](../examples/showcase).
 
@@ -21,13 +26,14 @@ If you need text, labels, or formulas around the graph, pair this page with [Tex
 | Show arrows of a field | `VectorField` | Best for local direction/magnitude |
 | Show traced flow through a field | `StreamLines` | Best for flow structure over time |
 | Show a 3D surface `(u, v) -> Vec3` | `ParametricSurface` | Best for spheres, waves, and geometry surfaces |
+| Add a legend/key | `PlotLegend` | Best for naming plotted series without making a one-off layout |
 
 ## FunctionGraph
 
 Plots a Rust function `f32 -> f32` over an x range as a polyline.
 
 ```rust
-use murali::frontend::collection::graph::function_graph::FunctionGraph;
+use murali::frontend::sangrah::ganit::calculus::function_graph::FunctionGraph;
 use murali::colors::*;
 use murali::positions::*;
 
@@ -44,12 +50,32 @@ scene.add_tattva(
 
 Use `FunctionGraph` when the natural explanation is “here is `y` as a function of `x`.” If you find yourself deriving both coordinates from one parameter, move to `ParametricCurve`.
 
+## PlotLegend
+
+Adds a compact graph legend for plotted series.
+
+```rust
+use murali::frontend::sangrah::ganit::graph::{PlotLegend, PlotLegendEntry};
+use murali::colors::*;
+
+scene.add_tattva(
+    PlotLegend::new(vec![
+        PlotLegendEntry::new("sine curve", BLUE_B),
+        PlotLegendEntry::new("sampled extrema", GOLD_C),
+    ]),
+    Vec3::new(4.4, 1.45, 0.0),
+);
+```
+
+Use `PlotLegend` when the graph needs a reusable visual key. Keep curve and point rendering in
+`calculus` or `data_geometry`; keep the graph-specific presentation helper here.
+
 ## ScatterPlot
 
 Plots a list of `Vec2` points as dots.
 
 ```rust
-use murali::frontend::collection::graph::scatter_plot::ScatterPlot;
+use murali::frontend::sangrah::ganit::data_geometry::scatter_plot::ScatterPlot;
 use glam::vec2;
 
 scene.add_tattva(
@@ -67,7 +93,7 @@ scene.add_tattva(
 A 2D parametric curve `t -> Vec2`.
 
 ```rust
-use murali::frontend::collection::graph::parametric_curve::ParametricCurve;
+use murali::frontend::sangrah::ganit::calculus::parametric_curve::ParametricCurve;
 
 scene.add_tattva(
     ParametricCurve::new((0.0, std::f32::consts::TAU), |t| {
@@ -88,7 +114,7 @@ Use `ParametricCurve` when:
 A 3D parametric curve `t -> Vec3`.
 
 ```rust
-use murali::frontend::collection::graph::parametric_curve3d::ParametricCurve3D;
+use murali::frontend::sangrah::ganit::calculus::parametric_curve3d::ParametricCurve3D;
 use std::f32::consts::TAU;
 
 scene.add_tattva(
@@ -107,7 +133,7 @@ This is a good fit for helices, orbital paths, trajectories, and “camera needs
 A 3D surface defined by `(u, v) -> Vec3`. Renders as a wireframe mesh.
 
 ```rust
-use murali::frontend::collection::graph::parametric_surface::ParametricSurface;
+use murali::frontend::sangrah::ganit::calculus::parametric_surface::ParametricSurface;
 use std::f32::consts::PI;
 
 scene.add_tattva(
@@ -148,7 +174,7 @@ scene.add_textured_surface_with_path(
 Displays arrows at grid points representing a vector function `Vec2 -> Vec2`.
 
 ```rust
-use murali::frontend::collection::graph::vector_field::VectorField;
+use murali::frontend::sangrah::ganit::calculus::vector_field::VectorField;
 
 scene.add_tattva(
     VectorField::new(
@@ -178,7 +204,7 @@ Use `VectorField` when you want viewers to read local direction and magnitude at
 Traces flow paths through a vector field using Euler integration.
 
 ```rust
-use murali::frontend::collection::graph::stream_lines::{StreamLines, line_start_points};
+use murali::frontend::sangrah::ganit::calculus::stream_lines::{StreamLines, line_start_points};
 
 scene.add_tattva(
     StreamLines::from_grid(

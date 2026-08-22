@@ -4,7 +4,7 @@ sidebar_position: 8
 
 # Utility
 
-Utility tattvas live under `murali::frontend::collection::utility`.
+Utility tattvas live under `murali::frontend::sangrah::utility`.
 
 ## TracedPath
 
@@ -15,7 +15,7 @@ Records and renders the trajectory of a point on a moving tattva. Similar to Man
 For normal user code, prefer `scene.add_tattva(...)`. The `scene.add(...)` call shown below is a lower-level exception used here because `TracedPath` is already a concrete tattva implementation rather than a regular state object.
 
 ```rust
-use murali::frontend::collection::utility::traced_path::TracedPath;
+use murali::frontend::sangrah::utility::traced_path::TracedPath;
 
 // Trace the center of a moving object
 let trace_id = scene.add(TracedPath::new(
@@ -77,7 +77,7 @@ scene.add_updater(trace_id, move |scene, tid, _dt| {
 A utility tattva that marks a specific frame for export. Useful for capturing a precise moment during a preview session without exporting the full video.
 
 ```rust
-use murali::frontend::collection::utility::screenshot_marker::ScreenshotMarker;
+use murali::frontend::sangrah::utility::screenshot_marker::ScreenshotMarker;
 
 scene.add_tattva(ScreenshotMarker::at(2.5), Vec3::ZERO); // capture at t=2.5s
 ```

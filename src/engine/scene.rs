@@ -175,29 +175,29 @@ impl Scene {
 
     pub fn add_vector_latex(
         &mut self,
-        equation: crate::frontend::collection::math::equation::VectorLatexEquation,
-    ) -> crate::frontend::collection::math::equation::VectorEquationHandle {
+        equation: crate::frontend::sangrah::ganit::notation::equation::VectorLatexEquation,
+    ) -> crate::frontend::sangrah::ganit::notation::equation::VectorEquationHandle {
         equation.add_to_scene(self)
     }
 
     pub fn add_vector_typst(
         &mut self,
-        equation: crate::frontend::collection::math::equation::VectorTypstEquation,
-    ) -> crate::frontend::collection::math::equation::VectorEquationHandle {
+        equation: crate::frontend::sangrah::ganit::notation::equation::VectorTypstEquation,
+    ) -> crate::frontend::sangrah::ganit::notation::equation::VectorEquationHandle {
         equation.add_to_scene(self)
     }
 
     pub fn add_vector_formula_latex(
         &mut self,
-        equation: crate::frontend::collection::math::equation::VectorLatexEquation,
-    ) -> crate::frontend::collection::math::equation::VectorEquationHandle {
+        equation: crate::frontend::sangrah::ganit::notation::equation::VectorLatexEquation,
+    ) -> crate::frontend::sangrah::ganit::notation::equation::VectorEquationHandle {
         self.add_vector_latex(equation)
     }
 
     pub fn add_vector_formula_typst(
         &mut self,
-        equation: crate::frontend::collection::math::equation::VectorTypstEquation,
-    ) -> crate::frontend::collection::math::equation::VectorEquationHandle {
+        equation: crate::frontend::sangrah::ganit::notation::equation::VectorTypstEquation,
+    ) -> crate::frontend::sangrah::ganit::notation::equation::VectorEquationHandle {
         self.add_vector_typst(equation)
     }
 
@@ -268,7 +268,7 @@ impl Scene {
         F: Fn(f32, f32) -> Vec3 + Send + Sync + 'static,
     {
         let surface =
-            crate::frontend::collection::graph::parametric_surface::ParametricSurface::new(
+            crate::frontend::sangrah::ganit::calculus::parametric_surface::ParametricSurface::new(
                 u_range, v_range, f,
             )
             .with_texture(texture);
@@ -277,7 +277,7 @@ impl Scene {
 
     pub fn add_textured_surface_with_path(
         &mut self,
-        surface: crate::frontend::collection::graph::parametric_surface::ParametricSurface,
+        surface: crate::frontend::sangrah::ganit::calculus::parametric_surface::ParametricSurface,
         texture_path: impl AsRef<Path>,
         position: Vec3,
     ) -> anyhow::Result<TattvaId> {
@@ -403,7 +403,7 @@ impl Scene {
 
     fn traced_path_count(&self) -> usize {
         use crate::frontend::Tattva;
-        use crate::frontend::collection::utility::TracedPath;
+        use crate::frontend::sangrah::utility::TracedPath;
 
         self.tattvas
             .values()
@@ -416,7 +416,7 @@ impl Scene {
     /// Update all traced paths in the scene
     fn update_traced_paths(&mut self) {
         use crate::frontend::Tattva;
-        use crate::frontend::collection::utility::TracedPath;
+        use crate::frontend::sangrah::utility::TracedPath;
 
         // Collect IDs of traced paths and their tracked objects
         let mut traced_paths: Vec<(TattvaId, TattvaId)> = Vec::new();
@@ -718,7 +718,7 @@ impl Default for Scene {
 mod tests {
     use super::*;
     use crate::engine::camera::Projection;
-    use crate::frontend::collection::primitives::square::Square;
+    use crate::frontend::sangrah::primitives::square::Square;
     use glam::Vec4;
 
     #[test]
@@ -818,7 +818,7 @@ mod tests {
 
     #[test]
     fn failed_typed_mutable_access_does_not_mark_state_dirty() {
-        use crate::frontend::collection::primitives::circle::Circle;
+        use crate::frontend::sangrah::primitives::circle::Circle;
 
         let mut scene = Scene::new();
         let id = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);
@@ -891,7 +891,7 @@ mod tests {
 
     #[test]
     fn seeking_with_traced_path_history_returns_an_error() {
-        use crate::frontend::collection::utility::TracedPath;
+        use crate::frontend::sangrah::utility::TracedPath;
 
         let mut scene = Scene::new();
         let tracked = scene.add_tattva(Square::new(1.0, Vec4::ONE), Vec3::ZERO);

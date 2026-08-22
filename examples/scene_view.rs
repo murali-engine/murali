@@ -6,11 +6,11 @@ use murali::colors::{
 use murali::engine::export::{ExportSettings, PngCompressionMode};
 use murali::frontend::TattvaId;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::primitives::{
+use murali::frontend::props::layers;
+use murali::frontend::sangrah::primitives::{
     circle::Circle, line::Line, rounded_rectangle::RoundedRectangle,
 };
-use murali::frontend::collection::text::label::Label;
-use murali::frontend::props::layers;
+use murali::frontend::sangrah::text::label::Label;
 use murali::{App, Scene, SceneView, SceneViewPlayback, Timeline};
 
 fn alpha(color: Vec4, opacity: f32) -> Vec4 {

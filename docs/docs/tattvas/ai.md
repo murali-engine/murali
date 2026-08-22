@@ -4,7 +4,7 @@ sidebar_position: 9
 
 # AI Diagrams
 
-AI diagram tattvas live under `murali::frontend::collection::ai`.
+AI diagram tattvas live under `murali::frontend::sangrah::ai`.
 
 This family is for higher-level teaching visuals and model diagrams rather than generic geometric graphing.
 
@@ -34,7 +34,7 @@ rule instead of joining near-zero samples in scan order.
 `MuraliAiIndicator` is useful as a branded AI activity mark, loading state, intro bumper, or background element. It is a composite helper: it adds several primitives to the scene and returns `MuraliAiIndicatorIds` so the group can be hidden, revealed, and looped from a timeline.
 
 ```rust
-use murali::frontend::collection::ai::{
+use murali::frontend::sangrah::ai::{
     MURALI_AI_INDICATOR_DURATION,
     MuraliAiIndicator,
 };
@@ -58,7 +58,7 @@ For video exports, "infinite" animation is represented as a finite `loop_until` 
 `AttentionMatrix` is useful when values matter cell-by-cell:
 
 ```rust
-use murali::frontend::collection::ai::attention_matrix::AttentionMatrix;
+use murali::frontend::sangrah::ai::transformers_llms::attention_matrix::AttentionMatrix;
 
 scene.add_tattva(
     AttentionMatrix::new(
@@ -438,7 +438,7 @@ reveals new rows and reconstructs the same occupancy under repeated timeline see
 `SignalFlow` is useful when motion along a route is the story:
 
 ```rust
-use murali::frontend::collection::ai::signal_flow::SignalFlow;
+use murali::frontend::sangrah::ai::ml_components::signal_flow::SignalFlow;
 
 scene.add_tattva(
     SignalFlow::new(vec![
@@ -450,17 +450,25 @@ scene.add_tattva(
 );
 ```
 
-`NeuralNetworkDiagram` is useful when layer structure matters:
+`NeuralNetworkDiagram` is useful when layer structure matters. Generated signal routes use only
+complete active paths, so deactivated nodes can be shown without accidentally animating flow
+through them:
 
 ```rust
-use murali::frontend::collection::ai::neural_network_diagram::NeuralNetworkDiagram;
+use murali::frontend::sangrah::ai::deep_learning::{ActivationFunc, NeuralNetworkDiagram};
 
 scene.add_tattva(
     NeuralNetworkDiagram::new(vec![3, 5, 2])
-        .with_labels(vec!["Input", "Hidden", "Output"]),
+        .with_labels(vec!["Input", "Hidden", "Output"])
+        .with_activation(ActivationFunc::ReLU)
+        .deactivate_node(1, 4),
     Vec3::ZERO,
 );
 ```
+
+For feed-forward inference examples, animate signals from input to output only. A completed pass can
+leave a dim activation trace, but weights should not be shown as changing unless the scene is
+explicitly explaining training after loss/backpropagation.
 
 ## Runnable References
 

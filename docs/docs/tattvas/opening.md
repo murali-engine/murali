@@ -27,7 +27,7 @@ normal composite idiom:
 ## Import
 
 ```rust
-use murali::frontend::collection::composite::beta::opening::{
+use murali::frontend::sangrah::composite::beta::opening::{
     Opening, OpeningError, OpeningIds, OpeningStyle, OpeningTiming,
 };
 ```

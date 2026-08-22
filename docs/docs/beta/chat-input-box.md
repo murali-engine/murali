@@ -28,7 +28,7 @@ box participates in the larger animation.
 ## Import
 
 ```rust
-use murali::frontend::collection::composite::beta::{
+use murali::frontend::sangrah::composite::beta::{
     ChatInputBox, ChatInputTipSide,
 };
 ```
@@ -38,7 +38,7 @@ use murali::frontend::collection::composite::beta::{
 ```rust
 use glam::{Vec3, vec2};
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::composite::beta::{
+use murali::frontend::sangrah::composite::beta::{
     ChatInputBox, ChatInputTipSide,
 };
 

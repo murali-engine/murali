@@ -21,6 +21,7 @@ pub use engine::scene_view::{SceneView, SceneViewPlayback};
 pub use engine::timeline::{Clip, SeekError, Timeline};
 pub use frontend::Tattva;
 pub use frontend::props::{DepthMode, layers};
+pub use frontend::sangrah;
 pub use palette::Palette;
 pub use resource::text::register_font_path;
 pub use resource::texture::{BuiltinTexture, TextureImage};

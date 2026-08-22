@@ -4,11 +4,11 @@ use murali::engine::camera::Projection;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::{SignalPlayback, Timeline};
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::ai::signal_flow::SignalFlow;
-use murali::frontend::collection::composite::axes3d::Axes3D;
-use murali::frontend::collection::graph::parametric_curve3d::ParametricCurve3D;
-use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
+use murali::frontend::sangrah::ai::ml_components::signal_flow::SignalFlow;
+use murali::frontend::sangrah::composite::axes3d::Axes3D;
+use murali::frontend::sangrah::ganit::calculus::parametric_curve3d::ParametricCurve3D;
+use murali::frontend::sangrah::text::label::Label;
 use murali::{App, DepthMode};
 
 fn space_curve(t: f32) -> Vec3 {

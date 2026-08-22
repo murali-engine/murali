@@ -45,8 +45,8 @@ use glam::Vec3;
 use murali::colors::{BLUE_D, WHITE};
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::primitives::circle::Circle;
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::primitives::circle::Circle;
+use murali::frontend::sangrah::text::label::Label;
 use murali::frontend::layout::Direction;
 use murali::{App, Frame, RenderOptions, Scene};
 
@@ -146,7 +146,7 @@ Square scenes use the same workflow. This complete example exports one `1200x120
 use glam::{Vec3, Vec4};
 use murali::colors::BLUE_D;
 use murali::engine::export::{ExportSettings, export_scene};
-use murali::frontend::collection::primitives::circle::Circle;
+use murali::frontend::sangrah::primitives::circle::Circle;
 use murali::{Frame, Scene};
 
 fn main() -> anyhow::Result<()> {

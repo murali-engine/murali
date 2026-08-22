@@ -73,7 +73,7 @@ anyhow = "1"
 glam = "0.33"
 ```
 
-Repository examples that use `murali::frontend::collection::math::linear_algebra` should be run
+Repository examples that use `murali::frontend::sangrah::ganit::linear_algebra` should be run
 with the same feature:
 
 ```bash

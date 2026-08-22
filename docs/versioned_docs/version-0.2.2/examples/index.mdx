@@ -30,6 +30,28 @@ cargo run --features experimental --example linear_algebra_vectors
 The repository helper scripts enable that feature automatically for examples tagged
 `linear-algebra`.
 
+## Sangrah Category Coverage
+
+Every newly added `sangrah` category has at least one exported component and at least one runnable
+example anchor:
+
+| Category | Example anchor |
+| --- | --- |
+| `ganit::notation` | `equation_and_matrix_animation`, `latex_and_typst` |
+| `ganit::graph` | `graphs_2d` |
+| `ganit::basic_math` | `equation_and_matrix_animation` |
+| `ganit::linear_algebra` | `linear_algebra_vectors`, `linear_algebra_matrix_vector` |
+| `ganit::calculus` | `graphs_2d`, `curves_3d`, `traced_paths` |
+| `ganit::probability` | `next_token_distribution` |
+| `ganit::statistics` | `normalization`, `graphs_2d` |
+| `ganit::optimization` | `force_fields`, `traced_paths`, `surfaces_3d` |
+| `ganit::information_theory` | `next_token_distribution`, `transformer_attention` |
+| `ganit::data_geometry` | `graphs_2d`, `tensor_slicing`, `linear_algebra_basis_change` |
+| `ai::deep_learning` | `neural_networks`, `normalization`, `transformer_attention` |
+| `ai::ml_components` | `neural_networks`, `tensor_semantics`, `graphs_2d` |
+| `ai::transformers_llms` | `transformer_attention`, `context_window`, `kv_cache` |
+| `ai::systems_agentic_ai` | `context_window`, `self_attention_lesson`, `stepwise_storytelling` |
+
 ## Quick Start Picks
 
 If you only want a few examples to begin with:
@@ -88,7 +110,7 @@ If you only want a few examples to begin with:
 
 ### Experimental Linear Algebra
 
-These examples use `murali::frontend::collection::math::linear_algebra`, which is currently gated
+These examples use `murali::frontend::sangrah::ganit::linear_algebra`, which is currently gated
 behind the `experimental` Cargo feature.
 
 - `linear_algebra_vectors`

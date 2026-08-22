@@ -7,8 +7,10 @@ Murali is a Rust-based animation engine for semantic graphics and mathematical s
 - Project overview: [Project Overview](https://muraliengine.com)
 - Scene and app docs: [Scene and App](https://muraliengine.com/docs/scene-and-app)
 - Internal architecture: [Architecture Overview](https://muraliengine.com/docs/architecture/overview)
+- AI visualization roadmap: [AI Visualization](https://muraliengine.com/docs/ai-visualization)
 - Youtube showcase [Murali Youtube Channel](https://www.youtube.com/@muraliengine)
 - Reference examples in this repo: [examples/README.md](./examples/README.md)
+- Sangrah category architecture: [src/frontend/sangrah](./src/frontend/sangrah/README.md)
 
 
 ## Goals
@@ -106,6 +108,11 @@ Some useful places to start:
 Murali is for people who want authored, programmatic control over mathematical, AI, and explainer-style visuals in Rust.
 
 If you like the kind of mathematical storytelling associated with Manim and want a Rust-native workflow, Murali is built in that spirit.
+
+Murali is also being grown as a long-term AI visualization engine. The
+[sangrah category architecture](./src/frontend/sangrah/README.md) names the math, probability,
+statistics, calculus, optimization, information theory, deep learning, LLM, and agentic-AI
+components that will be developed steadily through the end of 2030.
 
 ## Preview And Export Config
 

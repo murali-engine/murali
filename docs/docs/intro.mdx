@@ -10,6 +10,12 @@ Unlike traditional animation tools, Murali treats animations as deterministic fu
 
 Powered by `wgpu`, Murali runs natively across Vulkan, Metal, and DirectX, and provides first-class support for LaTeX, Typst, and parametric geometry.
 
+Murali is also being grown as an AI visualization engine for technical education. It already has AI
+diagram components and experimental linear-algebra components, with probability, statistics,
+calculus, optimization, information theory, data geometry, deep learning, LLM, and agentic-AI
+surfaces planned through the end of 2030. See [AI Visualization](./ai-visualization) for the public
+category roadmap.
+
 ## Why Murali?
 
 Manim is powerful, but it comes with trade-offs that become more noticeable as projects grow:
@@ -98,7 +104,7 @@ use murali::{App};
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::primitives::circle::Circle;
+use murali::frontend::sangrah::primitives::circle::Circle;
 
 fn main() -> anyhow::Result<()> {
     // 1. Create a scene
@@ -181,11 +187,12 @@ After completing your first scene, we recommend this progression:
 2. **[Visual Foundations](./visual-foundations)** — Important utilities such as how to place an object at specified position, using colors, and more
 3. **[Your First Scene](./first-scene)** — Step-by-step tutorial building a complete animation
 4. **[Mental Model](./mental-model)** — Core concepts: Scene, Tattva, Timeline, and how they work together
-5. **[Video Formats](./video-formats)** — Landscape, Shorts, square composition, and export sizing
-6. **[Which API Should I Use?](./which-api-should-i-use)** — Decision guide for common tasks
-7. **[Animations](./animations)** — Complete reference for all animation verbs
-8. **[Tattvas](./tattvas/)** — Explore all available shapes, text, graphs, and components
-9. **[Scene and App](./scene-and-app)** — Advanced scene management and app lifecycle
+5. **[AI Visualization](./ai-visualization)** — Current AI components and the 2026-2030 education roadmap
+6. **[Video Formats](./video-formats)** — Landscape, Shorts, square composition, and export sizing
+7. **[Which API Should I Use?](./which-api-should-i-use)** — Decision guide for common tasks
+8. **[Animations](./animations)** — Complete reference for all animation verbs
+9. **[Tattvas](./tattvas/)** — Explore all available shapes, text, graphs, and components
+10. **[Scene and App](./scene-and-app)** — Advanced scene management and app lifecycle
 
 **Quick navigation by use case:**
 - **Visualizing math?** → [Text](./tattvas/text), [Math](./tattvas/math), [Graphs](./tattvas/graphs)

@@ -38,7 +38,7 @@ The repository helper scripts automatically enable `experimental` for examples t
 The linear-algebra visual toolkit is available under:
 
 ```rust
-use murali::frontend::collection::math::linear_algebra;
+use murali::frontend::sangrah::ganit::linear_algebra;
 ```
 
 This module is gated behind:

@@ -37,7 +37,7 @@ let mut scene = Scene::new();
 The primary way to add objects to your scene is `add_tattva`:
 
 ```rust
-use murali::frontend::collection::primitives::circle::Circle;
+use murali::frontend::sangrah::primitives::circle::Circle;
 use glam::{Vec3, Vec4};
 
 // Returns a TattvaId for later reference

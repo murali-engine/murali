@@ -4,7 +4,7 @@ sidebar_position: 7
 
 # Storytelling
 
-Storytelling tattvas live under `murali::frontend::collection::storytelling`. They are higher-level constructs for building step-by-step explanations and narrative animations.
+Storytelling tattvas live under `murali::frontend::sangrah::storytelling`. They are higher-level constructs for building step-by-step explanations and narrative animations.
 
 ## Stepwise
 
@@ -17,7 +17,7 @@ It is a tattva: it implements `Project` and `Bounded`, so it's added to the scen
 Use `Stepwise::from_script(...)` to define nodes and connections through the script DSL:
 
 ```rust
-use murali::frontend::collection::storytelling::stepwise::{
+use murali::frontend::sangrah::storytelling::stepwise::{
     Stepwise, StepwiseLayout,
 };
 
@@ -95,7 +95,7 @@ let flow = Stepwise::from_script(|s| {
 Connections can go backwards. Use `.route()` to describe the path shape:
 
 ```rust
-use murali::frontend::collection::storytelling::stepwise::{
+use murali::frontend::sangrah::storytelling::stepwise::{
     model::Direction,
     Stepwise,
 };

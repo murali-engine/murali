@@ -3,8 +3,8 @@
 use glam::{Mat2, vec2, vec3};
 use murali::colors::*;
 use murali::engine::scene::Scene;
-use murali::frontend::collection::math::linear_algebra::MatrixTransformPanel;
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::ganit::linear_algebra::MatrixTransformPanel;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use murali::{App, Timeline};
 

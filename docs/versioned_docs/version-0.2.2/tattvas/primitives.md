@@ -4,12 +4,12 @@ sidebar_position: 1
 
 # Primitives
 
-Basic geometric shapes and procedural primitives. All live under `murali::frontend::collection::primitives`.
+Basic geometric shapes and procedural primitives. All live under `murali::frontend::sangrah::primitives`.
 
 ## Quick Start Example
 
 ```rust
-use murali::frontend::collection::primitives::{
+use murali::frontend::sangrah::primitives::{
 use murali::colors::*;
 use murali::positions::*;
     circle::Circle,
@@ -40,7 +40,7 @@ let square_id = scene.add_tattva(
 A filled circle with optional stroke outline.
 
 ```rust
-use murali::frontend::collection::primitives::circle::Circle;
+use murali::frontend::sangrah::primitives::circle::Circle;
 
 Circle::new(radius: f32, segments: u32, color: Vec4)
 ```
@@ -65,7 +65,7 @@ Circle::new(1.0, 64, fill_color)
 A filled square.
 
 ```rust
-use murali::frontend::collection::primitives::square::Square;
+use murali::frontend::sangrah::primitives::square::Square;
 
 Square::new(size: f32, color: Vec4)
 ```
@@ -83,7 +83,7 @@ Square::new(size: f32, color: Vec4)
 A filled rectangle with independent width and height.
 
 ```rust
-use murali::frontend::collection::primitives::rectangle::Rectangle;
+use murali::frontend::sangrah::primitives::rectangle::Rectangle;
 
 Rectangle::new(width: f32, height: f32, color: Vec4)
 ```
@@ -102,7 +102,7 @@ Rectangle::new(width: f32, height: f32, color: Vec4)
 A filled rectangle with rounded corners.
 
 ```rust
-use murali::frontend::collection::primitives::rounded_rectangle::RoundedRectangle;
+use murali::frontend::sangrah::primitives::rounded_rectangle::RoundedRectangle;
 
 RoundedRectangle::new(width: f32, height: f32, radius: f32, color: Vec4)
 ```
@@ -123,7 +123,7 @@ A filled chat/message bubble with rounded corners and a single continuous bounda
 bottom tip.
 
 ```rust
-use murali::frontend::collection::primitives::chat_bubble::{
+use murali::frontend::sangrah::primitives::chat_bubble::{
     ChatBubble, ChatBubbleTipSide,
 };
 
@@ -152,7 +152,7 @@ component with typewriter text, use the beta [`ChatInputBox`](../beta/chat-input
 A static 3D video prop loaded from a local `.glb` or `.gltf` file.
 
 ```rust
-use murali::frontend::collection::primitives::prop3d::Prop3D;
+use murali::frontend::sangrah::primitives::prop3d::Prop3D;
 
 let apple_id = scene.add_tattva(
     Prop3D::from_file("assets/props/apple.glb")?,
@@ -180,7 +180,7 @@ For free asset sources and troubleshooting, see [3D Prop Assets](../3d-prop-asse
 A filled ellipse with independent radii.
 
 ```rust
-use murali::frontend::collection::primitives::ellipse::Ellipse;
+use murali::frontend::sangrah::primitives::ellipse::Ellipse;
 
 Ellipse::new(rx: f32, ry: f32, segments: u32, color: Vec4)
 ```
@@ -200,7 +200,7 @@ Ellipse::new(rx: f32, ry: f32, segments: u32, color: Vec4)
 Regular polygon with n sides.
 
 ```rust
-use murali::frontend::collection::primitives::polygon::Polygon;
+use murali::frontend::sangrah::primitives::polygon::Polygon;
 
 // Regular polygon with n sides
 Polygon::regular(sides: u32, radius: f32, color: Vec4)
@@ -235,7 +235,7 @@ Polygon::regular(8, 1.0, color)
 A straight line segment with thickness.
 
 ```rust
-use murali::frontend::collection::primitives::line::Line;
+use murali::frontend::sangrah::primitives::line::Line;
 
 Line::new(start: Vec3, end: Vec3, thickness: f32, color: Vec4)
 ```
@@ -263,7 +263,7 @@ Line::new(start, end, 0.04, color)
 A line with an arrowhead.
 
 ```rust
-use murali::frontend::collection::primitives::arrow::Arrow;
+use murali::frontend::sangrah::primitives::arrow::Arrow;
 use glam::Vec2;
 
 // Default tip proportions
@@ -292,7 +292,7 @@ Arrow::new(start, end, thickness, tip_length, tip_width, color)
 A freeform path built from multiple points.
 
 ```rust
-use murali::frontend::collection::primitives::path::Path;
+use murali::frontend::sangrah::primitives::path::Path;
 
 let path = Path::new(vec![
     2.0 * LEFT,
@@ -317,7 +317,7 @@ let path = Path::new(vec![
 A 3D wireframe cube.
 
 ```rust
-use murali::frontend::collection::primitives::cube::Cube;
+use murali::frontend::sangrah::primitives::cube::Cube;
 
 Cube::new(size: f32, color: Vec4)
 ```
@@ -337,7 +337,7 @@ Cube::new(size: f32, color: Vec4)
 A circular contour displaced by Perlin noise, creating organic, animated shapes.
 
 ```rust
-use murali::frontend::collection::primitives::noisy_circle::NoisyCircle;
+use murali::frontend::sangrah::primitives::noisy_circle::NoisyCircle;
 
 // Basic usage
 NoisyCircle::new(radius: f32, color: Vec4)
@@ -390,7 +390,7 @@ timeline.call_during(0.0, 10.0, move |scene, t| {
 A wavy horizon line with vertical fill, perfect for landscapes or data visualizations.
 
 ```rust
-use murali::frontend::collection::primitives::noisy_horizon::NoisyHorizon;
+use murali::frontend::sangrah::primitives::noisy_horizon::NoisyHorizon;
 
 NoisyHorizon::new(
     x_start: f32,      // Left edge
@@ -428,7 +428,7 @@ timeline.call_during(0.0, 10.0, move |scene, t| {
 An animated belt of particles orbiting around a center, like an asteroid belt or particle ring.
 
 ```rust
-use murali::frontend::collection::primitives::particle_belt::ParticleBelt;
+use murali::frontend::sangrah::primitives::particle_belt::ParticleBelt;
 
 // Basic usage
 ParticleBelt::new(radius: f32)

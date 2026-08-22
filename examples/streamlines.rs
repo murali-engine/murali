@@ -5,9 +5,9 @@ use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::DirtyFlags;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::graph::stream_lines::{StreamLines, circle_start_points};
-use murali::frontend::collection::primitives::circle::Circle;
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::ganit::calculus::stream_lines::{StreamLines, circle_start_points};
+use murali::frontend::sangrah::primitives::circle::Circle;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn vortex_with_drift(pos: Vec2) -> Vec2 {

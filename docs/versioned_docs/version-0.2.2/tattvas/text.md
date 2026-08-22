@@ -6,7 +6,7 @@ sidebar_position: 2
 
 Text is essential for mathematical animation, teaching visuals, and explanatory content. Murali provides several text tattvas, each optimized for different use cases.
 
-All text tattvas live under `murali::frontend::collection::text`.
+All text tattvas live under `murali::frontend::sangrah::text`.
 
 If you are choosing between text systems for a real scene, start here and then read [Math](./math), [Animations](../animations), and [Examples](../examples/showcase).
 
@@ -41,7 +41,7 @@ The most common beginner mistake is overusing `Latex` for everything. For titles
 Lightweight glyph-based text using fontdue. Best for short strings, numbers, titles, and UI text.
 
 ```rust
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::text::label::Label;
 
 Label::new(text: impl Into<String>, world_height: f32)
 ```
@@ -209,7 +209,7 @@ Label is the fastest text option:
 
 ```rust
 use glam::{Quat, Vec3, Vec4};
-use murali::frontend::collection::text::letter3d::Letter3D;
+use murali::frontend::sangrah::text::letter3d::Letter3D;
 use murali::{BuiltinTexture, TextureImage};
 
 let letter = Letter3D::new('K', 2.6, 0.72)?
@@ -267,7 +267,7 @@ far plane large enough to include the initial position.
 `LetterParticles3D` samples a deterministic particle volume from the same glyph silhouette:
 
 ```rust
-use murali::frontend::collection::text::letter3d::LetterParticles3D;
+use murali::frontend::sangrah::text::letter3d::LetterParticles3D;
 
 let particles = LetterParticles3D::new('K', 2.6, 0.72, 260)?
     .with_motion(4.8, 2.35, 1.0)
@@ -300,7 +300,7 @@ object inside a parent scene.
 Renders mathematical equations using LaTeX. Industry standard for academic and scientific content.
 
 ```rust
-use murali::frontend::collection::text::latex::Latex;
+use murali::frontend::sangrah::text::latex::Latex;
 
 Latex::new(source: impl Into<String>, world_height: f32)
 ```
@@ -435,7 +435,7 @@ Modern typesetting system with built-in math support. No external tools required
 Typst is a strong middle ground between simple labels and full LaTeX. It works well for formatted teaching text, math-heavy notes, and scenes where you want cleaner authoring than raw LaTeX strings.
 
 ```rust
-use murali::frontend::collection::text::typst::Typst;
+use murali::frontend::sangrah::text::typst::Typst;
 
 Typst::new(source: impl Into<String>, world_height: f32)
 ```
@@ -536,7 +536,7 @@ Typst results are cached in an LRU cache:
 Syntax-highlighted code using Typst's `#raw` block.
 
 ```rust
-use murali::frontend::collection::text::code_block::{
+use murali::frontend::sangrah::text::code_block::{
     CodeBlock, CodeBlockSurface, CodeBlockTheme,
 };
 

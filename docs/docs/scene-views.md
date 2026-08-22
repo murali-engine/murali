@@ -28,7 +28,7 @@ diagrams, library composites, updaters, and its own timeline.
 ```rust
 use glam::{Vec3, Vec4};
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::primitives::circle::Circle;
+use murali::frontend::sangrah::primitives::circle::Circle;
 use murali::{Scene, Timeline};
 
 fn build_child() -> anyhow::Result<Scene> {
@@ -221,7 +221,7 @@ Build the opening as an ordinary child scene and author its local choreography i
 ```rust
 use glam::{Vec3, vec3};
 use murali::engine::camera::Projection;
-use murali::frontend::collection::composite::beta::opening::Opening;
+use murali::frontend::sangrah::composite::beta::opening::Opening;
 use murali::{Clip, Scene, Timeline};
 
 fn build_opening_scene() -> anyhow::Result<(Scene, f32)> {

@@ -4,14 +4,14 @@ sidebar_position: 5
 
 # Math
 
-Math tattvas live under `murali::frontend::collection::math`. These are higher-level constructs for mathematical notation.
+Math tattvas live under `murali::frontend::sangrah::ganit::notation`. These are higher-level constructs for mathematical notation.
 
 Use this family when the scene needs mathematical structure rather than just rendered text. If the visual meaning depends on equation parts, matrix cells, or continuity across transforms, these tattvas are usually a better fit than plain `Latex` or `Typst`.
 
 For general text choices, read [Text](./text) first. For motion and continuity, also see [Animations](../animations) and [Examples](../examples/showcase).
 
 The evolving linear-algebra toolkit lives at
-`murali::frontend::collection::math::linear_algebra`, but it is currently experimental and gated
+`murali::frontend::sangrah::ganit::linear_algebra`, but it is currently experimental and gated
 behind the `experimental` Cargo feature:
 
 ```toml
@@ -35,7 +35,7 @@ See [Experimental Features](../beta/experimental-features.md) before depending o
 Renders a sequence of individually colored and animatable equation parts, laid out horizontally.
 
 ```rust
-use murali::frontend::collection::math::equation::{EquationLayout, EquationPart};
+use murali::frontend::sangrah::ganit::notation::equation::{EquationLayout, EquationPart};
 use murali::colors::*;
 use murali::positions::*;
 
@@ -86,7 +86,7 @@ If you do not provide a key, Murali falls back to a generated continuity key bas
 Renders a 2D matrix with bracket notation.
 
 ```rust
-use murali::frontend::collection::math::matrix::Matrix;
+use murali::frontend::sangrah::ganit::notation::matrix::Matrix;
 
 scene.add_tattva(
     Matrix::new(
@@ -149,7 +149,7 @@ Use vector equations when you want formulas represented as morphable paths rathe
 Prefer the authored scene helpers:
 
 ```rust
-use murali::frontend::collection::math::equation::VectorTypstEquation;
+use murali::frontend::sangrah::ganit::notation::equation::VectorTypstEquation;
 
 let handle = scene.add_vector_formula_typst(
     VectorTypstEquation::new("$(a + b)^2$", 1.2)

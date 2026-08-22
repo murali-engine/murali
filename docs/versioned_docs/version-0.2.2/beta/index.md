@@ -47,11 +47,11 @@ The goal is to make these components available early without pretending their AP
 
 ## Stability Expectations
 
-Code in `murali::frontend::collection::composite::beta` should be imported explicitly and treated
+Code in `murali::frontend::sangrah::composite::beta` should be imported explicitly and treated
 as provisional:
 
 ```rust
-use murali::frontend::collection::composite::beta::ChatInputBox;
+use murali::frontend::sangrah::composite::beta::ChatInputBox;
 ```
 
 Avoid depending on beta APIs for long-lived public libraries unless you are comfortable updating

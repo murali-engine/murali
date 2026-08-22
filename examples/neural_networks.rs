@@ -1,15 +1,13 @@
-use glam::Vec3;
+use glam::{Vec3, Vec4};
 use murali::App;
 use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::{SignalPlayback, Timeline};
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::ai::{
-    neural_network_diagram::{IndicationStyle, NeuralNetworkDiagram},
-    signal_flow::SignalFlow,
-};
-use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
+use murali::frontend::sangrah::ai::deep_learning::{IndicationStyle, NeuralNetworkDiagram};
+use murali::frontend::sangrah::ai::ml_components::SignalFlow;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn main() -> anyhow::Result<()> {
@@ -23,7 +21,7 @@ fn main() -> anyhow::Result<()> {
 
     let subtitle_id = scene.add_tattva(
         Label::new(
-            "One network, one clean forward pass, then a second playback pattern over the same structure.",
+            "A few inputs flow forward through the same network, then the scene stops.",
             0.18,
         )
         .with_color(GRAY_B),
@@ -46,9 +44,9 @@ fn main() -> anyhow::Result<()> {
     let flow_paths = diagram.all_path_points();
 
     let diagram_id = scene.add_tattva(diagram, Vec3::new(0.0, 0.15, 0.0));
-    let flow_id = scene.add_tattva(
+    let live_flow_id = scene.add_tattva(
         {
-            let mut flow = SignalFlow::from_paths(flow_paths)
+            let mut flow = SignalFlow::from_paths(flow_paths.clone())
                 .with_progress(0.0)
                 .with_edge_color(GOLD_C)
                 .with_pulse_color(GOLD_A);
@@ -60,11 +58,27 @@ fn main() -> anyhow::Result<()> {
         },
         Vec3::new(0.0, 0.15, 0.0),
     );
-    scene.hide(flow_id);
+    scene.hide(live_flow_id);
+
+    let trace_id = scene.add_tattva(
+        {
+            let mut trace = SignalFlow::from_paths(flow_paths.clone())
+                .with_progress(1.0)
+                .with_edge_color(Vec4::new(0.98, 0.76, 0.30, 0.28))
+                .with_pulse_color(Vec4::new(1.0, 0.96, 0.72, 0.0));
+            trace.highlight_nodes = false;
+            trace.node_radius = 0.0;
+            trace.edge_thickness = 0.022;
+            trace.pulse_radius = 0.001;
+            trace
+        },
+        Vec3::new(0.0, 0.15, 0.0),
+    );
+    scene.hide(trace_id);
 
     let caption_id = scene.add_tattva(
         Label::new(
-            "Inactive nodes stay dim while the active routes carry the signal.",
+            "Inactive nodes stay dim; repeated inference passes move left-to-right, never backward.",
             0.17,
         )
         .with_color(GRAY_B),
@@ -73,7 +87,7 @@ fn main() -> anyhow::Result<()> {
 
     let footer_id = scene.add_tattva(
         Label::new(
-            "Start with structure and playback before introducing training or model internals.",
+            "Weights usually change during training after loss/backprop, not during a plain inference pass.",
             0.17,
         )
         .with_color(GRAY_B),
@@ -117,22 +131,35 @@ fn main() -> anyhow::Result<()> {
         .typewrite_text()
         .spawn();
     timeline
-        .animate(flow_id)
+        .animate(live_flow_id)
         .at(2.75)
         .for_duration(0.2)
         .ease(Ease::Linear)
         .appear()
         .spawn();
 
-    timeline.play_signal(flow_id, SignalPlayback::once(2.8, 2.0, Ease::InOutQuad));
     timeline.play_signal(
-        flow_id,
-        SignalPlayback::round_trip(5.4, 1.5, Ease::InOutQuad),
+        live_flow_id,
+        SignalPlayback::looped(2.8, 1.25, 4, Ease::InOutQuad),
     );
+    timeline
+        .animate(trace_id)
+        .at(4.05)
+        .for_duration(0.35)
+        .ease(Ease::Linear)
+        .appear()
+        .spawn();
+    timeline
+        .animate(live_flow_id)
+        .at(7.8)
+        .for_duration(0.35)
+        .ease(Ease::Linear)
+        .fade_to(0.0)
+        .spawn();
 
     timeline
         .animate(footer_id)
-        .at(6.6)
+        .at(8.2)
         .for_duration(1.6)
         .ease(Ease::Linear)
         .typewrite_text()

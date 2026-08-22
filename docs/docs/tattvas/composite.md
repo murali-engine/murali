@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Composite
 
-Composite components are made of multiple primitives or tattvas. They live under `murali::frontend::collection::composite`.
+Composite components are made of multiple primitives or tattvas. They live under `murali::frontend::sangrah::composite`.
 
 ## Beta Components
 
@@ -22,7 +22,7 @@ and SceneView handoff.
 
 ```rust
 use glam::Vec3;
-use murali::frontend::collection::composite::beta::opening::{
+use murali::frontend::sangrah::composite::beta::opening::{
     Opening, OpeningStyle, OpeningTiming,
 };
 use murali::colors::{BLUE, GOLD, PINK, TEAL};
@@ -73,7 +73,7 @@ cargo run --release --example opening_scene_view
 A `Card` is a small rounded rectangle plus centered label. Use it for diagram nodes, callouts, dashboards, and explainer scenes where you want a reusable labeled box without manually adding a background and text every time.
 
 ```rust
-use murali::frontend::collection::composite::Card;
+use murali::frontend::sangrah::composite::Card;
 
 let card = Card::new("Retrieved Context", 2.2, 0.58)
     .with_radius(0.12)
@@ -119,7 +119,7 @@ timeline
 2D coordinate axes with tick marks.
 
 ```rust
-use murali::frontend::collection::composite::axes::Axes;
+use murali::frontend::sangrah::composite::axes::Axes;
 
 let axes = Axes::new(x_range: (f32, f32), y_range: (f32, f32))
     .with_step(1.0)          // tick spacing on both axes
@@ -149,7 +149,7 @@ Projects to `RenderPrimitive::Line` segments — one for each axis and one per t
 A full grid background with distinct axis and grid line colors.
 
 ```rust
-use murali::frontend::collection::composite::number_plane::NumberPlane;
+use murali::frontend::sangrah::composite::number_plane::NumberPlane;
 
 scene.add_tattva(
     NumberPlane::new((-5.0, 5.0), (-3.5, 3.5))
@@ -181,7 +181,7 @@ scene.add_tattva(FunctionGraph::new(...), Vec3::ZERO); // top
 3D coordinate axes for use with parametric surfaces and 3D graphs.
 
 ```rust
-use murali::frontend::collection::composite::axes3d::Axes3D;
+use murali::frontend::sangrah::composite::axes3d::Axes3D;
 
 scene.add_tattva(
     Axes3D::new((-1.5, 1.5), (-1.5, 1.5), (-1.5, 1.5))

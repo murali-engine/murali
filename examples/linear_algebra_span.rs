@@ -3,12 +3,12 @@
 use glam::{Vec3, Vec4, vec2, vec3};
 use murali::colors::*;
 use murali::engine::scene::Scene;
-use murali::frontend::collection::composite::number_plane::NumberPlane;
-use murali::frontend::collection::math::linear_algebra::{
+use murali::frontend::sangrah::composite::number_plane::NumberPlane;
+use murali::frontend::sangrah::ganit::linear_algebra::{
     BasisVectors2D, CoordinateReadout, CoordinateReadoutMode, LinearCombinationView, SpanRegion2D,
     VectorAdditionView,
 };
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use murali::{App, Timeline};
 

@@ -4,11 +4,12 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::composite::{axes::Axes, number_plane::NumberPlane};
-use murali::frontend::collection::graph::scatter_plot::ScatterPlot;
-use murali::frontend::collection::primitives::path::Path;
-use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
+use murali::frontend::sangrah::composite::{axes::Axes, number_plane::NumberPlane};
+use murali::frontend::sangrah::ganit::data_geometry::scatter_plot::ScatterPlot;
+use murali::frontend::sangrah::ganit::graph::{PlotLegend, PlotLegendEntry};
+use murali::frontend::sangrah::primitives::path::Path;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use std::f32::consts::{FRAC_PI_2, PI};
 
@@ -78,6 +79,14 @@ fn main() -> anyhow::Result<()> {
         Label::new("y = sin(x)", 0.22).with_color(BLUE_B),
         Vec3::new(0.0, 2.0, 0.0),
     );
+    let legend_id = scene.add_tattva(
+        PlotLegend::new(vec![
+            PlotLegendEntry::new("sine curve", BLUE_B),
+            PlotLegendEntry::new("sampled extrema", GOLD_C),
+        ])
+        .with_text_color(GRAY_B),
+        Vec3::new(4.4, 1.45, 0.0),
+    );
     let x_label_id = scene.add_tattva(
         Label::new("x", 0.22).with_color(ORANGE_B),
         Vec3::new(4.45, -0.15, 0.0),
@@ -132,6 +141,13 @@ fn main() -> anyhow::Result<()> {
         .for_duration(1.0)
         .ease(Ease::Linear)
         .typewrite_text()
+        .spawn();
+    timeline
+        .animate(legend_id)
+        .at(2.75)
+        .for_duration(0.55)
+        .ease(Ease::OutCubic)
+        .appear()
         .spawn();
     timeline
         .animate(x_label_id)

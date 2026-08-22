@@ -4,11 +4,12 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::ai::{
+use murali::frontend::layout::Direction;
+use murali::frontend::sangrah::ai::{
     NextTokenDistribution, NextTokenSampling, TensorAxis, TensorSnapshot,
 };
-use murali::frontend::collection::text::label::Label;
-use murali::frontend::layout::Direction;
+use murali::frontend::sangrah::ganit::information_theory::EntropyMeter;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn main() -> anyhow::Result<()> {
@@ -46,8 +47,21 @@ fn main() -> anyhow::Result<()> {
             .with_top_p(0.90),
     )?;
     let selected = distribution.selected().token.clone();
+    let entropy_probabilities = distribution
+        .candidates
+        .iter()
+        .map(|candidate| candidate.sampling_probability)
+        .collect::<Vec<_>>();
     let distribution_id = scene.add_tattva(distribution, Vec3::new(0.0, -0.2, 0.0));
     scene.hide(distribution_id);
+    let entropy_id = scene.add_tattva(
+        EntropyMeter::from_probabilities(&entropy_probabilities)
+            .with_label("sampling entropy")
+            .with_size(2.8, 0.12)
+            .with_colors(GRAY_D, GOLD_C, GRAY_B),
+        Vec3::new(0.0, -2.75, 0.0),
+    );
+    scene.hide(entropy_id);
 
     let sentence = scene.add_tattva(
         Label::new(format!("The light was  +  {selected}"), 0.23).with_color(GOLD_A),
@@ -66,6 +80,13 @@ fn main() -> anyhow::Result<()> {
         .animate(distribution_id)
         .at(0.55)
         .for_duration(0.75)
+        .ease(Ease::OutCubic)
+        .appear()
+        .spawn();
+    timeline
+        .animate(entropy_id)
+        .at(1.15)
+        .for_duration(0.6)
         .ease(Ease::OutCubic)
         .appear()
         .spawn();

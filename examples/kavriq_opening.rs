@@ -3,9 +3,7 @@ use std::path::PathBuf;
 use glam::{Vec3, Vec4, vec3};
 use murali::engine::camera::Projection;
 use murali::engine::export::{ExportSettings, PngCompressionMode};
-use murali::frontend::collection::composite::beta::opening::{
-    Opening, OpeningStyle, OpeningTiming,
-};
+use murali::frontend::sangrah::composite::beta::opening::{Opening, OpeningStyle, OpeningTiming};
 use murali::{App, BuiltinTexture, Clip, Scene, TextureImage, Timeline};
 
 const OPENING_TEXT: &str = "KAVRIQ";

@@ -4,14 +4,14 @@ sidebar_position: 4
 
 # Tables
 
-Table tattvas live under `murali::frontend::collection::table`.
+Table tattvas live under `murali::frontend::sangrah::table`.
 
 ## Table
 
 Use `Table` when you want structured rows and columns with labels, titles, and line-by-line reveal behavior.
 
 ```rust
-use murali::frontend::collection::table::Table;
+use murali::frontend::sangrah::table::Table;
 
 scene.add_tattva(
     Table::new(vec![

@@ -6,9 +6,9 @@ use murali::engine::render::RenderOptions;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::primitives::circle::Circle;
-use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
+use murali::frontend::sangrah::primitives::circle::Circle;
+use murali::frontend::sangrah::text::label::Label;
 
 fn main() -> anyhow::Result<()> {
     let mut scene = Scene::new().with_frame(Frame::portrait());

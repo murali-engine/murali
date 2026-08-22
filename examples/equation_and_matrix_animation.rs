@@ -4,9 +4,10 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::math::equation::{EquationLayout, EquationPart};
-use murali::frontend::collection::math::matrix::Matrix;
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::ganit::basic_math::NumberLine;
+use murali::frontend::sangrah::ganit::notation::equation::{EquationLayout, EquationPart};
+use murali::frontend::sangrah::ganit::notation::matrix::Matrix;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use murali::positions::*;
 
@@ -66,6 +67,13 @@ fn main() -> anyhow::Result<()> {
         )
         .with_color(GRAY_A),
         0.15 * DOWN,
+    );
+    let number_line_id = scene.add_tattva(
+        NumberLine::new((-3.0, 6.0))
+            .with_step(1.0)
+            .with_color(GRAY_B)
+            .with_origin_color(GOLD_C),
+        DOWN * 0.45,
     );
 
     let matrix_heading_id = scene.add_tattva(
@@ -130,6 +138,13 @@ fn main() -> anyhow::Result<()> {
         .for_duration(1.2)
         .ease(Ease::Linear)
         .typewrite_text()
+        .spawn();
+    timeline
+        .animate(number_line_id)
+        .at(2.45)
+        .for_duration(0.45)
+        .ease(Ease::OutCubic)
+        .appear()
         .spawn();
     timeline
         .animate(target_equation_id)

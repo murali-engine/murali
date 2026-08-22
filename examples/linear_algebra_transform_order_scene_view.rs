@@ -5,10 +5,10 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::frontend::TattvaId;
 use murali::frontend::animation::Ease;
-use murali::frontend::collection::math::linear_algebra::{
+use murali::frontend::sangrah::ganit::linear_algebra::{
     LabeledVector2D, MatrixTransformPanel, TransformableGrid2D, VectorLabelAnchor,
 };
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use murali::{App, SceneView, SceneViewPlayback, Timeline};
 

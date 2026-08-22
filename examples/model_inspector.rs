@@ -2,8 +2,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use glam::{EulerRot, Quat, Vec3, Vec4};
-use murali::frontend::collection::primitives::prop3d::Prop3D;
-use murali::frontend::collection::text::label::Label;
+use murali::frontend::sangrah::primitives::prop3d::Prop3D;
+use murali::frontend::sangrah::text::label::Label;
 use murali::{App, DepthMode};
 use murali::{engine::camera::Projection, engine::scene::Scene};
 

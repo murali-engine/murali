@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Layout
 
-Layout helpers live under `murali::frontend::collection::layout`. They arrange groups of existing tattvas relative to each other.
+Layout helpers live under `murali::frontend::sangrah::layout`. They arrange groups of existing tattvas relative to each other.
 
 Note: these are not tattvas themselves — they operate on `TattvaId`s already in the scene.
 
@@ -13,7 +13,7 @@ Note: these are not tattvas themselves — they operate on `TattvaId`s already i
 Arranges tattvas horizontally left-to-right with a fixed gap.
 
 ```rust
-use murali::frontend::collection::prelude::HStack;
+use murali::frontend::sangrah::prelude::HStack;
 
 let a = scene.add_tattva(Circle::new(0.5, 32, red), Vec3::ZERO);
 let b = scene.add_tattva(Square::new(1.0, blue), Vec3::ZERO);
@@ -29,7 +29,7 @@ HStack::new(vec![a, b, c], 0.3).apply(&mut scene);
 Arranges tattvas vertically top-to-bottom with a fixed gap.
 
 ```rust
-use murali::frontend::collection::prelude::VStack;
+use murali::frontend::sangrah::prelude::VStack;
 
 VStack::new(vec![title_id, body_id, footer_id], 0.2).apply(&mut scene);
 ```

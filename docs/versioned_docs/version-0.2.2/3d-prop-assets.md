@@ -9,7 +9,7 @@ furniture, robots, and other objects that can be placed in an explainer scene. I
 turn Murali into a game engine.
 
 ```rust
-use murali::frontend::collection::primitives::prop3d::Prop3D;
+use murali::frontend::sangrah::primitives::prop3d::Prop3D;
 
 let prop_id = scene.add_tattva(
     Prop3D::from_file("assets/props/apple.glb")?,

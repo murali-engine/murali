@@ -1,4 +1,4 @@
-use crate::frontend::collection::primitives::path::{Path, PathFillRule};
+use crate::frontend::sangrah::primitives::path::{Path, PathFillRule};
 use crate::frontend::style::Style;
 use crate::projection::style::ColorSource;
 use anyhow::Result;
