@@ -3,11 +3,11 @@
 use glam::{Mat2, Vec3, vec2, vec3};
 use murali::colors::*;
 use murali::engine::scene::Scene;
-use murali::frontend::sangrah::composite::number_plane::NumberPlane;
-use murali::frontend::sangrah::ganit::linear_algebra::{
+use murali::frontend::collection::composite::number_plane::NumberPlane;
+use murali::frontend::collection::maths::linear_algebra::{
     LabeledVector2D, MatrixVectorFlow, TransformableGrid2D, VectorLabelAnchor,
 };
-use murali::frontend::sangrah::text::label::Label;
+use murali::frontend::collection::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use murali::{App, Timeline};
 

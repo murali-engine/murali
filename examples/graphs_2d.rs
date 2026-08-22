@@ -4,12 +4,12 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
+use murali::frontend::collection::composite::{axes::Axes, number_plane::NumberPlane};
+use murali::frontend::collection::maths::data_geometry::scatter_plot::ScatterPlot;
+use murali::frontend::collection::maths::graph::{PlotLegend, PlotLegendEntry};
+use murali::frontend::collection::primitives::path::Path;
+use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
-use murali::frontend::sangrah::composite::{axes::Axes, number_plane::NumberPlane};
-use murali::frontend::sangrah::ganit::data_geometry::scatter_plot::ScatterPlot;
-use murali::frontend::sangrah::ganit::graph::{PlotLegend, PlotLegendEntry};
-use murali::frontend::sangrah::primitives::path::Path;
-use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use std::f32::consts::{FRAC_PI_2, PI};
 

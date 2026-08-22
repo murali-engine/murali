@@ -7,8 +7,8 @@ use crate::frontend::animation::{
     RunSceneCallback, RunSceneCallbackOverTime, builder::AnimationBuilder,
     camera_animation_builder::CameraAnimationBuilder,
 };
+use crate::frontend::collection::maths::notation::equation::VectorEquationHandle;
 use crate::frontend::props::DrawableProps;
-use crate::frontend::sangrah::ganit::notation::equation::VectorEquationHandle;
 use crate::validation::ValidationError;
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
@@ -878,11 +878,11 @@ impl DerefMut for Clip {
 mod tests {
     use super::*;
     use crate::engine::camera::Projection;
-    use crate::frontend::sangrah::ganit::notation::equation::{EquationLayout, EquationPart};
-    use crate::frontend::sangrah::primitives::circle::Circle;
-    use crate::frontend::sangrah::primitives::path::Path;
-    use crate::frontend::sangrah::primitives::square::Square;
-    use crate::frontend::sangrah::text::label::Label;
+    use crate::frontend::collection::maths::notation::equation::{EquationLayout, EquationPart};
+    use crate::frontend::collection::primitives::circle::Circle;
+    use crate::frontend::collection::primitives::path::Path;
+    use crate::frontend::collection::primitives::square::Square;
+    use crate::frontend::collection::text::label::Label;
     use glam::{Vec2, Vec3, Vec4};
     use std::sync::{Arc, Mutex};
 

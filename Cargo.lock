@@ -2413,7 +2413,7 @@ checksum = "685a9ac4b61f4e728e1d2c6a7844609c16527aeb5e6c865915c08e619c16410f"
 
 [[package]]
 name = "murali"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "bytemuck",

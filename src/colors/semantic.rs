@@ -5,7 +5,7 @@
 //!
 //! ```rust
 //! use murali::colors::semantic::*;
-//! use murali::frontend::sangrah::primitives::circle::Circle;
+//! use murali::frontend::collection::primitives::circle::Circle;
 //!
 //! let circle = Circle::new(1.0, 48, accent());
 //! ```

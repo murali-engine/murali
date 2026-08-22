@@ -4,7 +4,7 @@ use murali::engine::export::{ExportSettings, PngCompressionMode, export_scene};
 use murali::engine::frame::Frame;
 use murali::engine::scene::Scene;
 use murali::frontend::TattvaId;
-use murali::frontend::sangrah::primitives::{circle::Circle, line::Line, path::Path};
+use murali::frontend::collection::primitives::{circle::Circle, line::Line, path::Path};
 use murali::positions::CAMERA_DEFAULT_POS;
 use std::path::PathBuf;
 

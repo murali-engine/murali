@@ -14,7 +14,7 @@ pub enum RenderPrimitive {
     ///
     /// Meshes are wrapped in an [`Arc`] for efficient reuse across frames and
     /// multiple instances (e.g., in
-    /// [`NeuralNetworkDiagram`](crate::frontend::sangrah::ai::deep_learning::neural_network_diagram::NeuralNetworkDiagram)).
+    /// [`NeuralNetworkDiagram`](crate::frontend::collection::ai::deep_learning::neural_network_diagram::NeuralNetworkDiagram)).
     Mesh(Arc<Mesh>),
 
     /// A 3D line segment with fixed thickness.
@@ -59,7 +59,7 @@ pub enum RenderPrimitive {
 
     /// A LaTeX mathematical formula.
     ///
-    /// The formula is typically converted into a [`crate::frontend::sangrah::primitives::path::Path`]
+    /// The formula is typically converted into a [`crate::frontend::collection::primitives::path::Path`]
     /// or pre-rendered texture depending on the Backend implementation.
     Latex {
         /// LaTeX source string (e.g., `e^{i\pi} + 1 = 0`).

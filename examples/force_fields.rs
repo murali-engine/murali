@@ -5,11 +5,11 @@ use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::DirtyFlags;
 use murali::frontend::animation::Ease;
+use murali::frontend::collection::maths::calculus::vector_field::VectorField;
+use murali::frontend::collection::maths::optimization::OptimizationPath2D;
+use murali::frontend::collection::primitives::circle::Circle;
+use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
-use murali::frontend::sangrah::ganit::calculus::vector_field::VectorField;
-use murali::frontend::sangrah::ganit::optimization::OptimizationPath2D;
-use murali::frontend::sangrah::primitives::circle::Circle;
-use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 use std::sync::{Arc, Mutex};
 

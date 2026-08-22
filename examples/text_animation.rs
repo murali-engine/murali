@@ -4,9 +4,9 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
+use murali::frontend::collection::primitives::path::Path;
+use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
-use murali::frontend::sangrah::primitives::path::Path;
-use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn main() -> anyhow::Result<()> {

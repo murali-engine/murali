@@ -4,10 +4,10 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::{SignalPlayback, Timeline};
 use murali::frontend::animation::Ease;
+use murali::frontend::collection::ai::deep_learning::{IndicationStyle, NeuralNetworkDiagram};
+use murali::frontend::collection::ai::ml_components::SignalFlow;
+use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::Direction;
-use murali::frontend::sangrah::ai::deep_learning::{IndicationStyle, NeuralNetworkDiagram};
-use murali::frontend::sangrah::ai::ml_components::SignalFlow;
-use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn main() -> anyhow::Result<()> {

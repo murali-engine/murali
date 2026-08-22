@@ -4,12 +4,12 @@ use murali::engine::camera::Projection;
 use murali::engine::export::{ExportSettings, PngCompressionMode};
 use murali::frontend::TattvaId;
 use murali::frontend::animation::Ease;
-use murali::frontend::props::layers;
-use murali::frontend::sangrah::composite::beta::opening::{Opening, OpeningStyle};
-use murali::frontend::sangrah::primitives::{
+use murali::frontend::collection::composite::beta::opening::{Opening, OpeningStyle};
+use murali::frontend::collection::primitives::{
     circle::Circle, line::Line, rounded_rectangle::RoundedRectangle,
 };
-use murali::frontend::sangrah::text::label::Label;
+use murali::frontend::collection::text::label::Label;
+use murali::frontend::props::layers;
 use murali::{
     App, BuiltinTexture, Clip, Scene, SceneView, SceneViewPlayback, TextureImage, Timeline,
 };

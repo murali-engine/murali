@@ -2,6 +2,16 @@
 
 All notable changes to Murali are recorded here.
 
+## 0.2.4 - 2026-08-22
+
+### Changed
+
+- Renamed the public reusable-component namespace from `sangrah` back to `collection`.
+- Renamed the math umbrella from `ganit` to `maths`, so math-facing components now live under
+  paths such as `murali::collection::maths::linear_algebra`.
+- Updated examples, documentation, and internal module paths to use the commercial-facing
+  `collection` and `maths` names.
+
 ## 0.2.2 - 2026-08-22
 
 ### Added

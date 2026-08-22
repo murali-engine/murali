@@ -5,10 +5,10 @@ use murali::engine::scene::{DrawableProps, Scene};
 use murali::engine::timeline::Timeline;
 use murali::frontend::TattvaId;
 use murali::frontend::animation::Ease;
+use murali::frontend::collection::layout::{Group, HStack, VStack};
+use murali::frontend::collection::primitives::{circle::Circle, square::Square};
+use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::{Anchor, Direction};
-use murali::frontend::sangrah::layout::{Group, HStack, VStack};
-use murali::frontend::sangrah::primitives::{circle::Circle, square::Square};
-use murali::frontend::sangrah::text::label::Label;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn position_of(scene: &Scene, id: TattvaId) -> Vec3 {

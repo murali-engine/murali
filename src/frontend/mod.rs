@@ -1,9 +1,9 @@
 // src/frontend/mod.rs
 
 pub mod animation;
+pub mod collection;
 pub mod layout;
 pub mod props;
-pub mod sangrah;
 pub mod style;
 pub mod tattva_trait;
 pub mod theme;

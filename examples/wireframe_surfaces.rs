@@ -4,11 +4,11 @@ use murali::engine::camera::Projection;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::sangrah::composite::axes3d::Axes3D;
-use murali::frontend::sangrah::ganit::calculus::parametric_surface::{
+use murali::frontend::collection::composite::axes3d::Axes3D;
+use murali::frontend::collection::maths::calculus::parametric_surface::{
     ParametricSurface, SurfaceRenderMode,
 };
-use murali::frontend::sangrah::text::label::Label;
+use murali::frontend::collection::text::label::Label;
 use murali::{App, DepthMode};
 
 fn saddle_surface(u: f32, v: f32) -> Vec3 {

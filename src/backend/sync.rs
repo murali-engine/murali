@@ -513,7 +513,7 @@ fn upload_mesh(
 mod tests {
     use super::*;
     use crate::frontend::Tattva;
-    use crate::frontend::sangrah::ganit::calculus::stream_lines::StreamLines;
+    use crate::frontend::collection::maths::calculus::stream_lines::StreamLines;
     use glam::Vec2;
 
     #[test]

@@ -4,12 +4,12 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::{SignalPlayback, Timeline};
 use murali::frontend::animation::Ease;
-use murali::frontend::layout::Direction;
-use murali::frontend::sangrah::ai::ml_components::SignalFlow;
-use murali::frontend::sangrah::ai::transformers_llms::{
+use murali::frontend::collection::ai::ml_components::SignalFlow;
+use murali::frontend::collection::ai::transformers_llms::{
     AttentionMatrix, TokenSequence, TransformerBlockDiagram,
 };
-use murali::frontend::sangrah::text::label::Label;
+use murali::frontend::collection::text::label::Label;
+use murali::frontend::layout::Direction;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn main() -> anyhow::Result<()> {

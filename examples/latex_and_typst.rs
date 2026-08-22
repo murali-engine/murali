@@ -4,13 +4,13 @@ use murali::colors::*;
 use murali::engine::scene::Scene;
 use murali::engine::timeline::Timeline;
 use murali::frontend::animation::Ease;
-use murali::frontend::layout::Direction;
-use murali::frontend::sangrah::ganit::notation::equation::{
+use murali::frontend::collection::maths::notation::equation::{
     VectorLatexEquation, VectorTypstEquation,
 };
-use murali::frontend::sangrah::text::label::Label;
-use murali::frontend::sangrah::text::latex::Latex;
-use murali::frontend::sangrah::text::typst::Typst;
+use murali::frontend::collection::text::label::Label;
+use murali::frontend::collection::text::latex::Latex;
+use murali::frontend::collection::text::typst::Typst;
+use murali::frontend::layout::Direction;
 use murali::positions::CAMERA_DEFAULT_POS;
 
 fn place_equation(scene: &mut Scene, ids: &[usize], position: Vec3) {

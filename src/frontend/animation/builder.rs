@@ -9,8 +9,8 @@ use crate::frontend::animation::{
     TensorSelectionTransition, TensorTransition, TransformerStageFocus, UnrevealText, UnwritePath,
     UnwriteSurface, UnwriteTable, UnwriteText, WritePath, WriteSurface, WriteTable, WriteText,
 };
+use crate::frontend::collection::common::tensor::{TensorSelector, TensorSnapshot};
 use crate::frontend::layout::Anchor;
-use crate::frontend::sangrah::common::tensor::{TensorSelector, TensorSnapshot};
 use glam::{Quat, Vec3, Vec4};
 
 #[derive(Debug, Clone)]
