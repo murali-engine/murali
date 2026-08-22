@@ -9,7 +9,7 @@ use murali::frontend::collection::graph::parametric_surface::{
     ParametricSurface, SurfaceRenderMode,
 };
 use murali::frontend::collection::text::label::Label;
-use murali::{App, DepthMode};
+use murali::{App, BuiltinTexture, DepthMode, TextureImage};
 
 fn sphere_surface(u: f32, v: f32) -> Vec3 {
     let radius = 1.35;
@@ -58,17 +58,17 @@ fn main() -> anyhow::Result<()> {
         Vec3::ZERO,
     );
 
-    let surface_id = scene.add_textured_surface_with_path(
+    let surface_id = scene.add_tattva(
         ParametricSurface::new(
             (0.0, std::f32::consts::PI),
             (0.0, std::f32::consts::TAU),
             sphere_surface,
         )
         .with_samples(40, 54)
-        .with_write_progress(1.0),
-        "/Users/ravishankar/personal-work/animation/murali/src/resource/assets/earthmap1k.jpg",
+        .with_write_progress(1.0)
+        .with_texture(TextureImage::builtin(BuiltinTexture::EarthMap)),
         Vec3::ZERO,
-    )?;
+    );
     scene.hide(surface_id);
 
     let x_label_id = scene.add_tattva(

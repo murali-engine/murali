@@ -9,6 +9,7 @@ use murali::{engine::camera::Projection, engine::scene::Scene};
 
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
 const FIT_SPAN: f32 = 4.2;
+const DEFAULT_MODEL: &str = "demo-apple";
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -16,11 +17,6 @@ fn main() -> Result<()> {
         print_help();
         return Ok(());
     }
-    if args.is_empty() {
-        print_help();
-        bail!("missing model path");
-    }
-
     let options = InspectorOptions::from_args(args)?;
     let model_path = resolve_model_path(&options.model)?;
     let prop = Prop3D::from_file(&model_path)?;
@@ -192,7 +188,7 @@ impl InspectorOptions {
         }
 
         let options = Self {
-            model: model.context("missing model path")?,
+            model: model.unwrap_or_else(|| DEFAULT_MODEL.to_string()),
             scale: Vec3::new(
                 scale_x.unwrap_or(uniform_scale),
                 scale_y.unwrap_or(uniform_scale),
@@ -344,9 +340,10 @@ fn print_help() {
     println!(
         "\
 Usage:
-  cargo run --example model_inspector -- <model-or-directory> [options]
+  cargo run --example model_inspector -- [model-or-directory] [options]
 
 The model is centered and fitted automatically. Scale options adjust the fitted result.
+If no model is provided, the bundled demo apple model is used.
 
 Options:
   --scale N          Uniform scale multiplier
@@ -388,6 +385,13 @@ mod tests {
         assert_eq!(options.scale, Vec3::ONE);
         assert_eq!(options.rotate_speed, 24.0);
         assert_eq!(options.camera_distance, None);
+    }
+
+    #[test]
+    fn uses_demo_model_when_no_path_is_provided() {
+        let options = InspectorOptions::from_args(Vec::new()).unwrap();
+
+        assert_eq!(options.model, DEFAULT_MODEL);
     }
 
     #[test]

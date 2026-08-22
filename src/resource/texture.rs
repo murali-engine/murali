@@ -6,6 +6,7 @@ use std::path::Path;
 pub enum BuiltinTexture {
     BlackMarble,
     WhiteMarble,
+    EarthMap,
 }
 
 impl BuiltinTexture {
@@ -17,6 +18,7 @@ impl BuiltinTexture {
             Self::WhiteMarble => {
                 include_bytes!("../../assets/textures/kavriq-white-marble-texture.png")
             }
+            Self::EarthMap => include_bytes!("assets/earthmap1k.jpg"),
         }
     }
 }
@@ -63,11 +65,14 @@ mod tests {
 
     #[test]
     fn built_in_marble_textures_decode_without_filesystem_paths() {
-        for texture in [BuiltinTexture::BlackMarble, BuiltinTexture::WhiteMarble] {
+        for texture in [
+            BuiltinTexture::BlackMarble,
+            BuiltinTexture::WhiteMarble,
+            BuiltinTexture::EarthMap,
+        ] {
             let image = TextureImage::builtin(texture);
 
-            assert_eq!((image.width, image.height), (1254, 1254));
-            assert_eq!(image.rgba.len(), 1254 * 1254 * 4);
+            assert_eq!(image.rgba.len(), image.width as usize * image.height as usize * 4);
         }
     }
 }

@@ -8,6 +8,7 @@ use murali::frontend::animation::Ease;
 use murali::frontend::collection::graph::parametric_surface::ParametricSurface;
 use murali::frontend::collection::text::label::Label;
 use murali::frontend::layout::{Bounded, Bounds, Direction};
+use murali::{BuiltinTexture, TextureImage};
 use murali::positions::CAMERA_DEFAULT_POS;
 use murali::projection::{Project, ProjectionCtx, RenderPrimitive};
 use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI, SQRT_2, TAU};
@@ -18,8 +19,6 @@ const MAP_HALF_HEIGHT: f32 = 3.5;
 const TRANSITION_DURATION: f32 = 4.8;
 const GRATICULE_COLOR: Vec4 = Vec4::new(0.78, 0.92, 1.0, 0.22);
 const MAP_TINT: Vec4 = Vec4::new(1.0, 1.0, 1.0, 0.98);
-const EARTH_TEXTURE: &str =
-    "/Users/ravishankar/personal-work/animation/murali/src/resource/assets/earthmap1k.jpg";
 
 #[derive(Debug, Clone, Copy)]
 enum ProjectionKind {
@@ -164,7 +163,7 @@ fn main() -> anyhow::Result<()> {
     let projection_state = Arc::new(Mutex::new(ProjectionBlend::new(sequence[0])));
 
     let surface_state = projection_state.clone();
-    let surface_id = scene.add_textured_surface_with_path(
+    let surface_id = scene.add_tattva(
         ParametricSurface::new((0.0, PI), (0.0, TAU), move |u, v| {
             let lat = FRAC_PI_2 - u;
             let lon = v - PI;
@@ -175,10 +174,10 @@ fn main() -> anyhow::Result<()> {
         .with_samples(72, 144)
         .with_write_progress(0.0)
         .with_texture_flip_y(true)
-        .with_color(MAP_TINT),
-        EARTH_TEXTURE,
+        .with_color(MAP_TINT)
+        .with_texture(TextureImage::builtin(BuiltinTexture::EarthMap)),
         Vec3::new(0.0, -0.08, 0.0),
-    )?;
+    );
 
     let graticule_id = scene.add_tattva(
         ProjectionGraticule::new(projection_state.clone()),
