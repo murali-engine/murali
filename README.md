@@ -54,7 +54,7 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-murali = "0.2.1"
+murali = "0.2.2"
 anyhow = "1"
 glam = "0.33"
 ```
@@ -74,7 +74,7 @@ requires the `experimental` feature:
 
 ```toml
 [dependencies]
-murali = { version = "0.2.1", features = ["experimental"] }
+murali = { version = "0.2.2", features = ["experimental"] }
 ```
 
 Repository examples that use that API should be run with the feature enabled:

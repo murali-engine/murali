@@ -2,6 +2,23 @@
 
 All notable changes to Murali are recorded here.
 
+## 0.2.2 - 2026-08-22
+
+### Added
+
+- Experimental `math::linear_algebra` collection behind the `experimental` Cargo feature, including
+  reusable 2D vector, basis, grid transform, matrix-vector flow, determinant, dot product,
+  projection, orthogonality, dimension badge, and composition helpers.
+- Linear algebra reference examples covering vectors, span, dot product, basis change, matrix
+  transforms, matrix-vector flow, column combinations, determinants, composition order, and a
+  SceneView-based transform-order comparison.
+- Experimental feature documentation and example listings for opt-in linear algebra APIs.
+
+### Changed
+
+- `preview_all.sh` and `export_all.sh` can select examples by tags/ranges and automatically enable
+  the `experimental` feature for tagged linear algebra examples.
+
 ## 0.2.1 - 2026-08-22
 
 ### Added
