@@ -67,7 +67,7 @@ they clarify the teaching subject.
 ## Source Architecture
 
 The source-visible category READMEs live in
-[`src/frontend/collection`](https://github.com/ravishankarkumar/murali/tree/main/src/frontend/collection).
+[`src/frontend/collection`](https://github.com/murali-engine/murali/tree/main/src/frontend/collection).
 They document the category ownership rules and intended 2026-2030 evolution without pretending that
 every planned area is already stable.
 

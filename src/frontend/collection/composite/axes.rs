@@ -4,6 +4,7 @@ use glam::{Vec3, Vec4};
 
 /// Frontend Axes.
 /// A composite Tattva that projects into multiple lines and (eventually) labels.
+#[derive(Debug, Clone)]
 pub struct Axes {
     pub x_range: (f32, f32),
     pub y_range: (f32, f32),

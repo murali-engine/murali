@@ -2,16 +2,49 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
-    'intro',
-    'installation',
-    'visual-foundations',
-    'first-scene',
-    'mental-model',
-    'which-api-should-i-use',
-    'common-first-mistakes',
-    'coordinate-system',
+    {
+      type: 'category',
+      label: 'Murali',
+      collapsed: false,
+      items: [
+        'intro',
+        'installation',
+        'package-structure',
+        'roadmap',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Murali Engine',
+      collapsed: false,
+      items: [
+        'visual-foundations',
+        'first-scene',
+        'mental-model',
+        'which-api-should-i-use',
+        'python-bindings',
+        'common-first-mistakes',
+        'coordinate-system',
+        'video-formats',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Murali Kit',
+      collapsed: false,
+      items: [
+        'murali-kit',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Future Packages',
+      collapsed: true,
+      items: [
+        'core-and-addons',
+      ],
+    },
     'ai-visualization/index',
-    'video-formats',
     {
       type: 'category',
       label: '3D',
@@ -71,7 +104,6 @@ const sidebars: SidebarsConfig = {
       ],
     },
     'useful-features',
-    'roadmap',
     {
       type: 'category',
       label: 'Architecture',

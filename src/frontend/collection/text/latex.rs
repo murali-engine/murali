@@ -6,6 +6,7 @@ use crate::projection::{Project, ProjectionCtx, RenderPrimitive};
 
 /// The Frontend LaTeX object.
 /// Pure semantic intent. No file IO occurs here.
+#[derive(Debug, Clone)]
 pub struct Latex {
     pub source: String,
     pub world_height: f32,

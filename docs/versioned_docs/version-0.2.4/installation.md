@@ -40,7 +40,7 @@ If you specifically want the latest unreleased changes, you can still depend on 
 
 ```toml
 [dependencies]
-murali = { git = "https://github.com/ravishankarkumar/murali" }
+murali = { git = "https://github.com/murali-engine/murali" }
 anyhow = "1"
 glam = "0.33"
 ```
@@ -81,6 +81,27 @@ cargo run --features experimental --example linear_algebra_vectors
 ```
 
 See [Experimental Features](./beta/experimental-features.md) for the current feature-gated APIs.
+
+## Python Package
+
+The Python engine package is named `murali-engine` and is imported as `murali_engine`.
+Before the first PyPI release, install it from a local engine checkout:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install maturin
+.venv/bin/maturin develop --features python
+.venv/bin/python python/examples/hello_shapes.py
+```
+
+After PyPI publish, users should install it directly:
+
+```bash
+python3 -m pip install murali-engine
+```
+
+The companion `murali-kit` package depends on `murali-engine` and contains broader Python examples
+and add-on experiments. Installing `murali-engine` gives you the engine, not the kit.
 
 ## Preview Vs Export Dependencies
 

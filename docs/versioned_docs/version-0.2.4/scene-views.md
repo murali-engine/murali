@@ -336,7 +336,7 @@ reveals a separate explanation and prediction panel:
 cargo run --example scene_view -- --preview
 ```
 
-Source: [`examples/scene_view.rs`](https://github.com/ravishankarkumar/murali/blob/main/examples/scene_view.rs)
+Source: [`examples/scene_view.rs`](https://github.com/murali-engine/murali/blob/main/examples/scene_view.rs)
 
 Run the full-frame beta Opening handoff to see a perspective child fade into an independently
 authored orthographic parent:
@@ -345,4 +345,4 @@ authored orthographic parent:
 cargo run --release --example opening_scene_view
 ```
 
-Source: [`examples/opening_scene_view.rs`](https://github.com/ravishankarkumar/murali/blob/main/examples/opening_scene_view.rs)
+Source: [`examples/opening_scene_view.rs`](https://github.com/murali-engine/murali/blob/main/examples/opening_scene_view.rs)

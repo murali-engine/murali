@@ -1,0 +1,133 @@
+---
+sidebar_position: 6
+---
+
+# 3D
+
+Murali's 3D support is built for explanatory video scenes, not for game-engine style simulation.
+Use it when depth helps the viewer understand a shape, object, flow, or spatial relationship.
+
+The current 3D workflow covers three main needs:
+
+- authored mathematical geometry, such as curves, surfaces, axes, and wireframes
+- static video props loaded from local `.glb` or `.gltf` files with `Prop3D`
+- camera framing, movement, and perspective projection for making depth readable
+
+All 3D objects are still ordinary Murali tattvas. Once an object is added to a scene, it can use the
+same scene-level placement and timeline transforms as other elements:
+
+```rust
+use glam::{Vec3, vec3};
+use murali::frontend::collection::primitives::prop3d::Prop3D;
+
+let prop_id = scene.add_tattva(
+    Prop3D::from_file("assets/props/apple.glb")?,
+    vec3(0.0, 0.0, 0.0),
+);
+
+scene.set_scale(prop_id, Vec3::splat(0.8));
+
+timeline
+    .animate(prop_id)
+    .at(1.0)
+    .for_duration(1.2)
+    .move_to(vec3(1.0, 0.4, 0.0))
+    .spawn();
+```
+
+## What Exists Today
+
+Murali currently supports:
+
+- 3D positions through `Vec3`
+- perspective and orthographic cameras
+- 3D axes
+- parametric 3D curves
+- parametric surfaces
+- wireframe and textured surfaces
+- static `.glb` and `.gltf` props through `Prop3D`
+- object movement, rotation, scaling, and opacity through existing timeline animations
+
+`Prop3D` loads static glTF geometry, base-color material factors, and common base-color textures.
+Prefer `.glb` when available because it travels as one file. Loose `.gltf` works when the referenced
+`.bin` and texture files stay beside it. `Prop3D` is best for video props such as apples, balls,
+books, animals, tools, robots, and other simple objects that support a scene.
+
+## Current Boundaries
+
+Murali does not currently try to be a full 3D engine. In particular, `Prop3D` does not yet support:
+
+- skeletal animation
+- physics or collision
+- advanced PBR lighting
+- engine-specific materials
+- interactive object picking
+
+Those boundaries are intentional. For Murali, the main question is whether a 3D object helps the
+video explain something clearly.
+
+## Making 3D Read Well
+
+Depth is easy to add and easy to misuse. A good 3D scene usually needs at least one of these:
+
+- a camera angle that separates front, side, and depth
+- face colors, textures, or wireframes that reveal the form
+- motion that shows the object from more than one angle
+- surrounding axes, labels, or text that explain why the object matters
+
+The bundled `demo-pyramid.glb` uses different colors on different faces because Murali's current
+mesh renderer is mostly unlit. Real props with textures often read better, but faceted color is a
+useful fallback for simple demo objects.
+
+## Recommended Examples
+
+- `curves_3d`
+  Focus: one traced parametric curve and camera framing
+- `surfaces_3d`
+  Focus: a translucent shaded surface whose form is clarified by color and camera motion
+- `wireframe_surfaces`
+  Focus: wireframe curvature reading
+- `textured_surface`
+  Focus: UV texture mapping on a globe
+- `prop3d_glb`
+  Focus: loading a single-file `.glb` prop and animating it with ordinary scene transforms. The
+  bundled demo asset is faceted so its 3D form remains visible before full lighting support exists.
+- `prop3d_gltf`
+  Focus: loading a loose `.gltf` apple prop with its sibling `.bin` file.
+- `model_inspector`
+  Focus: resolving, centering, framing, and continuously rotating an unfamiliar GLB/GLTF asset
+  before it is used in a scene.
+
+## Good First Pick
+
+Start with `curves_3d` for the lightest 3D introduction, then move to `surfaces_3d`.
+
+## What To Look For
+
+- whether the camera helps the eye understand the shape
+- whether the scene uses 3D because it adds clarity, not just because it can
+- whether surface reveals are staged clearly enough to read
+
+## Run Locally
+
+```bash
+cargo run --example curves_3d
+```
+
+For a static 3D prop loaded from a local GLB asset:
+
+```bash
+cargo run --example prop3d_glb
+```
+
+For a static 3D prop loaded from a loose glTF asset:
+
+```bash
+cargo run --example prop3d_gltf
+```
+
+To inspect either format with automatic framing and interactive camera controls:
+
+```bash
+cargo run --example model_inspector -- demo-apple
+```

@@ -188,7 +188,9 @@ An advanced demo where the Earth surface image bends through several classic map
 
 ## Running Examples
 
-Clone the repository and run examples locally:
+### Rust Examples
+
+Clone the engine repository and run Rust examples locally:
 
 ```bash
 cargo run --example hello_shapes
@@ -215,3 +217,34 @@ Mark an example by adding a top-level comment:
 ```
 
 Use this README as the full catalog, and use the top-level project README for a smaller curated subset.
+
+### Python Examples
+
+Python examples are split by package boundary. The engine repository keeps a small smoke example in
+`python/examples`, while broader companion examples live in the separate `murali-kit` repository.
+
+From this engine repository, install the local Python extension and run the smoke example:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install maturin
+.venv/bin/maturin develop --features python
+.venv/bin/python python/examples/hello_shapes.py
+```
+
+From a sibling `murali-kit` checkout, create the kit environment and point it at the adjacent local
+engine checkout:
+
+```bash
+cd ../murali-kit
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-local.txt
+source .venv/bin/activate
+python preview_all.py --list
+python examples/hello_shapes.py
+```
+
+On supported platforms, `murali-kit` can depend on the published `murali-engine` package instead of
+a local checkout. The first PyPI release currently provides a macOS Apple Silicon wheel. The copied
+Rust examples in `murali-kit/rust-reference/examples` are migration references; new Python examples
+should be authored directly in `murali-kit/examples`.

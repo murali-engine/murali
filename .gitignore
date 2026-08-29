@@ -1,4 +1,7 @@
 /target
+/.venv
+__pycache__/
+*.py[cod]
 /rendered_output
 /local-resources
 

@@ -11,6 +11,9 @@ pub mod resource;
 pub mod utils;
 pub mod validation;
 
+#[cfg(feature = "python")]
+mod python;
+
 // Re-export common types for ergonomics
 pub use engine::EngineError;
 pub use engine::app::App;

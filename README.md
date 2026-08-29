@@ -56,7 +56,7 @@ Install from crates.io:
 
 ```toml
 [dependencies]
-murali = "0.2.4"
+murali = "0.2.5"
 anyhow = "1"
 glam = "0.33"
 ```
@@ -64,19 +64,40 @@ glam = "0.33"
 Browse runnable examples from the GitHub repository:
 
 ```bash
-git clone https://github.com/ravishankarkumar/murali
+git clone https://github.com/murali-engine/murali
 cd murali
 cargo run --example hello_shapes
 ```
 
 The published crate excludes `examples/**`, so reference examples are available from the repository rather than from the crates.io package alone.
 
+Python users install the engine package as `murali-engine` and import it as `murali_engine`:
+
+```bash
+python3 -m pip install murali-engine==0.2.5
+```
+
+The first PyPI release currently provides a macOS Apple Silicon wheel. Other platforms need future
+published wheels or a local source build. For local engine development, build the Python extension
+from this repository:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install maturin
+.venv/bin/maturin develop --features python
+source .venv/bin/activate
+python python/examples/hello_shapes.py
+```
+
+Companion Python examples and add-on experiments live in the separate `murali-kit` repository. The
+kit depends on `murali-engine`; the engine does not depend on the kit.
+
 Some in-progress APIs are feature-gated. For example, the linear-algebra visual toolkit currently
 requires the `experimental` feature:
 
 ```toml
 [dependencies]
-murali = { version = "0.2.4", features = ["experimental"] }
+murali = { version = "0.2.5", features = ["experimental"] }
 ```
 
 Repository examples that use that API should be run with the feature enabled:

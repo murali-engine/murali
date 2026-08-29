@@ -1,0 +1,33 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "murali-engine"
+version = "0.2.5"
+description = "Python bindings for Murali Engine."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT OR Apache-2.0" }
+authors = [{ name = "Murali Engine" }]
+keywords = ["animation", "graphics", "visualization", "education", "ai"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Education",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+[project.urls]
+Homepage = "https://muraliengine.com"
+Repository = "https://github.com/murali-engine/murali"
+Documentation = "https://muraliengine.com"
+
+[tool.maturin]
+features = ["python"]
+module-name = "murali_engine"

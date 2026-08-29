@@ -63,7 +63,7 @@ const resources: Card[] = [
   {
     title: 'Reference examples',
     description: 'Runnable, maintained examples for learning Murali scene construction.',
-    href: 'https://github.com/ravishankarkumar/murali/blob/main/examples/README.md',
+    href: 'https://github.com/murali-engine/murali/blob/main/examples/README.md',
     label: 'Examples',
   },
   {
@@ -164,7 +164,7 @@ function HomepageHeader() {
             <Link className="button button--primary button--lg" to="/docs/intro">
               Start with the docs
             </Link>
-            <Link className={styles.secondaryAction} href="https://github.com/ravishankarkumar/murali">
+            <Link className={styles.secondaryAction} href="https://github.com/murali-engine/murali">
               View GitHub
             </Link>
           </div>

@@ -3,6 +3,8 @@
 Use this checklist to publish a Murali crate, freeze matching Docusaurus documentation, and create
 the matching GitHub Release. Set `VERSION` to the version being released, for example `0.2.2`.
 
+For the Python package release, use [`PYPI_RELEASE.md`](./PYPI_RELEASE.md).
+
 ## 1. Prepare The Crate
 
 - Update `Cargo.toml`, `Cargo.lock`, installation snippets, `CHANGELOG.md`, and any release post.
@@ -80,7 +82,7 @@ gh release create vVERSION \
 
 Otherwise, use the GitHub UI:
 
-1. Open `https://github.com/ravishankarkumar/murali/releases/new`.
+1. Open `https://github.com/murali-engine/murali/releases/new`.
 2. Select tag `vVERSION`.
 3. Set the title to `Murali vVERSION`.
 4. Paste release notes from `CHANGELOG.md`.

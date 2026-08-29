@@ -3,7 +3,7 @@ use glam::{Vec2, Vec3, Vec4, vec2};
 use crate::frontend::layout::{Bounded, Bounds};
 use crate::projection::{Project, ProjectionCtx, RenderPrimitive};
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct ParametricCurve3D {
     pub t_range: (f32, f32),
     pub samples: usize,

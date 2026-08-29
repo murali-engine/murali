@@ -116,7 +116,7 @@ Export it with:
 cargo run --release --example portrait_video
 ```
 
-The repository contains the complete runnable source in [`examples/portrait_video.rs`](https://github.com/ravishankarkumar/murali/blob/main/examples/portrait_video.rs).
+The repository contains the complete runnable source in [`examples/portrait_video.rs`](https://github.com/murali-engine/murali/blob/main/examples/portrait_video.rs).
 
 ## Configure Export Width
 

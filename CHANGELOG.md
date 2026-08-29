@@ -2,6 +2,21 @@
 
 All notable changes to Murali are recorded here.
 
+## 0.2.5 - 2026-08-29
+
+### Added
+
+- Published the first experimental Python engine package as `murali-engine`, imported as
+  `murali_engine`.
+- Added Python bindings for core scene authoring, timelines, shapes, text, tables, axes, selected
+  3D surfaces, SceneView, preview, and PNG export.
+- Added Python smoke examples and binding tests for the new package surface.
+
+### Changed
+
+- Clarified the package boundary between Murali Engine, Murali Kit, and future add-on packages.
+- Updated installation and Python binding docs for the `0.2.5` release.
+
 ## 0.2.4 - 2026-08-22
 
 ### Changed

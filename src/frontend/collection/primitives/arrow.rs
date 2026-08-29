@@ -6,6 +6,7 @@ use crate::projection::{Project, ProjectionCtx, RenderPrimitive};
 use glam::{Vec2, Vec3, Vec4};
 
 /// An arrow with a shaft (line) and a triangular tip
+#[derive(Debug, Clone)]
 pub struct Arrow {
     /// Start point of the arrow
     pub start: Vec2,

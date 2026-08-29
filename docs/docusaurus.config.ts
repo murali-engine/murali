@@ -14,7 +14,7 @@ const config: Config = {
   url: 'https://muraliengine.com',
   baseUrl: '/',
 
-  organizationName: 'ravishankarkumar',
+  organizationName: 'murali-engine',
   projectName: 'murali',
 
   onBrokenLinks: 'throw',
@@ -35,8 +35,8 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/ravishankarkumar/murali/tree/main/docs/',
-          lastVersion: '0.2.4',
+          editUrl: 'https://github.com/murali-engine/murali/tree/main/docs/',
+          lastVersion: '0.2.5',
           versions: {
             current: {
               label: 'Next 🚧',
@@ -50,7 +50,7 @@ const config: Config = {
             type: ['rss', 'atom'],
             xslt: true,
           },
-          editUrl: 'https://github.com/ravishankarkumar/murali/tree/main/docs/',
+          editUrl: 'https://github.com/murali-engine/murali/tree/main/docs/',
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
           onUntruncatedBlogPosts: 'warn',
@@ -83,14 +83,14 @@ const config: Config = {
           label: 'Docs',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
-        {href: 'https://github.com/ravishankarkumar/murali/blob/main/examples/README.md', label: 'Examples', position: 'left'},
+        {href: 'https://github.com/murali-engine/murali/blob/main/examples/README.md', label: 'Examples', position: 'left'},
         {href: 'https://www.youtube.com/@muraliengine', label: 'Showcase', position: 'left'},
         {
           type: 'docsVersionDropdown',
           position: 'right',
         },
         {
-          href: 'https://github.com/ravishankarkumar/murali',
+          href: 'https://github.com/murali-engine/murali',
           label: 'GitHub',
           position: 'right',
         },
@@ -111,7 +111,7 @@ const config: Config = {
             {label: 'Blog', to: '/blog'},
             {label: 'Design Guidelines', to: '/design-guidelines'},
             {label: 'Kavriq', href: 'https://kavriq.com/'},
-            {label: 'GitHub', href: 'https://github.com/ravishankarkumar/murali'},
+            {label: 'GitHub', href: 'https://github.com/murali-engine/murali'},
           ],
         },
       ],
