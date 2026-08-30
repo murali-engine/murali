@@ -4,6 +4,12 @@ sidebar_position: 4
 
 # Animations
 
+:::note Python authors
+This page still uses Rust examples. For the Python verbs and builder, start with
+[Your First Scene](./first-scene) and the [Python API](./python-bindings). Ease names in Python
+are strings such as `"out_cubic"`.
+:::
+
 Murali uses a `Timeline` to schedule animations. Animations are **time-driven** — they depend on elapsed time, not frame count. This makes them deterministic, reproducible, and easy to reason about.
 
 Prefer concrete animation verbs first. Reach for callbacks like `call_at(...)` and `call_during(...)` only when the built-in authored verbs do not express the motion or state change you need.

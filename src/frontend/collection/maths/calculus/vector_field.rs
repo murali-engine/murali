@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 /// A vector field that displays arrows at grid points
 /// The arrows represent a vector function evaluated at each point
+#[derive(Clone)]
 pub struct VectorField {
     /// Range of x values
     pub x_range: (f32, f32),

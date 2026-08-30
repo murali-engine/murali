@@ -22,7 +22,6 @@ use crate::engine::export::{ExportSettings, export_scene};
 use crate::engine::frame::Frame;
 use crate::engine::render::RenderOptions;
 use crate::engine::scene::Scene;
-use crate::frontend::theme::Theme;
 
 const AUTO_CLOSE_DELAY_SECONDS: f32 = 5.0;
 
@@ -127,6 +126,9 @@ impl<'a> ApplicationHandler for App {
         }
 
         let scene = self.pending_scene.take().unwrap_or_else(Scene::new);
+        let clear_color = scene
+            .background()
+            .unwrap_or_else(|| crate::frontend::theme::Theme::global().background);
         let window = event_loop
             .create_window(
                 Window::default_attributes()
@@ -143,8 +145,7 @@ impl<'a> ApplicationHandler for App {
         self.camera_controller
             .sync_from_camera(&engine.scene.camera);
 
-        // let bg = Theme::global().background;
-        engine.set_clear_color(Theme::global().background);
+        engine.set_clear_color(clear_color);
 
         self.window = Some(arc_window.clone());
         self.engine = Some(engine);

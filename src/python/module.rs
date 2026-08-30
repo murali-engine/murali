@@ -1,0 +1,44 @@
+#[pymodule]
+fn murali_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<PyScene>()?;
+    m.add_class::<PyTattvaHandle>()?;
+    m.add_class::<PyTimeline>()?;
+    m.add_class::<PySceneTick>()?;
+    m.add_class::<PyAnimationBuilder>()?;
+    m.add_class::<PyLabel>()?;
+    m.add_class::<PyLetter3D>()?;
+    m.add_class::<PyLetterParticles3D>()?;
+    m.add_class::<PyCircle>()?;
+    m.add_class::<PyParticleBelt>()?;
+    m.add_class::<PySquare>()?;
+    m.add_class::<PyRectangle>()?;
+    m.add_class::<PyRoundedRectangle>()?;
+    m.add_class::<PyChatBubble>()?;
+    m.add_class::<PyPolygon>()?;
+    m.add_class::<PyLine>()?;
+    m.add_class::<PyArrow>()?;
+    m.add_class::<PyPath>()?;
+    m.add_class::<PyTracedPath>()?;
+    m.add_class::<PyCodeBlock>()?;
+    m.add_class::<PyContextBlock>()?;
+    m.add_class::<PyContextWindow>()?;
+    m.add_class::<PySignalFlow>()?;
+    m.add_class::<PyEquationPart>()?;
+    m.add_class::<PyEquationLayout>()?;
+    m.add_class::<PyMatrix>()?;
+    m.add_class::<PyNumberLine>()?;
+    m.add_class::<PyOptimizationPath2D>()?;
+    m.add_class::<PyLatex>()?;
+    m.add_class::<PyTypst>()?;
+    m.add_class::<PyVectorPath>()?;
+    m.add_class::<PyAxes>()?;
+    m.add_class::<PyNumberPlane>()?;
+    m.add_class::<PyTable>()?;
+    m.add_class::<PyAxes3D>()?;
+    m.add_class::<PyParametricCurve3D>()?;
+    m.add_class::<PyParametricSurface>()?;
+    m.add_class::<PyProp3D>()?;
+    m.add_class::<PySceneView>()?;
+
+    Ok(())
+}

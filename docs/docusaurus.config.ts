@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Murali',
-  tagline: 'A Rust-powered math animation engine',
+  tagline: 'A Python animation engine for math, AI, and teaching visuals',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -36,11 +36,10 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/murali-engine/murali/tree/main/docs/',
-          lastVersion: '0.2.5',
+          lastVersion: 'current',
           versions: {
             current: {
-              label: 'Next 🚧',
-              path: 'next',
+              label: '0.3.0 🚧',
             },
           },
         },
@@ -83,7 +82,7 @@ const config: Config = {
           label: 'Docs',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
-        {href: 'https://github.com/murali-engine/murali/blob/main/examples/README.md', label: 'Examples', position: 'left'},
+        {href: 'https://github.com/murali-engine/murali-kit/tree/main/examples', label: 'Examples', position: 'left'},
         {href: 'https://www.youtube.com/@muraliengine', label: 'Showcase', position: 'left'},
         {
           type: 'docsVersionDropdown',
@@ -120,7 +119,7 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
-      additionalLanguages: ['rust', 'toml', 'bash'],
+      additionalLanguages: ['python', 'rust', 'toml', 'bash'],
     },
   } satisfies Preset.ThemeConfig,
 };

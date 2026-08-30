@@ -1,0 +1,182 @@
+# Prebuilt murali-engine wheels. A v* tag publishes them to PyPI.
+name: Python wheels
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wheels-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  linux:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - runner: ubuntu-22.04
+            target: x86_64
+          - runner: ubuntu-24.04-arm
+            target: aarch64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --locked
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: "2_28"
+          rust-toolchain: stable
+          before-script-linux: |
+            # openssl-src needs Perl and IPC::Cmd. FindBin ships in the perl package;
+            # there is no perl-FindBin RPM on AlmaLinux 8 / manylinux_2_28.
+            if command -v dnf >/dev/null; then
+              dnf install -y perl perl-IPC-Cmd
+            elif command -v yum >/dev/null; then
+              yum install -y perl perl-IPC-Cmd || yum install -y perl-core
+            fi
+
+      - name: Smoke-test wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --no-index --find-links dist murali-engine
+          python -c "from murali_engine import Scene, Circle, Timeline; print('murali-engine import ok')"
+          python -m unittest python.tests.test_bindings
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.platform.target }}
+          path: dist
+
+  windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          architecture: x64
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: x64
+          args: --release --out dist --locked
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          rust-toolchain: stable
+
+      - name: Smoke-test wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --no-index --find-links dist murali-engine
+          python -c "from murali_engine import Scene, Circle, Timeline; print('murali-engine import ok')"
+          python -m unittest python.tests.test_bindings
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-x64
+          path: dist
+
+  macos:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - runner: macos-15-intel
+            target: x86_64
+          - runner: macos-latest
+            target: aarch64
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --locked
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          rust-toolchain: stable
+
+      - name: Smoke-test wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --no-index --find-links dist murali-engine
+          python -c "from murali_engine import Scene, Circle, Timeline; print('murali-engine import ok')"
+          python -m unittest python.tests.test_bindings
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.platform.target }}
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
+  publish:
+    name: Publish to PyPI
+    needs: [linux, windows, macos, sdist]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+
+      - name: List artifacts
+        run: ls -l dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+          attestations: false
+          packages-dir: dist

@@ -1,6 +1,6 @@
 [package]
 name = "murali"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2024"
 rust-version = "1.85"
 description = "A Rust animation engine for programmatic, timeline-driven mathematical, AI, and explainer visuals."
@@ -74,6 +74,11 @@ thiserror = "2"
 fontdue = "0.9"
 hecs = "0.11"
 pyo3 = { version = "0.25", optional = true, features = ["abi3-py310", "extension-module"] }
+
+# typst-kit depends on native-tls/openssl on Linux. Vendoring avoids a libssl
+# wheel dependency, which manylinux/PyPI would reject.
+[target.'cfg(all(target_os = "linux", target_env = "gnu"))'.dependencies]
+openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
 naga = { version = "26", features = ["wgsl-in"] }

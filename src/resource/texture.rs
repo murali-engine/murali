@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use std::path::Path;
+use std::sync::{Arc, OnceLock};
 
 /// Texture assets embedded in Murali and available without filesystem paths.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,13 +33,39 @@ pub struct TextureImage {
 }
 
 impl TextureImage {
-    /// Decodes a texture embedded in the Murali crate.
-    pub fn builtin(texture: BuiltinTexture) -> Self {
+    fn decode_builtin(texture: BuiltinTexture) -> Self {
         let image = image::load_from_memory(texture.bytes())
             .expect("Murali built-in texture bytes must contain a valid image");
         let rgba = image.to_rgba8();
         let (width, height) = rgba.dimensions();
         Self::from_rgba(rgba.into_raw(), width, height)
+    }
+
+    /// Decodes a texture embedded in the Murali crate.
+    pub fn builtin(texture: BuiltinTexture) -> Self {
+        Self::builtin_shared(texture).as_ref().clone()
+    }
+
+    /// Cached built-in texture. Cloning the returned `Arc` does not decode or copy pixels.
+    pub fn builtin_shared(texture: BuiltinTexture) -> Arc<Self> {
+        fn cache(slot: &OnceLock<Arc<TextureImage>>, texture: BuiltinTexture) -> Arc<TextureImage> {
+            slot.get_or_init(|| Arc::new(TextureImage::decode_builtin(texture)))
+                .clone()
+        }
+        match texture {
+            BuiltinTexture::BlackMarble => {
+                static CACHED: OnceLock<Arc<TextureImage>> = OnceLock::new();
+                cache(&CACHED, texture)
+            }
+            BuiltinTexture::WhiteMarble => {
+                static CACHED: OnceLock<Arc<TextureImage>> = OnceLock::new();
+                cache(&CACHED, texture)
+            }
+            BuiltinTexture::EarthMap => {
+                static CACHED: OnceLock<Arc<TextureImage>> = OnceLock::new();
+                cache(&CACHED, texture)
+            }
+        }
     }
 
     pub fn from_rgba(rgba: Vec<u8>, width: u32, height: u32) -> Self {

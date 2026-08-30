@@ -1,4 +1,8 @@
-from murali_engine import BLUE, GREEN, WHITE, Circle, Label, Rectangle, Scene, Square, Timeline
+from murali_engine import Circle, Label, Rectangle, Scene, Square, Timeline
+
+WHITE = (1.0, 1.0, 1.0, 1.0)
+BLUE = (0.345, 0.769, 0.867, 1.0)
+GREEN = (0.514, 0.757, 0.404, 1.0)
 
 
 def build_scene() -> Scene:

@@ -2,6 +2,20 @@
 
 All notable changes to Murali are recorded here.
 
+## Unreleased
+
+### Added
+
+- GitHub Actions now builds `murali-engine` wheels for macOS arm64 and x86_64, Linux x86_64 and
+  aarch64, and Windows x86_64, plus a source distribution. Pushing a `v*` tag publishes them to
+  PyPI so common platforms do not need a local Rust toolchain.
+
+### Changed
+
+- Public docs now lead with Python. Introduction, installation, first scene, mental model, kit,
+  and the homepage are Python-first. Frozen 0.2.x pages stay in the version dropdown. The live
+  docs line is the 0.3.0 track.
+
 ## 0.2.5 - 2026-08-29
 
 ### Added

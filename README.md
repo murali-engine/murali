@@ -46,40 +46,34 @@ are promoted into stable sections only after they prove mature and broadly usefu
 
 ## Getting Started
 
-Requirements:
-
-- Rust 1.85 or newer
-- A working graphics environment for preview
-- `ffmpeg` if you want video export
-
-Install from crates.io:
-
-```toml
-[dependencies]
-murali = "0.2.5"
-anyhow = "1"
-glam = "0.33"
-```
-
-Browse runnable examples from the GitHub repository:
+The public authoring path is Python. Install Murali Kit, which pulls in a compatible engine:
 
 ```bash
-git clone https://github.com/murali-engine/murali
-cd murali
-cargo run --example hello_shapes
+python3 -m pip install murali-kit==0.1.1
 ```
 
-The published crate excludes `examples/**`, so reference examples are available from the repository rather than from the crates.io package alone.
+```python
+from murali_engine import Circle, Label, Scene, Timeline
+from murali_kit.colors import GREEN_D, WHITE
+from murali_kit.themes import DarkTheme, apply_theme
 
-Python users install the engine package as `murali-engine` and import it as `murali_engine`:
+scene = apply_theme(Scene(), DarkTheme())
+scene.add(Label("Hello Murali", height=0.38, color=WHITE), at=(0.0, 2.4, 0.0))
+scene.add(Circle(radius=1.2, color=GREEN_D).with_stroke(0.04, WHITE))
+scene.preview()
+```
+
+Prebuilt `murali-engine` wheels cover macOS arm64 and x86_64, Linux x86_64 and aarch64, and Windows
+x86_64. Those installs do not need a local Rust toolchain.
 
 ```bash
-python3 -m pip install murali-engine==0.2.5
+python3 -m pip install murali-engine==0.2.6
 ```
 
-The first PyPI release currently provides a macOS Apple Silicon wheel. Other platforms need future
-published wheels or a local source build. For local engine development, build the Python extension
-from this repository:
+Python examples live in [`murali-kit`](https://github.com/murali-engine/murali-kit). Docs:
+[muraliengine.com](https://muraliengine.com).
+
+### Local engine development
 
 ```bash
 python3 -m venv .venv
@@ -89,15 +83,32 @@ source .venv/bin/activate
 python python/examples/hello_shapes.py
 ```
 
-Companion Python examples and add-on experiments live in the separate `murali-kit` repository. The
-kit depends on `murali-engine`; the engine does not depend on the kit.
+### Rust crate
+
+Use the `murali` crate when you are working on the runtime:
+
+```toml
+[dependencies]
+murali = "0.2.6"
+anyhow = "1"
+glam = "0.33"
+```
+
+```bash
+git clone https://github.com/murali-engine/murali
+cd murali
+cargo run --example hello_shapes --release -- --preview
+```
+
+The published crate excludes `examples/**`. Reference Rust examples are in this repository. You need
+Rust 1.85 or newer, a graphics environment for preview, and `ffmpeg` for video export.
 
 Some in-progress APIs are feature-gated. For example, the linear-algebra visual toolkit currently
 requires the `experimental` feature:
 
 ```toml
 [dependencies]
-murali = { version = "0.2.5", features = ["experimental"] }
+murali = { version = "0.2.6", features = ["experimental"] }
 ```
 
 Repository examples that use that API should be run with the feature enabled:
@@ -119,8 +130,9 @@ camera, and continuous-preview controls.
 Some useful places to start:
 
 - [Documentation](https://muraliengine.com/docs/intro)
-- [Landscape, portrait, and square video formats](https://muraliengine.com/docs/video-formats)
-- [Reference examples catalog](./examples/README.md)
+- [Your first scene](https://muraliengine.com/docs/first-scene)
+- [Murali Kit examples](https://github.com/murali-engine/murali-kit/tree/main/examples)
+- [Release (crates.io + PyPI wheels)](./RELEASE.md)
 - [Future roadmap](./ROADMAP.md)
 - [YouTube showcase](https://www.youtube.com/@muraliengine)
 

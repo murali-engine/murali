@@ -244,7 +244,13 @@ python preview_all.py --list
 python examples/hello_shapes.py
 ```
 
-On supported platforms, `murali-kit` can depend on the published `murali-engine` package instead of
-a local checkout. The first PyPI release currently provides a macOS Apple Silicon wheel. The copied
+On supported platforms, install the released kit package with:
+
+```bash
+python3 -m pip install murali-kit==0.1.0
+```
+
+`murali-kit` depends on the published `murali-engine` package instead of requiring a local checkout.
+Prebuilt `murali-engine` wheels cover macOS, Linux, and Windows on common architectures. The copied
 Rust examples in `murali-kit/rust-reference/examples` are migration references; new Python examples
 should be authored directly in `murali-kit/examples`.

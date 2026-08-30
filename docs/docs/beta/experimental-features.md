@@ -14,7 +14,7 @@ Enable the feature in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-murali = { version = "0.2.5", features = ["experimental"] }
+murali = { version = "0.2.6", features = ["experimental"] }
 ```
 
 Or enable it from the command line when running a repository example:

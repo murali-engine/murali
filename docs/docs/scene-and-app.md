@@ -4,6 +4,11 @@ sidebar_position: 5
 
 # Scene & App
 
+:::note Python authors
+Python does not construct `App`. After `scene.play(timeline)`, call `scene.preview()`,
+`scene.save_png(...)`, or `scene.export_video(...)`.
+:::
+
 This guide covers how to work with `Scene` (the container for your animation) and `App` (the runtime that brings it to life).
 
 For most authored code, prefer the higher-level APIs first:

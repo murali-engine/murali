@@ -4,98 +4,73 @@ sidebar_position: 2
 
 # Installation
 
-This page covers the quickest way to get Murali running and the optional tools that improve the experience.
-
-## Prerequisites
-
-You should have:
-
-- Rust 1.85 or newer
-- `cargo`
-- a working graphics environment for preview mode
-
-If you do not have Rust yet, install it from the official site:
-
-- [Install Rust](https://www.rust-lang.org/tools/install)
-
-Optional but useful:
-
-- `ffmpeg` for MP4 and GIF assembly during export
-- `latex` and `dvisvgm` if you want LaTeX text rendering
-
-Typst does not require a separate system install in the default setup.
-
-## Add Murali To A Project
-
-Install Murali from crates.io:
-
-```toml
-[dependencies]
-murali = "0.2.5"
-anyhow = "1"
-glam = "0.33"
-```
-
-If you specifically want the latest unreleased changes, you can still depend on GitHub instead:
-
-```toml
-[dependencies]
-murali = { git = "https://github.com/murali-engine/murali" }
-anyhow = "1"
-glam = "0.33"
-```
-
-If you want a quick scratch project:
+Install Murali Kit. That is the usual authoring path, and it pulls in a compatible engine:
 
 ```bash
-cargo new --bin my_scene
-cd my_scene
-mkdir -p examples
+python3 -m pip install murali-kit
 ```
 
-Then add the dependency snippet above to `Cargo.toml`.
+Then:
 
-Important packaging note:
+```python
+from murali_engine import Scene
+from murali_kit.themes import DarkTheme, apply_theme
 
-- the published crate excludes `examples/**`
-- the reference examples are available in the GitHub repository
-- the crates.io package gives you the library surface, not the full example catalog
-
-## Feature-Gated APIs
-
-Some APIs are available only when a Cargo feature is enabled. The current linear-algebra visual
-toolkit is experimental and requires the `experimental` feature:
-
-```toml
-[dependencies]
-murali = { version = "0.2.5", features = ["experimental"] }
-anyhow = "1"
-glam = "0.33"
+scene = apply_theme(Scene(), DarkTheme())
+scene.preview()
 ```
 
-Repository examples that use `murali::frontend::collection::maths::linear_algebra` should be run
-with the same feature:
+Pinned versions:
 
 ```bash
-cargo run --features experimental --example linear_algebra_vectors
+python3 -m pip install murali-engine==0.2.6
+python3 -m pip install murali-kit==0.1.1
 ```
 
-See [Experimental Features](./beta/experimental-features.md) for the current feature-gated APIs.
+`murali-kit` depends on `murali-engine>=0.2.6,<0.3.0`. Installing the engine alone does not install
+the kit.
 
-## Python Package
+## What you get
 
-The Python engine package is named `murali-engine` and is imported as `murali_engine`.
+| Package | Import | Role |
+| --- | --- | --- |
+| `murali-kit` | `murali_kit` | Themes, named colors, teaching views, examples |
+| `murali-engine` | `murali_engine` | Scene, primitives, timeline, preview, export |
 
-On supported platforms, install the released package from PyPI:
+Python 3.10 or newer. A GPU-capable graphics environment for preview. `ffmpeg` if you want MP4 or
+GIF export. `latex` and `dvisvgm` only if you use `Latex`. Typst is embedded; it does not need a
+system install.
 
-```bash
-python3 -m pip install murali-engine==0.2.5
-```
+## Prebuilt wheels
 
-The first PyPI release currently provides a macOS Apple Silicon wheel. Other platforms need future
-published wheels or a local source build.
+`murali-engine` ships prebuilt wheels for:
 
-For local engine development, install it from a checkout:
+- macOS arm64 and x86_64
+- Linux x86_64 and aarch64
+- Windows x86_64
+
+Those installs do not need a local Rust toolchain. Other platforms can still build from the source
+distribution if [Rust 1.85+](https://www.rust-lang.org/tools/install) is available.
+
+## Preview vs export
+
+Preview (`scene.preview()`):
+
+- needs a working graphics environment
+- does not require `ffmpeg`
+
+Export:
+
+- `scene.save_png(path)` always writes a PNG
+- `scene.export_video(path)` uses `ffmpeg` to assemble MP4 or GIF
+- if `ffmpeg` is missing, Murali still writes frames and tells you where they landed
+
+`preview()`, `save_png()`, `export_video()`, and `export()` consume the scene. Call one of them at
+the end of the script.
+
+## Local engine development
+
+Only if you are changing the engine itself, from a checkout of this repository:
 
 ```bash
 python3 -m venv .venv
@@ -104,26 +79,47 @@ python3 -m venv .venv
 .venv/bin/python python/examples/hello_shapes.py
 ```
 
-The companion `murali-kit` package depends on `murali-engine` and contains broader Python examples
-and add-on experiments. Installing `murali-engine` gives you the engine, not the kit.
+Kit examples live in the [`murali-kit`](https://github.com/murali-engine/murali-kit) repository.
+Develop against an adjacent engine checkout with that repo's `requirements-local.txt`.
 
-## Preview Vs Export Dependencies
+## Core Rust Engine
 
-Preview mode:
+Use this path when you are working on the runtime, not when you are writing scenes.
 
-- needs a working graphics environment
-- does not require `ffmpeg`
+You need Rust 1.85 or newer, `cargo`, and a graphics environment for preview.
 
-Export mode:
+```toml
+[dependencies]
+murali = "0.2.6"
+anyhow = "1"
+glam = "0.33"
+```
 
-- can always render PNG frames
-- uses `ffmpeg` when assembling video or GIF output
+```bash
+git clone https://github.com/murali-engine/murali
+cd murali
+cargo run --example hello_shapes --release -- --preview
+```
 
-If `ffmpeg` is missing, Murali still exports frames and tells you where they were written.
+The published crate excludes `examples/**`. Reference examples are in the GitHub repository.
 
-## Project Config
+Some Rust APIs are feature-gated. The linear-algebra visual toolkit currently needs `experimental`:
 
-Murali looks for a nearby `murali.toml` next to a `Cargo.toml`. A minimal config looks like this:
+```toml
+[dependencies]
+murali = { version = "0.2.6", features = ["experimental"] }
+```
+
+```bash
+cargo run --features experimental --example linear_algebra_vectors
+```
+
+See [Experimental Features](./beta/experimental-features.md) and
+[Your First Scene (Rust)](./rust-first-scene.md).
+
+## Project config
+
+Murali looks for a nearby `murali.toml`. A minimal config:
 
 ```toml
 [preview]
@@ -134,34 +130,12 @@ fps = 60
 width = 1920
 ```
 
-`width` is the literal output width. Murali derives height from the scene's landscape, portrait, or square [video format](./video-formats.md).
+`width` is the output width in pixels. Height follows the scene's landscape, portrait, or square
+[video format](./video-formats.md). The repo includes `murali.toml.example`.
 
-The repo includes a sample file at `murali.toml.example` in the repository root.
-
-## First Run
-
-Once your dependency is added, the fastest next step is:
-
-1. read [Your First Scene](./first-scene.md)
-2. create `examples/my_scene.rs`
-3. run it in preview mode from your own project:
-
-```bash
-cargo run --example my_scene --release -- --preview
-```
-
-## LaTeX Support
-
-LaTeX text rendering requires system tools:
-
-- `latex`
-- `dvisvgm`
-
-If you do not want to install them yet, use `Typst` or `Label` first.
-
-## Related Docs
+## Related docs
 
 - [Introduction](./intro.mdx)
 - [Your First Scene](./first-scene.md)
-- [Text](./tattvas/text.md)
-- [Export and Capture](./export-and-capture.md)
+- [Murali Kit](./murali-kit.md)
+- [Python API](./python-bindings.md)

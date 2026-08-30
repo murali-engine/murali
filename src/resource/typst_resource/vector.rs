@@ -1,4 +1,4 @@
-use crate::frontend::collection::primitives::path::{Path, PathFillRule};
+use crate::frontend::collection::primitives::path::{Path, PathFillRule, PathSegment};
 use crate::frontend::style::Style;
 use crate::projection::style::ColorSource;
 use anyhow::Result;
@@ -11,6 +11,31 @@ pub struct VectorSymbol {
     pub key: String,
     pub path: Path,
     pub center: Vec2,
+}
+
+pub fn scale_path(path: &mut Path, factor: f32) {
+    for segment in &mut path.segments {
+        match segment {
+            PathSegment::MoveTo(point) => *point *= factor,
+            PathSegment::LineTo(point) => *point *= factor,
+            PathSegment::QuadTo(control, point) => {
+                *control *= factor;
+                *point *= factor;
+            }
+            PathSegment::CubicTo(control1, control2, point) => {
+                *control1 *= factor;
+                *control2 *= factor;
+                *point *= factor;
+            }
+        }
+    }
+}
+
+pub fn scale_symbols(symbols: &mut [VectorSymbol], factor: f32) {
+    for symbol in symbols {
+        scale_path(&mut symbol.path, factor);
+        symbol.center *= factor;
+    }
 }
 
 /// Parses an SVG string into a collection of morphable Path objects.

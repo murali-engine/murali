@@ -1,98 +1,207 @@
-# Release And Docs Versioning
+# Release
 
-Use this checklist to publish a Murali crate, freeze matching Docusaurus documentation, and create
-the matching GitHub Release. Set `VERSION` to the version being released, for example `0.2.2`.
+This is the only release guide for the engine repository. It covers both artifacts:
 
-For the Python package release, use [`PYPI_RELEASE.md`](./PYPI_RELEASE.md).
+| Artifact | Users get it from | How it is published |
+| --- | --- | --- |
+| Rust crate `murali` | crates.io | `cargo publish` from your machine |
+| Python package `murali-engine` | PyPI | GitHub Actions, on a `v*` tag |
 
-## 1. Prepare The Crate
+`pip install murali-engine` never reads GitHub Actions. CI **builds** the wheels; the tag job
+**uploads** them to PyPI; pip then picks a matching wheel. Do not `maturin upload` a local macOS
+wheel for a version that CI will also publish.
 
-- Update `Cargo.toml`, `Cargo.lock`, installation snippets, `CHANGELOG.md`, and any release post.
-- Confirm license metadata matches the repository license files.
-- Run the Rust checks:
+Release **engine first**, then [murali-kit](https://github.com/murali-engine/murali-kit). Kit
+depends on a published `murali-engine` range.
+
+Set the version once:
 
 ```bash
-cargo fmt --all -- --check
+export VERSION=0.2.6
+```
+
+The git tag is `v${VERSION}`. Cargo.toml, pyproject.toml, and the Python wheel must use the same
+number.
+
+## How The Python Wheels Work
+
+`.github/workflows/wheels.yml` builds:
+
+- macOS arm64 and x86_64
+- Linux x86_64 and aarch64 (manylinux 2_28)
+- Windows x86_64
+- an sdist for other platforms
+
+The package is `abi3` for CPython 3.10+, so one wheel per OS/arch covers 3.10 and newer. Those
+installs do not need Rust. The sdist still does (Rust 1.85+).
+
+PRs and `main` **build and smoke-test** wheels. Only `v*` tags **publish**.
+
+## One-Time Setup
+
+### crates.io
+
+```bash
+cargo login
+```
+
+Use a crates.io API token. This is only for `cargo publish`. It is not used by the wheel workflow.
+
+### PyPI trusted publishing
+
+Configure once at
+`https://pypi.org/manage/project/murali-engine/settings/publishing/`:
+
+- Owner: `murali-engine`
+- Repository: `murali`
+- Workflow: `wheels.yml`
+- Environment: `pypi`
+
+In GitHub, create an Environment named `pypi` (`Settings → Environments`). Protection rules are
+optional.
+
+Do not put a PyPI token in the repo or in chat. The publish job uses OIDC.
+
+## 1. Bump Metadata
+
+Update the same version in:
+
+- `Cargo.toml` (`version`)
+- `Cargo.lock` (`cargo update -p murali` or a normal build that rewrites the lock)
+- `pyproject.toml`
+- `CHANGELOG.md`
+- install pins in `README.md`, `docs/docs/intro.mdx`, and `docs/docs/installation.md`
+
+```bash
+rg "$VERSION" Cargo.toml Cargo.lock pyproject.toml README.md docs/docs
+scripts/check-release-metadata.sh
+```
+
+That script checks crate/Python pins, licenses, and that live docs still use
+`lastVersion: 'current'` (the Python-first 0.3.0 track). Historical 0.2.x pages stay in the version
+dropdown.
+
+## 2. Checks
+
+```bash
+cargo fmt --all --check
 cargo test --all-targets
+cargo test --features python python
+cargo clippy --all-targets --all-features -- -A warnings -D clippy::correctness -D clippy::suspicious
 cargo check --no-default-features --all-targets
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
-```
-
-## 2. Validate And Freeze The Docs
-
-Update `docs/docs/` first, then run from `docs/`:
-
-```bash
-npm ci
-npm run typecheck
-npm run build
-npm run docusaurus -- docs:version VERSION
-npm run build
-```
-
-Version docs only once the live pages represent the released API.
-
-Murali currently keeps only the latest frozen release docs to avoid stale API guidance confusing
-search engines and AI readers. After `docs:version VERSION`, prune older frozen docs unless there is
-a deliberate reason to keep them:
-
-```bash
-# Keep only docs/versioned_docs/version-VERSION and
-# docs/versioned_sidebars/version-VERSION-sidebars.json.
-$EDITOR versions.json
-rm -rf versioned_docs/version-OLD versioned_sidebars/version-OLD-sidebars.json
-npm run build
-```
-
-Then return to the repository root and verify release metadata:
-
-```bash
+npm run build --prefix docs
 scripts/check-release-metadata.sh
 cargo package --list
 cargo publish --dry-run
 ```
 
-Review the package contents before publishing.
+Review `cargo package --list`. The crate excludes `docs/**`, `examples/**`, and `RELEASE.md`.
 
-## 3. Commit, Tag, Publish, And Push
+A local wheel is optional and only for the machine you are on:
+
+```bash
+.venv/bin/maturin build --release --features python --locked
+```
+
+Do not upload it.
+
+## 3. Cargo Publish (Rust Crate)
+
+Commit the version bump, then publish the crate **before or immediately with** the git tag. crates.io
+does not use GitHub Actions.
 
 ```bash
 git add -A
-git commit -m "Release murali VERSION"
-git tag vVERSION
+git commit -m "Release murali ${VERSION}"
+git tag "v${VERSION}"
 cargo publish
-git push origin main
-git push origin vVERSION
 ```
 
-Pushing `main` deploys the site through `.github/workflows/deploy.yml`.
+If `cargo publish` fails, do not push the tag. Yank or fix, then try again. A published crates.io
+version cannot be replaced; only yanked.
 
-## 4. Create The GitHub Release
+Wait until `https://crates.io/crates/murali/${VERSION}` exists and `cargo search murali` sees it.
 
-GitHub Releases are not created automatically from tags. Create a release object for `vVERSION` so
-the repository Releases page does not look stale.
-
-If the GitHub CLI is available:
+## 4. Push The Tag (Python Wheels)
 
 ```bash
-gh release create vVERSION \
-  --title "Murali vVERSION" \
+git push origin main
+git push origin "v${VERSION}"
+```
+
+Pushing `main` deploys docs via `.github/workflows/deploy.yml`.
+Pushing `v${VERSION}` runs `.github/workflows/wheels.yml` and, if every platform job passes,
+uploads wheels and the sdist to PyPI.
+
+Watch the **Python wheels** workflow. Each platform job installs the wheel and runs
+`python/tests/test_bindings.py`.
+
+If one platform fails, nothing new is published (`needs: [linux, windows, macos, sdist]`). Fix,
+tag a new version if the failed tag already created partial files (PyPI files are immutable;
+`skip-existing` only skips identical filenames).
+
+## 5. GitHub Release
+
+Tags do not create a GitHub Release object. Add one so the Releases page is not empty:
+
+```bash
+gh release create "v${VERSION}" \
+  --title "Murali v${VERSION}" \
   --notes-file /tmp/murali-release-notes.md
 ```
 
-Otherwise, use the GitHub UI:
+Notes usually come from `CHANGELOG.md`. Link crates.io, PyPI, and `vPREVIOUS...v${VERSION}`.
 
-1. Open `https://github.com/murali-engine/murali/releases/new`.
-2. Select tag `vVERSION`.
-3. Set the title to `Murali vVERSION`.
-4. Paste release notes from `CHANGELOG.md`.
-5. Include links to crates.io and the compare range `vPREVIOUS...vVERSION`.
-6. Publish the release.
+## 6. Verify
 
-## 5. Post-Release Checks
+```bash
+python3 -m venv /tmp/murali-pypi-test
+/tmp/murali-pypi-test/bin/python -m pip install --upgrade pip
+/tmp/murali-pypi-test/bin/python -m pip install "murali-engine==${VERSION}"
+/tmp/murali-pypi-test/bin/python -c "from murali_engine import Scene, Circle, Timeline; print('pypi ok')"
+```
 
-- Verify the new crates.io version and a fresh dependency resolution.
-- Verify the GitHub Releases page shows `vVERSION` as the latest release.
-- Verify the deployed docs, version selector, and release post.
-- Confirm README installation instructions point to the released version.
-- Run `scripts/check-release-metadata.sh` once more against the tagged tree.
+Confirm all platform wheels are listed:
+
+```text
+https://pypi.org/project/murali-engine/#files
+https://crates.io/crates/murali
+https://github.com/murali-engine/murali/releases
+https://muraliengine.com/docs/intro
+```
+
+Then release kit: [murali-kit RELEASE.md](https://github.com/murali-engine/murali-kit/blob/main/RELEASE.md).
+
+## Docs Freeze (Only For A Named Docs Version)
+
+Live docs are the current Python-first track (`lastVersion: 'current'`, labeled `0.3.0 🚧`). Do
+**not** freeze Docusaurus on every crate patch.
+
+When you actually cut a public docs version that should stay at `/docs`:
+
+```bash
+cd docs
+npm ci
+npm run build
+npm run docusaurus -- docs:version ${VERSION}
+```
+
+Then point `lastVersion` at that frozen version, update `scripts/check-release-metadata.sh` to
+match, and prune older frozen trees if you do not want them in the dropdown.
+
+## Do Not
+
+- Upload one local wheel with `maturin upload` / `maturin publish`
+- Reuse a yanked or failed version number for different files
+- Release kit before `murali-engine==${VERSION}` is installable from PyPI
+- Put PyPI or crates.io tokens in the repo, the workflow file, or chat
+
+## AI Helper Prompt
+
+```text
+I am releasing murali ${VERSION} from the engine repository.
+Follow RELEASE.md only. Publish the Rust crate with cargo publish, then push tag v${VERSION}
+so GitHub Actions uploads murali-engine wheels to PyPI. Do not maturin upload a local wheel.
+Do not ask me to paste tokens. Trusted publishing is wheels.yml / environment pypi.
+```

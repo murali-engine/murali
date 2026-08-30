@@ -8,6 +8,34 @@ build.
 This roadmap contains future work only. Completed work belongs in release notes and documentation,
 not in the plan.
 
+## P0: Python Coherence And 0.3.0
+
+Murali `0.3.0` is the target for the first coherent Python-first release line. The goal is for
+`murali-engine` to feel like a real Python library rather than a partial Rust binding, and for
+`murali-kit` examples to run against it without local setup surprises.
+
+- Freeze the intended Python API shape for scenes, objects, timelines, layout, preview, export,
+  and examples.
+- Inventory Rust examples and engine features against the currently exposed Python surface.
+- Keep `0.2.x` releases additive and compatibility-focused; reserve breaking Python API cleanup for
+  `0.3.0`.
+- Make the Python binding architecture predictable after the `src/python/` split, with consistent
+  constructors, validation, return values, and module registration.
+- Expose missing APIs only when they are needed by real examples, documentation, or `murali-kit`.
+- Classify the existing `frontend::collection` tree before `0.3.0`: keep atomic and structural
+  building blocks in the engine, move opinionated compositions and teaching recipes to
+  `murali-kit`, and leave unstable surfaces Rust-only until they are ready.
+- Move Python-facing theme selection to `murali-kit`; keep engine styling explicit through colors,
+  backgrounds, fonts, materials, and conservative renderer defaults.
+- Port examples in stages: basic shapes, text, timelines, layout, axes, tables, 3D, scene views,
+  and advanced demos.
+- Use the examples as the backbone for Python documentation: quickstart, concepts, API guide,
+  `murali-kit` guide, and the hidden Core Rust Engine reference.
+- Add release confidence checks for Python import, Python examples, `murali-kit` examples, Maturin
+  wheel builds, and normal Rust tests.
+
+The working inventory for this effort lives in `docs/internal/python-api-inventory.md`.
+
 ## P0: Reliability And Quality Gates
 
 - Add Linux, macOS, and headless-render coverage for the `wgpu` runtime.

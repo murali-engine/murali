@@ -4,6 +4,11 @@ sidebar_position: 3
 
 # Tattvas
 
+:::note Python authors
+In Python, add objects with `scene.add(...)` and keep the returned handle. Teaching views such as
+networks and graphs live in [Murali Kit](../murali-kit), not on `murali_engine`.
+:::
+
 A tattva is any object that can be placed, animated, and rendered in a scene. The word comes from Sanskrit and means "element" or "essence".
 
 Every tattva is added to the scene with `add_tattva(shape, position)` which returns a `TattvaId` for later reference:

@@ -146,6 +146,12 @@ For release builds and publishing:
 Companion Python examples and add-on experiments live in the `murali-kit` repository. `murali-kit`
 depends on `murali-engine`; installing `murali-engine` does not install the kit.
 
+Install the companion kit separately when you want its helpers and examples:
+
+```bash
+python3 -m pip install murali-kit==0.1.0
+```
+
 ## First Release Boundary
 
 The first PyPI release is experimental, but it should not feel like a toy binding.

@@ -21,7 +21,11 @@ require_text() {
 
 lock_version=$(awk '
   $0 == "name = \"murali\"" { found = 1; next }
-  found && /^version = / { gsub(/^version = \"|\"$/, ""); print; exit }
+  found && /^version = / {
+    gsub(/"/, "", $3)
+    print $3
+    exit
+  }
 ' Cargo.lock)
 
 if [[ "$lock_version" != "$version" ]]; then
@@ -31,25 +35,17 @@ fi
 
 require_text Cargo.toml 'license = "MIT OR Apache-2.0"'
 require_text README.md "murali = \"$version\""
+require_text README.md "murali-engine==$version"
 require_text README.md 'dual-licensed under either the MIT License or the Apache License'
 require_text docs/docs/installation.md "murali = \"$version\""
-require_text docs/docs/intro.mdx "murali = \"$version\""
-require_text docs/docusaurus.config.ts "lastVersion: '$version'"
+require_text docs/docs/installation.md "murali-engine==$version"
+require_text docs/docs/intro.mdx "murali-engine==$version"
+require_text docs/docusaurus.config.ts "lastVersion: 'current'"
 
-first_docs_version=$(sed -n 's/.*"\([^"]*\)".*/\1/p' docs/versions.json | head -n 1)
-if [[ "$first_docs_version" != "$version" ]]; then
-  echo "docs/versions.json starts with $first_docs_version, expected $version" >&2
+if [[ ! -d docs/versioned_docs/version-0.2.5 ]]; then
+  echo "Missing historical documentation artifact: docs/versioned_docs/version-0.2.5" >&2
   exit 1
 fi
-
-for path in \
-  "docs/versioned_docs/version-$version" \
-  "docs/versioned_sidebars/version-$version-sidebars.json"; do
-  if [[ ! -e "$path" ]]; then
-    echo "Missing frozen documentation artifact: $path" >&2
-    exit 1
-  fi
-done
 
 for file in LICENSE-APACHE LICENSE-MIT; do
   if [[ ! -s "$file" ]]; then

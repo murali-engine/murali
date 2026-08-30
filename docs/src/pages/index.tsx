@@ -20,31 +20,35 @@ type Card = {
 const pathways: Card[] = [
   {
     title: 'Get started',
-    description: 'Introduction, installation, and your first scene.',
+    description: 'Install murali-kit and write your first Python scene.',
     to: '/docs/intro',
     label: 'Quickstart',
   },
   {
-    title: 'Learn tattvas',
-    description: 'Shapes, text, layout, and storytelling building blocks.',
-    to: '/docs/tattvas/',
-    label: 'Core API',
+    title: 'Write a scene',
+    description: 'Scene, tattvas, timeline, preview, and export in Python.',
+    to: '/docs/first-scene',
+    label: 'Tutorial',
   },
   {
-    title: 'Master timelines',
-    description: 'Animation scheduling, easing, and scene orchestration.',
-    to: '/docs/animations',
-    label: 'Animation',
+    title: 'Murali Kit',
+    description: 'Themes, named colors, and reusable teaching views.',
+    to: '/docs/murali-kit',
+    label: 'Authoring',
   },
   {
-    title: 'Study the engine',
-    description: 'Architecture, projection, renderer internals, and ECS flow.',
+    title: 'Engine internals',
+    description: 'Rust architecture, renderer, and contributor notes.',
     to: '/docs/architecture/overview/',
     label: 'Internals',
   },
 ];
 
 const highlights: Card[] = [
+  {
+    title: 'Python authoring',
+    description: 'Write scenes in Python. The Rust engine renders them.',
+  },
   {
     title: 'Time-driven animation',
     description: 'Deterministic scenes built as explicit functions of time.',
@@ -53,17 +57,13 @@ const highlights: Card[] = [
     title: 'GPU-native rendering',
     description: 'Powered by wgpu across Metal, Vulkan, and DirectX 12.',
   },
-  {
-    title: 'Typed scene construction',
-    description: 'Rust gives large animation codebases structure and safety.',
-  },
 ];
 
 const resources: Card[] = [
   {
-    title: 'Reference examples',
-    description: 'Runnable, maintained examples for learning Murali scene construction.',
-    href: 'https://github.com/murali-engine/murali/blob/main/examples/README.md',
+    title: 'Python examples',
+    description: 'Runnable kit examples for shapes, motion, math, and AI lessons.',
+    href: 'https://github.com/murali-engine/murali-kit/tree/main/examples',
     label: 'Examples',
   },
   {
@@ -73,14 +73,14 @@ const resources: Card[] = [
     label: 'Videos',
   },
   {
-    title: 'Storytelling primitives',
-    description: 'Stepwise diagrams and visual explanation components, with Stepwise as the recommended path for new storytelling work.',
-    to: '/docs/tattvas/storytelling/',
+    title: 'Python API',
+    description: 'The murali_engine surface for scenes, tattvas, timelines, and export.',
+    to: '/docs/python-bindings',
   },
   {
-    title: 'Feature internals',
-    description: 'Implementation notes for major systems such as Stepwise and neural diagrams.',
-    to: '/docs/feature-internals/overview/',
+    title: 'Engine internals',
+    description: 'Architecture notes for people changing the Rust runtime.',
+    to: '/docs/architecture/overview/',
   },
 ];
 
@@ -103,7 +103,7 @@ const showcaseVideos: VideoShowcase[] = [
   },
 ];
 
-const constructs = ['Scene', 'Timeline', 'Tattvas', 'Renderer'];
+const constructs = ['Scene', 'Timeline', 'Tattvas', 'Kit'];
 
 function SurfaceCard({ title, description, to, href, label }: Card) {
   const content = (
@@ -140,13 +140,13 @@ function HomepageHeader() {
     <header className={styles.hero}>
       <div className={clsx('container', styles.heroInner)}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Rust animation engine</p>
+          <p className={styles.eyebrow}>Python animation engine</p>
           <Heading as="h1" className={styles.heroTitle}>
-            Build precise animation systems.
+            Build precise teaching visuals.
           </Heading>
           <p className={styles.heroSubtitle}>
-            Murali is a Rust-powered engine for mathematical animation, teaching visuals, and
-            timeline-driven scene construction.
+            Write mathematical and AI animation in Python. Murali renders on a modern GPU runtime
+            with deterministic, timeline-driven scenes.
           </p>
           <p className={styles.heroNote}>
             Developed in part for{' '}
@@ -249,7 +249,7 @@ export default function Home(): ReactNode {
             <SectionIntro
               eyebrow="Overview"
               title="A cleaner way to build mathematical animation"
-              body="Murali treats animation as system design: composable scene objects, precise timelines, and a renderer built for modern graphics APIs."
+              body="Write scenes in Python. Murali keeps tattvas, timelines, and rendering as one deterministic system, with kit components for lessons and themes."
             />
             <div className={styles.threeUp}>
               {highlights.map((item) => (
@@ -271,7 +271,7 @@ export default function Home(): ReactNode {
             <SectionIntro
               eyebrow="Paths"
               title="Choose the right place to begin"
-              body="Start with the basics, move into tattvas and timelines, or go directly into the engine internals."
+              body="Start in Python, add kit teaching views when you need them, and open Core Rust Engine only if you are changing the runtime."
             />
             <div className={styles.cardGrid}>
               {pathways.map((item) => (
@@ -287,16 +287,16 @@ export default function Home(): ReactNode {
               <SectionIntro
                 eyebrow="Explore"
                 title="Documentation, internals, examples, and showcase videos"
-                body="Murali includes storytelling primitives, architecture notes, maintained reference examples, and showcase videos so you can move from concept to scene quickly."
+                body="Start with the Python walkthrough, then kit examples. Architecture notes and Rust examples stay available for engine work."
               />
               <div className={styles.note}>
                 <p className={styles.noteTitle}>Suggested reading order</p>
                 <ol className={styles.noteList}>
                   <li>Introduction</li>
-                  <li>Tattvas</li>
-                  <li>Animations</li>
-                  <li>Scenes and App</li>
-                  <li>Architecture overview</li>
+                  <li>Your first scene</li>
+                  <li>Mental model</li>
+                  <li>Murali Kit</li>
+                  <li>Python API</li>
                 </ol>
               </div>
             </div>

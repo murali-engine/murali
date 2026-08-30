@@ -12,6 +12,31 @@ build.
 This page contains future work only. Released capabilities are documented in the guides and
 release notes.
 
+## Python Coherence And 0.3.0
+
+Murali `0.3.0` is planned as the first coherent Python-first release line. The goal is for
+`murali-engine` to feel like a complete Python library, with `murali-kit` examples running against
+it cleanly.
+
+- Freeze the intended Python API shape for scenes, objects, timelines, layout, preview, export, and
+  examples.
+- Inventory Rust examples and engine features against the currently exposed Python surface.
+- Keep `0.2.x` releases additive and compatibility-focused; reserve breaking Python API cleanup for
+  `0.3.0`.
+- Make the Python binding architecture predictable, with consistent constructors, validation,
+  return values, and module registration.
+- Expose missing APIs when they are needed by real examples, documentation, or `murali-kit`.
+- Classify the existing Rust collection tree before `0.3.0`: keep core building blocks in the
+  engine, move opinionated compositions to `murali-kit`, and leave unstable surfaces Rust-only until
+  they are ready.
+- Move Python-facing theme selection to `murali-kit`; keep engine styling explicit through colors,
+  backgrounds, fonts, materials, and conservative renderer defaults.
+- Port examples in stages: basic shapes, text, timelines, layout, axes, tables, 3D, scene views,
+  and advanced demos.
+- Use the examples as the backbone for Python documentation.
+- Add release checks for Python import, Python examples, `murali-kit` examples, Maturin wheel
+  builds, and normal Rust tests.
+
 ## Reliability And Quality Gates
 
 - Cross-platform and headless `wgpu` runtime coverage.

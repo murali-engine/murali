@@ -2,7 +2,7 @@
 
 pub use crate::frontend::props::{DrawableProps, SharedProps};
 
-use glam::{Mat4, Quat, Vec2, Vec3, vec2, vec3};
+use glam::{Mat4, Quat, Vec2, Vec3, Vec4, vec2, vec3};
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
@@ -102,6 +102,7 @@ pub struct Scene {
     /// Global State
     pub camera: Camera,
     frame: Frame,
+    background: Option<Vec4>,
     pub global_model: Mat4,
 
     /// Independently animated child scenes presented as parent-scene objects.
@@ -123,6 +124,7 @@ impl Scene {
             updaters: UpdaterManager::new(),
             camera: Camera::for_frame(Frame::default()),
             frame: Frame::default(),
+            background: None,
             global_model: Mat4::IDENTITY,
             scene_views: HashMap::new(),
             next_tattva_id: 1,
@@ -145,6 +147,24 @@ impl Scene {
 
     pub fn frame(&self) -> Frame {
         self.frame
+    }
+
+    /// Selects the scene's explicit clear/background color.
+    pub fn with_background(mut self, color: Vec4) -> Self {
+        self.set_background(color);
+        self
+    }
+
+    pub fn set_background(&mut self, color: Vec4) {
+        self.background = Some(color);
+    }
+
+    pub fn clear_background(&mut self) {
+        self.background = None;
+    }
+
+    pub fn background(&self) -> Option<Vec4> {
+        self.background
     }
 
     /// Adds a Tattva to the scene and returns its stable ID.
@@ -477,6 +497,11 @@ impl Scene {
 
     pub fn anchor_position(&self, id: TattvaId, anchor: Anchor) -> Option<Vec2> {
         self.world_bounds(id).map(|b| b.anchor(anchor))
+    }
+
+    pub fn position(&self, id: TattvaId) -> Option<Vec3> {
+        self.get_tattva_any(id)
+            .map(|tattva| DrawableProps::read(tattva.props()).position)
     }
 
     pub fn set_position_2d(&mut self, id: TattvaId, position: Vec2) {

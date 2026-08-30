@@ -79,7 +79,9 @@ impl ExportSettings {
         settings.width = scene.frame().default_export_width();
         settings.duration_seconds = infer_duration(scene);
 
-        let bg = Theme::global().background;
+        let bg = scene
+            .background()
+            .unwrap_or_else(|| Theme::global().background);
         settings.clear_color = bg;
 
         settings

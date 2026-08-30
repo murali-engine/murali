@@ -4,6 +4,11 @@ sidebar_position: 6
 
 # Timelines and Clips
 
+:::note Python authors
+Python exposes `Timeline` with `.at(...)`, `.for_duration(...)`, and `.spawn()`. Rust `Clip`
+composition is not on the Python surface yet. Independent child clocks use `SceneView`.
+:::
+
 A **Timeline** is the scene's single global time axis. A **Clip** is a reusable group of animations authored from its own local time `0.0` and placed onto that timeline.
 
 When content needs a genuinely independent runtime clock rather than clip-local authoring, put it

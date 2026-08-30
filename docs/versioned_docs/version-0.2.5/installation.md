@@ -107,6 +107,12 @@ python3 -m venv .venv
 The companion `murali-kit` package depends on `murali-engine` and contains broader Python examples
 and add-on experiments. Installing `murali-engine` gives you the engine, not the kit.
 
+Install Murali Kit when you want the companion Python helpers and examples:
+
+```bash
+python3 -m pip install murali-kit==0.1.0
+```
+
 ## Preview Vs Export Dependencies
 
 Preview mode:

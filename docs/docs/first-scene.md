@@ -4,413 +4,134 @@ sidebar_position: 4
 
 # Your First Scene
 
-This guide walks you through creating a minimal Murali scene from scratch. By the end, you'll have a working animation with shapes, text, and motion.
+Build a small Python scene: a title, a square, a circle, and two moves. By the end you can preview
+it in a window or write a PNG.
 
-## What You'll Build
-
-A simple scene with:
-- A title label
-- Two shapes (a square and a circle)
-- Smooth animated motion between positions
+Rust engine contributors should use [Your First Scene (Rust)](./rust-first-scene.md) instead.
 
 ## Prerequisites
 
-Make sure you have Murali installed. If not, see the [Introduction](./intro.mdx) for setup instructions.
+```bash
+python3 -m pip install murali-kit
+```
 
-## Step 1: Create a New File
+See [Installation](./installation) if that fails.
 
-Create a new file in your project's `examples/` directory or in a new binary crate:
+## The complete scene
+
+Save this as `my_first_scene.py`:
+
+```python
+from murali_engine import Circle, Label, Scene, Square, Timeline
+from murali_kit.colors import GREEN_D, RED_B, WHITE
+from murali_kit.themes import DarkTheme, apply_theme
+
+scene = apply_theme(Scene(), DarkTheme())
+
+title = scene.add(Label("My First Scene", height=0.38, color=WHITE))
+scene.to_edge(title, "up", margin=0.8)
+
+square = scene.add(
+    Square(size=1.2, color=RED_B).with_stroke(0.04, WHITE),
+    at=(-4.0, 0.0, 0.0),
+)
+circle = scene.add(
+    Circle(radius=0.65, color=GREEN_D, segments=48).with_stroke(0.04, WHITE),
+    at=(4.0, 0.0, 0.0),
+)
+
+timeline = Timeline()
+timeline.animate(square).at(0.0).for_duration(2.0).ease("in_out_quad").move_to((2.0, 0.0, 0.0)).spawn()
+timeline.animate(circle).at(0.5).for_duration(2.0).ease("out_quad").move_to((-2.0, 0.0, 0.0)).spawn()
+scene.play(timeline)
+
+scene.preview()
+```
+
+Run it:
 
 ```bash
-# If using the Murali repo
-touch examples/my_first_scene.rs
-
-# Or create a new binary project
-cargo new --bin my_first_scene
-cd my_first_scene
-# Add murali to Cargo.toml dependencies
+python3 my_first_scene.py
 ```
 
-## Step 2: Import What You Need
+## What each part does
 
-Start with the essential imports:
+**Theme.** `Scene()` comes from the engine. `apply_theme(..., DarkTheme())` is kit styling. The
+engine does not own named themes.
 
-```rust
-use glam::{Vec3, Vec4};
-use murali::App;
-use murali::colors::*;
-use murali::positions::*;
-use murali::engine::scene::Scene;
-use murali::engine::timeline::Timeline;
-use murali::frontend::animation::Ease;
-use murali::frontend::collection::primitives::{circle::Circle, square::Square};
-use murali::frontend::collection::text::label::Label;
+**Tattvas.** `scene.add(...)` places an object and returns a handle. Use that handle to lay it out
+and to animate it.
 
-fn main() -> anyhow::Result<()> {
-    // We'll build the scene here
-    Ok(())
-}
+**Position.** `at=(x, y, z)` is world space, not pixels. The origin is the center of the frame.
+`to_edge(title, "up", margin=0.8)` is a layout helper; `"up"`, `"down"`, `"left"`, and `"right"`
+are the direction names.
+
+**Color.** Named swatches such as `WHITE` and `RED_B` live in `murali_kit.colors`. The engine
+accepts any RGBA tuple `(r, g, b, a)` with values from `0.0` to `1.0`.
+
+**Timeline.** `.animate(handle)` starts a builder. `.at(seconds)` is start time, `.for_duration(...)`
+is length, `.ease(...)` is the curve, then a verb such as `.move_to(...)`. **`.spawn()` commits
+the animation.** Without it, nothing is scheduled.
+
+**Play, then run.** `scene.play(timeline)` installs the schedule. `scene.preview()` opens a window
+and consumes the scene.
+
+## Export instead of preview
+
+Replace the last line with one of:
+
+```python
+scene.save_png("my_first_scene.png", width=1920)
 ```
 
-## Step 3: Create a Scene
-
-The `Scene` is the container for all your objects:
-
-```rust
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // More code will go here
-    
-    Ok(())
-}
+```python
+scene.export_video("my_first_scene.mp4", width=1920, fps=60)
 ```
 
-## Step 4: Add a Title
+Do not call `preview()`, `save_png()`, and `export_video()` on the same scene object. Each one
+takes ownership of the scene.
 
-Add a text label at the top of your scene:
+A PNG at `duration=0.0` is the opening frame. Appear, typewrite, and draw animations keep those
+tattvas hidden on frame one, so a duration-zero PNG can look empty. Export a later time, or use
+video, when you want the motion visible.
 
-```rust
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // Add a title
-    scene.add_tattva(
-        Label::new("My First Scene", 0.32)
-            .with_color(WHITE),
-        3.0 * UP,
-    );
-    
-    Ok(())
-}
+## Portrait and other frames
+
+```python
+scene = apply_theme(Scene(frame="portrait"), DarkTheme())
 ```
 
-**What's happening here:**
-- `Label::new("My First Scene", 0.32)` creates a text label with font size 0.32
-- `.with_color(...)` sets the text color (RGBA values from 0.0 to 1.0)
-- `3.0 * UP` positions the label at coordinates (x=0, y=3, z=0)
+`"landscape"`, `"portrait"`, and `"square"` are the frame names. See [Video Formats](./video-formats).
 
-## Step 5: Add Shapes
+## Coordinate system
 
-Now add two shapes that we'll animate:
+Right-handed world space:
 
-```rust
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // Title
-    scene.add_tattva(
-        Label::new("My First Scene", 0.32)
-            .with_color(WHITE),
-        3.0 * UP,
-    );
-    
-    // Add a red square on the left
-    let square_id = scene.add_tattva(
-        Square::new(1.2, RED_B),
-        4.0 * LEFT,
-    );
-    
-    // Add a green circle on the right
-    let circle_id = scene.add_tattva(
-        Circle::new(0.65, 48, GREEN_D),
-        4.0 * RIGHT,
-    );
-    
-    Ok(())
-}
-```
+- **X** — left (negative) to right (positive)
+- **Y** — down (negative) to up (positive)
+- **Z** — into the screen (negative) to toward the camera (positive)
 
-**Important:** Notice we're saving the IDs returned by `add_tattva`. We'll need these to animate the shapes.
+If your numbers are in the hundreds, you are probably thinking in pixels. A circle of radius `1.0`
+is a reasonable starting size.
 
-**Parameters explained:**
-- `Square::new(1.2, color)` - size of 1.2 units, with a red color
-- `Circle::new(0.65, 48, color)` - radius of 0.65, 48 segments for smoothness, green color
+## Kit examples
 
-## Step 6: Set Up the Camera
+Broader Python examples live in
+[`murali-kit/examples`](https://github.com/murali-engine/murali-kit/tree/main/examples).
+`hello_shapes.py` and `motion_basics.py` are the next two to read.
 
-Configure the camera to frame your scene properly:
+## What's next
 
-```rust
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // ... (previous code for title and shapes)
-    
-    // Configure camera
-    scene.camera_mut().position = CAMERA_DEFAULT_POS;
-    scene.camera_mut().set_view_width(16.0);
-    
-    Ok(())
-}
-```
+1. [Mental Model](./mental-model) — how Scene, tattva, and timeline fit
+2. [Murali Kit](./murali-kit) — themes, colors, teaching views
+3. [Which API Should I Use?](./which-api-should-i-use)
+4. [Common First Mistakes](./common-first-mistakes)
+5. [Python API](./python-bindings)
 
-The camera is positioned at z=10 (looking toward the origin) with a view width of 16 units.
+## If nothing appears
 
-## Step 7: Create a Timeline and Add Animations
-
-Now for the fun part - making things move:
-
-```rust
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // ... (previous code)
-    
-    // Create a timeline
-    let mut timeline = Timeline::new();
-    
-    // Animate the square
-    timeline
-        .animate(square_id)
-        .at(0.0)                              // Start at time 0
-        .for_duration(2.0)                    // Take 2 seconds
-        .ease(Ease::InOutQuad)                // Smooth easing
-        .move_to(2.0 * RIGHT)    // Move to new position
-        .spawn();
-    
-    // Animate the circle
-    timeline
-        .animate(circle_id)
-        .at(0.5)                              // Start at time 0.5
-        .for_duration(2.0)                    // Take 2 seconds
-        .ease(Ease::OutQuad)                  // Different easing
-        .move_to(2.0 * LEFT)   // Move to new position
-        .spawn();
-    
-    Ok(())
-}
-```
-
-**What's happening:**
-- We create animations using the builder pattern
-- `.animate(id)` targets a specific tattva by its ID
-- `.at(time)` sets when the animation starts
-- `.for_duration(seconds)` sets how long it takes
-- `.ease(...)` controls the motion curve (smooth vs linear)
-- `.move_to(position)` is the animation verb - what actually changes
-- `.spawn()` adds the animation to the timeline
-
-## Step 8: Play the Timeline
-
-Tell the scene to use this timeline:
-
-```rust
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // ... (all previous code)
-    
-    // Play the timeline
-    scene.play(timeline)?;
-    
-    Ok(())
-}
-```
-
-## Step 9: Run the App
-
-Finally, create and run the app:
-
-```rust
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // ... (all previous code)
-    
-    // Run the app
-    App::new()?.with_scene(scene).run_app()
-}
-```
-
-## Complete Code
-
-Here's the full example:
-
-```rust
-use glam::{Vec3, Vec4};
-use murali::App;
-use murali::engine::scene::Scene;
-use murali::engine::timeline::Timeline;
-use murali::frontend::animation::Ease;
-use murali::frontend::collection::primitives::{circle::Circle, square::Square};
-use murali::frontend::collection::text::label::Label;
-
-fn main() -> anyhow::Result<()> {
-    let mut scene = Scene::new();
-    
-    // Title
-    scene.add_tattva(
-        Label::new("My First Scene", 0.32)
-            .with_color(WHITE),
-        3.0 * UP,
-    );
-    
-    // Shapes
-    let square_id = scene.add_tattva(
-        Square::new(1.2, RED_B),
-        4.0 * LEFT,
-    );
-    
-    let circle_id = scene.add_tattva(
-        Circle::new(0.65, 48, GREEN_D),
-        4.0 * RIGHT,
-    );
-    
-    // Camera
-    scene.camera_mut().position = CAMERA_DEFAULT_POS;
-    scene.camera_mut().set_view_width(16.0);
-    
-    // Timeline
-    let mut timeline = Timeline::new();
-    
-    timeline
-        .animate(square_id)
-        .at(0.0)
-        .for_duration(2.0)
-        .ease(Ease::InOutQuad)
-        .move_to(2.0 * RIGHT)
-        .spawn();
-    
-    timeline
-        .animate(circle_id)
-        .at(0.5)
-        .for_duration(2.0)
-        .ease(Ease::OutQuad)
-        .move_to(2.0 * LEFT)
-        .spawn();
-    
-    scene.play(timeline)?;
-    
-    // Run
-    App::new()?.with_scene(scene).run_app()
-}
-```
-
-## Running Your Scene
-
-### Preview Mode
-
-To see your animation in a window:
-
-```bash
-cargo run --example my_first_scene --release -- --preview
-```
-
-Without `--preview`, Murali exports by default rather than opening an interactive window.
-
-For explicit export:
-
-```bash
-cargo run --example my_first_scene --release -- --export
-```
-
-**Controls:**
-- **[O]** - Switch to orbit camera mode
-- **[P]** - Switch to pan/zoom camera mode
-- **[Drag]** - Move the camera
-- **[Scroll]** - Zoom in/out
-- **[Esc]** - Exit
-
-### Export Mode
-
-To export your animation as a video:
-
-```bash
-cargo run --example my_first_scene --release
-```
-
-Or explicitly:
-
-```bash
-cargo run --example my_first_scene --release -- --export
-```
-
-This will create an MP4 file in your output directory.
-
-## Understanding the Coordinate System
-
-Murali uses a right-handed coordinate system:
-- **X-axis**: Left (negative) to right (positive)
-- **Y-axis**: Down (negative) to up (positive)
-- **Z-axis**: Into screen (negative) to out of screen (positive)
-
-The origin (0, 0, 0) is at the center of the frame.
-
-## Key Concepts
-
-### Scene
-The container for all objects, the global timeline, and state. It's the source of truth for your animation.
-
-### Tattva
-Any visual object in Murali (shapes, text, graphs, etc.). Each tattva has:
-- A unique ID
-- A position in 3D space
-- Properties like color, scale, rotation, opacity
-
-### Timeline
-The scene's global time axis. It schedules when animations happen and how long they take.
-
-### Clip
-A reusable animation section authored from its own local time `0.0`, then appended, overlaid, or explicitly placed on the timeline.
-
-### Animation Verbs
-Methods that change tattva properties over time:
-- `.move_to(position)` - Change position
-- `.scale_to(scale)` - Change size
-- `.rotate_to(quat)` - Change rotation
-- `.fade_to(opacity)` - Change opacity
-- `.appear()` - Fade in from invisible
-- And many more...
-
-## What's Next?
-
-Now that you have a working scene, here's your recommended learning path:
-
-**Core Concepts (Start Here):**
-1. **[Mental Model](./mental-model)** - Understand how Scene, Tattva, and Timeline work together
-2. **[Which API Should I Use?](./which-api-should-i-use)** - Decision guide for common tasks
-3. **[Common First Mistakes](./common-first-mistakes)** - Avoid common pitfalls
-
-**Expand Your Skills:**
-- **[Animations](./animations)** - Complete reference for all animation verbs
-- **[Tattvas](./tattvas/)** - Discover all shapes, text, graphs, and components
-- **[Scene and App](./scene-and-app)** - Advanced scene management
-- **[Camera](./camera)** - Control camera movement and framing
-
-**By Use Case:**
-- Teaching math → [Text](./tattvas/text), [Math](./tattvas/math), [Graphs](./tattvas/graphs)
-- Data visualization → [Graphs](./tattvas/graphs), [Tables](./tattvas/tables)
-- AI/ML explanations → [AI Tattvas](./tattvas/ai), [Storytelling](./tattvas/storytelling)
-
-## Common First Mistakes
-
-### Shapes Not Visible
-- Check that your camera is positioned correctly (usually at positive Z)
-- Verify your shapes are within the camera's view width
-- Make sure colors have alpha = 1.0 (fully opaque)
-
-### Animations Not Playing
-- Did you call `scene.play(timeline)` before running the app?
-- Check that animation start times (`.at(...)`) are reasonable
-- Verify you're using the correct tattva IDs
-
-### Colors Look Wrong
-- Colors use RGBA format with values from 0.0 to 1.0
-- Example: `Vec4::new(1.0, 0.0, 0.0, 1.0)` is bright red
-- The fourth value is alpha (transparency)
-
-## Troubleshooting
-
-**"Cannot find tattva with ID"**
-- You're trying to animate a tattva that doesn't exist
-- Make sure you saved the ID from `add_tattva` and used it correctly
-
-**Window opens but nothing appears**
-- Your objects might be outside the camera view
-- Try adjusting camera position or view width
-- Check that your positions make sense (not too far from origin)
-
-**Animation happens instantly**
-- Check your `.for_duration(...)` value - it should be > 0
-- Verify your timeline is actually being played with `scene.play(timeline)`
+- Confirm `scene.play(timeline)` runs before `preview()` / export
+- Confirm every animation ends with `.spawn()`
+- Stay near the origin; try `at=(0.0, 0.0, 0.0)`
+- Use alpha `1.0` so colors are opaque
+- Remember that `preview()` cannot be followed by `save_png()` on the same object
