@@ -22,25 +22,25 @@ const pathways: Card[] = [
     title: 'Get started',
     description: 'Install murali-kit and write your first Python scene.',
     to: '/docs/intro',
-    label: 'Quickstart',
+    label: 'Start',
   },
   {
-    title: 'Write a scene',
-    description: 'Scene, tattvas, timeline, preview, and export in Python.',
-    to: '/docs/first-scene',
-    label: 'Tutorial',
-  },
-  {
-    title: 'Murali Kit',
-    description: 'Themes, named colors, and reusable teaching views.',
-    to: '/docs/murali-kit',
+    title: 'Write scenes',
+    description: 'Coordinates, tattvas, timelines, camera, and export.',
+    to: '/docs/tattvas/',
     label: 'Authoring',
   },
   {
-    title: 'Engine internals',
-    description: 'Rust architecture, renderer, and contributor notes.',
+    title: 'Teaching views',
+    description: 'Themes, named colors, and lesson diagrams from the kit.',
+    to: '/docs/murali-kit',
+    label: 'Kit',
+  },
+  {
+    title: 'Internals',
+    description: 'Rust architecture and runtime notes, when you need them.',
     to: '/docs/architecture/overview/',
-    label: 'Internals',
+    label: 'Runtime',
   },
 ];
 
@@ -271,7 +271,7 @@ export default function Home(): ReactNode {
             <SectionIntro
               eyebrow="Paths"
               title="Choose the right place to begin"
-              body="Start in Python, add kit teaching views when you need them, and open Core Rust Engine only if you are changing the runtime."
+              body="One guide: start in Python, write scenes, add teaching views, then open Internals only if you are changing the runtime."
             />
             <div className={styles.cardGrid}>
               {pathways.map((item) => (
@@ -294,8 +294,8 @@ export default function Home(): ReactNode {
                 <ol className={styles.noteList}>
                   <li>Introduction</li>
                   <li>Your first scene</li>
-                  <li>Mental model</li>
-                  <li>Murali Kit</li>
+                  <li>Tattvas and animations</li>
+                  <li>Teaching views</li>
                   <li>Python API</li>
                 </ol>
               </div>

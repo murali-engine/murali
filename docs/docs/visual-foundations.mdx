@@ -2,36 +2,33 @@
 sidebar_position: 3
 ---
 
-# Visual Foundations
+# Space and color
 
-:::note Python authors
-Named colors such as `WHITE` and `BLUE_D` are imported from `murali_kit.colors`. The engine accepts
-plain RGBA tuples. This page’s snippets are still Rust.
-:::
+Murali is not pixel-based. Positions, radii, and type sizes are **world units**. That keeps layout
+predictable and export resolution-independent.
 
-Before jumping into your first scene, it’s important to understand how Murali thinks about **space, positioning, and visuals**.
+```python
+from murali_engine import Circle, Scene
+from murali_kit.colors import BLUE_D, WHITE
+from murali_kit.themes import DarkTheme, apply_theme
 
-Murali uses a deterministic, world-coordinate system — not pixels — which makes animations predictable and reproducible.
+scene = apply_theme(Scene(), DarkTheme())
+scene.add(Circle(radius=1.0, color=BLUE_D).with_stroke(0.04, WHITE))
+```
 
-This page builds the mental model you need.
-
----
-
-## Key Idea
-
-Murali is **not pixel-based**.
-
-Everything is defined in a **world coordinate system**, which makes:
-
-- layouts predictable  
-- animations resolution-independent  
-- outputs reproducible  
+See [Coordinate system](./coordinate-system) for axes, frames, and `to_edge`.
 
 ---
 
 ## Colors
 
-Murali defines constants for colors so that it is easy to use them while creating scenes.
+The engine accepts `(r, g, b, a)` tuples in `0.0…1.0`. Named swatches are kit:
+
+```python
+from murali_kit.colors import WHITE, BLUE_D, GOLD_C, GRAY_B
+```
+
+Unsuffixed names are the C step (`BLUE` is `BLUE_C`). A through E run light to dark.
 
 <table>
   <thead>

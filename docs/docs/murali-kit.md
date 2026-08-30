@@ -2,9 +2,9 @@
 sidebar_position: 4
 ---
 
-# Murali Kit
+# Teaching views
 
-Murali Kit is the Python authoring layer. Install it and you also get a compatible engine.
+Install **Murali Kit** and you get themes, named colors, and lesson diagrams on top of the engine.
 
 ```bash
 python3 -m pip install murali-kit==0.1.1
@@ -17,59 +17,37 @@ from murali_kit.composite import TitleCard
 from murali_kit.themes import DarkTheme, apply_theme
 
 scene = apply_theme(Scene(), DarkTheme())
-TitleCard("Murali Kit", "Python add-ons for Murali Engine").add_to_scene(scene)
+TitleCard("Murali Kit", "Teaching views on Murali Engine").add_to_scene(scene)
 scene.add(Label("Hello", height=0.3, color=WHITE))
 scene.preview()
 ```
 
-## What kit owns
+This is the usual authoring path. You still import primitives from `murali_engine`. Kit does not
+replace `Scene` or `Timeline`.
 
-- **Themes** — `DarkTheme`, `LightTheme`, `apply_theme(scene, theme)`
-- **Named colors** — `WHITE`, `BLUE_D`, `GOLD_C`, and the rest of the Manim-style palette
-- **Teaching views** — diagrams and composed objects for lessons
-- **Layout helpers** — `Group`, stacks, and related authoring helpers
-- **Examples** — [`murali-kit/examples`](https://github.com/murali-engine/murali-kit/tree/main/examples)
-
-Kit is opinionated on purpose. Themes, palettes, and lesson diagrams will keep moving as the
-authoring style settles.
-
-## What stays in the engine
-
-- `Scene`, `Timeline`, handles, camera, frames, `SceneView`
-- preview and export
-- primitives: shapes, `Label`, `Latex`, `Typst`, `CodeBlock`, `Path`
-- generic renderables: `Axes`, `NumberPlane`, `Table`, `ParametricSurface`, `Prop3D`
-
-If you can say it with a circle, a label, and a timeline, it is engine. If it is a lesson diagram
-or a look, it is kit.
-
-## Themes
+## Themes and colors
 
 ```python
-from murali_engine import Scene
-from murali_kit.composite import TitleCard
-from murali_kit.themes import LightTheme, apply_theme
+from murali_kit.themes import DarkTheme, LightTheme, apply_theme
+from murali_kit.colors import WHITE, BLUE_D, GOLD_C
 
 theme = LightTheme()
 scene = apply_theme(Scene(), theme)
-TitleCard("Murali Kit", "Light theme", **theme.title_card_kwargs()).add_to_scene(scene)
 ```
 
-`apply_theme` mutates the scene (background and related styling) and returns it. Themes do not
-construct scenes.
+`apply_theme` styles an existing scene and returns it. Themes do not construct scenes. The palette
+table is on [Space and color](./visual-foundations).
 
-## Colors
+## Composite
 
 ```python
-from murali_kit.colors import BLUE_D, GOLD_C, WHITE
+from murali_kit.composite import TitleCard, Opening, MuraliLogo, ChatInputBox
 ```
 
-Unsuffixed names are the C step of the scale (`BLUE` is `BLUE_C`). The engine will accept any
-`(r, g, b, a)` tuple; the names are a kit convenience.
+Title cards, openings, and the logo are authored compositions. `Opening` can also live inside a
+[SceneView](./scene-views) when the ident needs its own camera.
 
-## Teaching views
-
-Import from the category, not from a `collection` package:
+## AI
 
 ```python
 from murali_kit.ai import (
@@ -80,36 +58,41 @@ from murali_kit.ai import (
     NextTokenDistribution,
     TokenSequence,
     TransformerBlockDiagram,
+    TensorView,
 )
-from murali_kit.maths import FunctionGraph, NumberLine, VectorField
-from murali_kit.storytelling import Stepwise
-from murali_kit.composite import TitleCard, Opening
 ```
 
-Those modules map to `src/ai`, `src/maths`, `src/composite`, and so on in the kit repo.
+These are lesson diagrams, not a model runtime. The category roadmap is
+[AI Visualization](./ai-visualization).
+
+## Maths
+
+```python
+from murali_kit.maths import FunctionGraph, NumberLine, VectorField, StreamLines
+```
+
+Linear-algebra teaching views also live under `murali_kit.maths` (`LabeledVector2D`,
+`MatrixVectorFlow`, and related). Engine `Axes` / `NumberPlane` stay on `murali_engine` when you
+need the generic renderable.
+
+## Story and layout
+
+```python
+from murali_kit.storytelling import Stepwise
+from murali_kit.layout import Group
+```
+
+`Stepwise` is the guided-reveal helper. `Group` / stacks share transforms without a second clock.
 
 ## Examples
 
-From a kit checkout:
-
 ```bash
-python3 -m pip install murali-kit
 python examples/hello_shapes.py
 python examples/motion_basics.py
 python examples/title_card.py
+python examples/neural_networks.py
 ```
 
-Local development against an adjacent engine repo uses `requirements-local.txt` in
-[murali-kit](https://github.com/murali-engine/murali-kit).
+Catalog: [`murali-kit/examples`](https://github.com/murali-engine/murali-kit/tree/main/examples).
 
-## Dependency range
-
-Murali Kit currently tracks `murali-engine>=0.2.6,<0.3.0`. When the engine makes a breaking 0.3.0
-cut, kit will follow with its own version bump.
-
-## Related docs
-
-- [Your First Scene](./first-scene)
-- [Package Structure](./package-structure)
-- [Python API](./python-bindings)
-- [Which API Should I Use?](./which-api-should-i-use)
+Kit currently depends on `murali-engine>=0.2.6,<0.3.0`.

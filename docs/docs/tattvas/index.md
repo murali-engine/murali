@@ -4,45 +4,73 @@ sidebar_position: 3
 
 # Tattvas
 
-:::note Python authors
-In Python, add objects with `scene.add(...)` and keep the returned handle. Teaching views such as
-networks and graphs live in [Murali Kit](../murali-kit), not on `murali_engine`.
-:::
+A **tattva** is any object you can place, animate, and render. From Sanskrit: “element” or
+“essence.”
 
-A tattva is any object that can be placed, animated, and rendered in a scene. The word comes from Sanskrit and means "element" or "essence".
+Add it with `scene.add(...)`. Keep the handle.
 
-Every tattva is added to the scene with `add_tattva(shape, position)` which returns a `TattvaId` for later reference:
+```python
+from murali_engine import Circle, Label, Scene
+from murali_kit.colors import GREEN_D, WHITE
+from murali_kit.themes import DarkTheme, apply_theme
 
-```rust
-let id = scene.add_tattva(Circle::new(1.0, 64, Vec4::new(0.2, 0.6, 1.0, 1.0)), Vec3::ZERO);
+scene = apply_theme(Scene(), DarkTheme())
+title = scene.add(Label("Hello", height=0.38, color=WHITE), at=(0.0, 2.4, 0.0))
+circle = scene.add(
+    Circle(radius=0.8, color=GREEN_D, segments=48).with_stroke(0.04, WHITE),
+    at=(0.0, 0.0, 0.0),
+)
 ```
 
-This is the preferred authoring API. The lower-level `scene.add(...)` path is intended for internal or advanced cases where you already have a fully constructed tattva object.
+Engine primitives are the language. Kit teaching views are sentences built from that language.
+Import each from the package that owns it.
 
-Before diving into a specific family, see [Common Tattva Properties](properties) for the shared scene-level behavior that most tattvas support.
+## Engine primitives
 
-Tattvas are organized into categories based on their purpose:
+| Need | Type |
+| --- | --- |
+| Shapes | `Circle`, `Square`, `Rectangle`, `RoundedRectangle`, `Polygon`, `Line`, `Arrow`, `Path` |
+| Text | `Label`, `Latex`, `Typst`, `CodeBlock` |
+| Structure | `Axes`, `NumberPlane`, `Table` |
+| 3D | `Axes3D`, `ParametricSurface`, `ParametricCurve3D`, `Prop3D`, `Letter3D` |
+| Motion traces | `TracedPath`, `ParticleBelt` |
+| Nested scene | `SceneView` |
 
-- [Primitives](primitives) — basic shapes such as circle, square, rectangle, line, polygon, arrow, path, cube, and Prop3D
-- [Text](text) — label, latex, typst, and code block
-- [Tables](tables) — structured grids with labels and titles
-- [Composite](composite) — cards, axes, number plane, 3D axes, and beta components
-- [Opening (Beta)](opening) — configurable 3D title, particle dissolve, and tagline choreography
-- [Graphs](graphs) — function graphs, scatter plots, parametric curves, surfaces, vector fields, and stream lines
-- [Math](math) — equation layout, matrices, and vector formulas
-- [Layout](layout) — stacking and relative arrangement helpers
-- [Storytelling](storytelling) — stepwise reveal for guided explanations
-- [AI Diagrams](ai) — context windows, next-token distributions, KV caches, normalization, semantic tensors and operations, trace ingestion, attention and transformer views, neural diagrams, signal flows, and AI indicators
-- [Utility](utility) — traced path, screenshot marker, and other scene helpers
+```python
+from murali_engine import Circle, Label, Latex, Axes, Table, Path, Prop3D
+```
 
-## What should be covered
+`with_stroke`, `with_color`, and other `with_*` methods return the same object.
 
-As a rule, the docs should cover all shipped tattva families, even when some pages begin as lightweight indexes.
+## Kit teaching views
 
-A good content split is:
+| Need | Import |
+| --- | --- |
+| Title / opening | `murali_kit.composite` (`TitleCard`, `Opening`, `MuraliLogo`) |
+| AI diagrams | `murali_kit.ai` (`NeuralNetworkDiagram`, `AttentionMatrix`, `TokenSequence`, `KvCacheView`, …) |
+| Maths | `murali_kit.maths` (`FunctionGraph`, `NumberLine`, `VectorField`, linear-algebra views) |
+| Story | `murali_kit.storytelling` (`Stepwise`) |
+| Layout | `murali_kit.layout` (`Group`, stacks) |
+| Theme / palette | `murali_kit.themes`, `murali_kit.colors` |
 
-- family page for orientation
-- concrete tattva entries for constructors and notable fields
-- one shared page for common tattva properties
+See [Teaching views](../murali-kit) for the catalog.
 
-That keeps the docs discoverable without repeating the same transform and visibility guidance on every page.
+## Shared scene helpers
+
+```python
+scene.to_edge(handle, "up", margin=0.8)
+scene.hide(handle)
+scene.show(handle)
+scene.set_position(handle, (1.0, 0.0, 0.0))
+scene.set_scale(handle, (2.0, 2.0, 2.0))
+scene.set_layer(handle, 1)
+```
+
+Constructor field lists for the native Rust types still live under
+[Internals → Tattva details](./properties). Prefer this page and the [Python API](../python-bindings)
+while authoring.
+
+## 3D props
+
+Load a GLB/GLTF with `Prop3D.from_file(...)` / `from_glb` / `from_gltf`. Asset notes:
+[3D prop assets](../3d-prop-assets).

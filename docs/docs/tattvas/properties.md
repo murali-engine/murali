@@ -4,6 +4,9 @@ sidebar_position: 1
 
 # Common Tattva Properties
 
+Python authors: add objects with `scene.add(...)` and use scene helpers (`hide`, `to_edge`,
+`set_position`). This page is the shared native property list.
+
 Most tattvas share the same scene-level properties even when their shape-specific APIs differ.
 
 These common properties come from `DrawableProps` and are what the timeline and scene helpers usually animate:

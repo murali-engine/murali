@@ -64,13 +64,12 @@ The engine accepts a background as an RGBA tuple. It does not export `DarkTheme`
 
 ## Docs shape
 
-Public docs follow the same split:
+The public guide is one product, **Murali**. A scene file already mixes both packages, so the
+sidebar follows authoring: Start, Write scenes, Teaching views, Reference. The package split is
+this page, not two top-level products.
 
-- **Murali Engine** — Python authoring for the runtime
-- **Murali Kit** — themes, colors, teaching views
-- **Core Rust Engine** — implementation, architecture, Rust examples
-
-If you are writing scenes, you can ignore Core Rust Engine.
+Rust architecture and native constructor notes live under **Internals**. Ignore that section while
+you are writing scenes.
 
 ## Rust crate
 

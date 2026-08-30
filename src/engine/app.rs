@@ -36,6 +36,7 @@ pub struct App {
     preview_start_time: Option<Instant>,
     preview_frame_count: u64,
     auto_close_preview: bool,
+    auto_close_delay: f32,
     camera_controller: ActiveCameraController,
     is_left_mouse_down: bool,
     last_cursor_position: Option<(f64, f64)>,
@@ -51,6 +52,7 @@ impl App {
             preview_start_time: None,
             preview_frame_count: 0,
             auto_close_preview: false,
+            auto_close_delay: AUTO_CLOSE_DELAY_SECONDS,
             window: None,
             engine: None,
             pending_scene: None,
@@ -66,7 +68,9 @@ impl App {
     pub fn run_app(mut self) -> Result<()> {
         let args: Vec<String> = std::env::args().collect();
         self.debug_mode = args.iter().any(|arg| arg == "--debug");
-        self.auto_close_preview = args.iter().any(|arg| arg == "--auto-close");
+        if args.iter().any(|arg| arg == "--auto-close") {
+            self.auto_close_preview = true;
+        }
 
         if should_preview(&args, &self.render_options) {
             print_camera_help();
@@ -95,6 +99,12 @@ impl App {
 
     pub fn with_preview(mut self) -> Self {
         self.render_options.video = Some(false);
+        self
+    }
+
+    pub fn with_auto_close(mut self, delay_seconds: f32) -> Self {
+        self.auto_close_preview = true;
+        self.auto_close_delay = delay_seconds.max(0.0);
         self
     }
 
@@ -210,7 +220,7 @@ impl<'a> ApplicationHandler for App {
                     && preview_has_reached_auto_close(
                         engine.scene.scene_time,
                         timeline_end,
-                        AUTO_CLOSE_DELAY_SECONDS,
+                        self.auto_close_delay,
                     )
                 {
                     event_loop.exit();
@@ -343,6 +353,12 @@ mod tests {
     fn auto_close_handles_scenes_without_a_timeline() {
         assert!(!preview_has_reached_auto_close(4.999, 0.0, 5.0));
         assert!(preview_has_reached_auto_close(5.0, 0.0, 5.0));
+    }
+
+    #[test]
+    fn auto_close_honors_a_three_second_hold() {
+        assert!(!preview_has_reached_auto_close(12.999, 10.0, 3.0));
+        assert!(preview_has_reached_auto_close(13.0, 10.0, 3.0));
     }
 
     #[test]

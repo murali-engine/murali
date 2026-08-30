@@ -4,9 +4,11 @@ sidebar_position: 8
 
 # AI Visualization
 
-Murali is being built as a Rust-native animation engine for AI education and technical visual
-storytelling. The long-term target is to grow the visualization surface steadily through the end of
-2030, with reusable components for the math and systems ideas behind modern AI.
+Murali is a Python animation engine for AI education and technical visual storytelling. Teaching
+views such as attention matrices and neural diagrams live in [Murali Kit](../murali-kit). The
+runtime is Rust; day-to-day authoring is Python.
+
+The long-term target is to grow that visualization surface steadily through the end of 2030.
 
 Murali is not trying to become an inference framework. It is meant to visualize authored or recorded
 state: tensors, tokens, matrices, distributions, model traces, optimization steps, geometric

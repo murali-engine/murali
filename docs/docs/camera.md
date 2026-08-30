@@ -4,132 +4,55 @@ sidebar_position: 5
 
 # Camera
 
-Murali's camera is pure state — no input handling, no magic. It owns a position, a target, and a projection mode. The scene owns the camera.
+The scene owns the camera: a position, a target, and a projection. In Python you set it through
+scene methods, not by mutating a raw camera struct.
 
-```rust
-scene.camera_mut().position = Vec3::new(0.0, 0.0, 10.0);
+```python
+scene.set_camera(position=(0.0, 0.0, 10.0), target=(0.0, 0.0, 0.0))
+scene.set_view_width(16.0)
 ```
 
-## Projection modes
+## Orthographic (default)
 
-### Orthographic (default)
+Objects do not shrink with distance. `set_view_width` is how much world is visible horizontally.
+Height follows the scene frame.
 
-The default for 2D math scenes. Objects don't shrink with distance — only `view_width` controls how much of the world is visible.
-
-```rust
-use murali::engine::camera::{Camera, Projection};
-
-scene.camera_mut().projection = Projection::Orthographic {
-    width: 16.0,   // visible world units horizontally
-    height: 9.0,   // visible world units vertically
-    near: -100.0,
-    far: 100.0,
-};
+```python
+scene.set_view_width(8.0)   # zoom in
+scene.set_view_width(24.0)  # zoom out
 ```
 
-The default is `width: 16.0, height: 9.0` — giving a canonical `[-8, 8] × [-4.5, 4.5]` world space. Moving the camera position in orthographic mode does not change what's visible. Use `set_view_width` instead.
+Moving the camera in orthographic mode does not change the 2D crop. Use `set_view_width`.
 
-### Perspective
+Default view width is `16.0`, which matches landscape bounds `[-8, 8] × [-4.5, 4.5]`.
 
-For 3D scenes where depth perception matters.
+## Perspective
 
-```rust
-let aspect = scene.frame().aspect_ratio();
-scene.camera_mut().projection = Projection::Perspective {
-    fov_y_rad: std::f32::consts::FRAC_PI_4, // 45°
-    aspect,
-    near: 0.1,
-    far: 1000.0,
-};
+For 3D scenes where depth should read as depth:
+
+```python
+scene.set_perspective_camera(fov_y_degrees=45.0, near=0.1, far=100.0)
+scene.set_camera(position=(4.0, 3.0, 8.0), target=(0.0, 0.0, 0.0))
 ```
 
-## Controlling the viewport (orthographic)
-
-### set_view_width — the ground truth
-
-Controls how much of the world is visible horizontally. Height is derived automatically to preserve the scene frame's aspect ratio.
-
-```rust
-scene.camera_mut().set_view_width(8.0);  // zoom in — less world visible, objects appear larger
-scene.camera_mut().set_view_width(24.0); // zoom out — more world visible, objects appear smaller
-```
-
-### view_width — the getter
-
-```rust
-let w = scene.camera().view_width(); // 16.0 by default
-```
-
-Useful for relative adjustments:
-
-```rust
-// Zoom in to half the current view
-scene.camera_mut().set_view_width(scene.camera().view_width() * 0.5);
-```
-
-### zoom_in / zoom_out
-
-Convenience wrappers around `set_view_width`. The factor describes how much larger or smaller objects appear.
-
-```rust
-scene.camera_mut().zoom_in(2.0);  // objects appear 2× bigger  (width /= 2)
-scene.camera_mut().zoom_out(2.0); // objects appear 2× smaller (width *= 2)
-```
-
-## Positioning the camera
-
-```rust
-scene.camera_mut().position = Vec3::new(0.0, 0.0, 10.0); // standard 2D setup
-scene.camera_mut().target   = Vec3::ZERO;                 // look at origin
-scene.camera_mut().up       = Vec3::Y;                    // Y is up
-```
-
-For 2D scenes, keep `position.z` positive and `target` at the origin. The Z value doesn't affect orthographic rendering but is needed for the view matrix.
-
-For 3D scenes, orbit freely — the preview window's orbit controller handles mouse drag automatically.
+`up` defaults to `(0.0, 1.0, 0.0)`.
 
 ## Animating the camera
 
-Camera animations go through the timeline like any other animation:
-
-```rust
-timeline
-    .animate_camera()
-    .at(0.0)
-    .for_duration(2.0)
-    .ease(Ease::InOutQuad)
-    .move_to(Vec3::new(2.0, 1.0, 10.0))
-    .spawn();
+```python
+timeline.animate_camera_frame(
+    start_time=0.0,
+    duration=2.0,
+    position=(2.0, 1.0, 10.0),
+    target=(0.0, 0.0, 0.0),
+    ease="in_out_quad",
+)
+timeline.zoom_camera(start_time=1.0, duration=2.0, zoom=8.0, ease="in_out_quad")
 ```
 
-Available camera animation kinds:
+`zoom` here is the target orthographic view width.
 
-| Method | Effect |
-|---|---|
-| `.move_to(Vec3)` | Animate camera position |
-| `.look_at(Vec3)` | Animate camera target |
-| `.frame_to(position, target)` | Animate both position and target together |
-| `.zoom_to(width)` | Animate orthographic view width |
-| `.fov_to(radians)` | Animate perspective field of view |
+## Preview orbit
 
-Example — zoom in over 2 seconds:
-
-```rust
-timeline
-    .animate_camera()
-    .at(1.0)
-    .for_duration(2.0)
-    .ease(Ease::InOutCubic)
-    .zoom_to(8.0)  // from default 16.0 → 8.0
-    .spawn();
-```
-
-## Preview controls
-
-When running in preview mode, the camera is controlled by mouse input:
-
-| Action | Effect |
-|---|---|
-| Left drag | Orbit (3D) |
-| Scroll | Zoom |
-| Right drag | Pan |
+In `scene.preview()`, you can orbit and pan in the window. That is inspection, not authored
+camera motion. Authored motion goes on the timeline so export matches preview timing.

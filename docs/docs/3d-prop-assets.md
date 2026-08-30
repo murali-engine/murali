@@ -4,9 +4,15 @@ sidebar_position: 10
 
 # 3D Prop Assets
 
-Murali's `Prop3D` workflow is intended for video props: apples, balls, books, animals, tools,
-furniture, robots, and other objects that can be placed in an explainer scene. It is not meant to
-turn Murali into a game engine.
+`Prop3D` is for video props: apples, books, tools, robots — objects you place in an explainer. It
+is not a game engine.
+
+```python
+from murali_engine import Prop3D, Scene
+
+scene = Scene()
+prop = scene.add(Prop3D.from_file("assets/props/apple.glb"), at=(0.0, 0.0, 0.0))
+```
 
 ```rust
 use murali::frontend::collection::primitives::prop3d::Prop3D;

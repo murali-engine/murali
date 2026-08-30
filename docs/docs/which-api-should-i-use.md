@@ -178,7 +178,7 @@ independent content a `SceneView`.
 
 ## What's next
 
-- [Mental Model](./mental-model)
-- [Murali Kit](./murali-kit)
+- [Tattvas](./tattvas/)
+- [Animations](./animations)
+- [Teaching views](./murali-kit)
 - [Python API](./python-bindings)
-- [Common First Mistakes](./common-first-mistakes)

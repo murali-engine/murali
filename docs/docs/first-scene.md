@@ -122,11 +122,10 @@ Broader Python examples live in
 
 ## What's next
 
-1. [Mental Model](./mental-model) — how Scene, tattva, and timeline fit
-2. [Murali Kit](./murali-kit) — themes, colors, teaching views
-3. [Which API Should I Use?](./which-api-should-i-use)
+1. [Mental Model](./mental-model)
+2. [Tattvas](./tattvas/) and [Animations](./animations)
+3. [Teaching views](./murali-kit)
 4. [Common First Mistakes](./common-first-mistakes)
-5. [Python API](./python-bindings)
 
 ## If nothing appears
 

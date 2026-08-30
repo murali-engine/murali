@@ -54,6 +54,7 @@ scene.set_perspective_camera(fov_y_degrees, near, far)
 scene.hide(handle) / scene.show(handle)
 scene.play(timeline)
 scene.preview()
+scene.preview(auto_close=True, hold=3.0)
 scene.save_png(path, width=None, fps=None, duration=None)
 scene.export_video(path, width=None, fps=None, duration=None, preserve_frames=False)
 ```
@@ -121,6 +122,6 @@ published with `cargo publish`. See `RELEASE.md`.
 ## Related
 
 - [Your First Scene](./first-scene)
-- [Mental Model](./mental-model)
-- [Murali Kit](./murali-kit)
+- [Tattvas](./tattvas/)
+- [Teaching views](./murali-kit)
 - [Which API Should I Use?](./which-api-should-i-use)

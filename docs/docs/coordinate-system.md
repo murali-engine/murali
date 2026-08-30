@@ -4,70 +4,82 @@ sidebar_position: 5
 
 # Coordinate system
 
-Murali uses a right-handed world-space coordinate system with the origin at the center of the screen.
+Murali uses a right-handed **world space** with the origin at the center of the frame. Positions
+are not pixels.
 
 ## Axes
 
-- X — horizontal, positive to the right
-- Y — vertical, positive upward
-- Z — depth, positive toward the viewer
+- **X** — left (negative) to right (positive)
+- **Y** — down (negative) to up (positive)
+- **Z** — into the screen (negative) to toward the camera (positive)
 
-## Scene frames
+```python
+from murali_engine import Circle, Scene
+from murali_kit.colors import GREEN_D, WHITE
+from murali_kit.themes import DarkTheme, apply_theme
 
-Every scene owns its logical composition frame. Landscape is the default:
-
-```rust
-let landscape = Scene::new();
-let portrait = Scene::new().with_frame(Frame::portrait());
-let square = Scene::new().with_frame(Frame::square());
+scene = apply_theme(Scene(), DarkTheme())
+scene.add(Circle(radius=0.8, color=GREEN_D).with_stroke(0.04, WHITE), at=(0.0, 0.0, 0.0))
+scene.add(Circle(radius=0.4, color=GREEN_D), at=(-4.0, 2.5, 0.0))
 ```
 
-The built-in frames have exact, symmetric world-space bounds:
+If your numbers are in the hundreds, you are thinking in pixels. A circle of radius `1.0` is a
+reasonable starting size.
 
-| Frame | Logical size | X bounds | Y bounds |
+## Frames
+
+Every scene owns a composition frame. Landscape is the default:
+
+```python
+Scene()
+Scene(frame="portrait")
+Scene(frame="square")
+```
+
+| Frame | Aspect | X bounds | Y bounds |
 | --- | --- | --- | --- |
-| `Frame::landscape()` | 16:9 | `-8` to `8` | `-4.5` to `4.5` |
-| `Frame::portrait()` | 9:16 | `-4.5` to `4.5` | `-8` to `8` |
-| `Frame::square()` | 1:1 | `-8` to `8` | `-8` to `8` |
+| `"landscape"` | 16:9 | `-8` to `8` | `-4.5` to `4.5` |
+| `"portrait"` | 9:16 | `-4.5` to `4.5` | `-8` to `8` |
+| `"square"` | 1:1 | `-8` to `8` | `-8` to `8` |
 
-Coordinates retain their ordinary world-space meaning in every frame. Selecting portrait does not rearrange or scale scene content automatically; compose deliberately within its `9:16` bounds.
+Selecting portrait does not reflow existing objects. Compose inside that frame. Layout helpers such
+as `to_edge` use the frame immediately.
 
-All sizes (font sizes, shape radii, line thickness) are in these world units. The scene frame initializes the camera before composition, so layout helpers such as `to_edge` use the selected aspect immediately.
+See [Video Formats](./video-formats.md).
 
-For complete portrait, landscape, and square workflows, see [Video Formats](./video-formats.md).
+## Layout
+
+```python
+title = scene.add(Label("Title", height=0.38, color=WHITE))
+scene.to_edge(title, "up", margin=0.8)
+scene.next_to(caption, title, "down", 0.4)
+scene.align_to(left, right, "center")
+```
+
+Directions are `"up"`, `"down"`, `"left"`, `"right"`. Kit `Group`, `HStack`, and `VStack` stack
+handles when several objects should move together.
 
 ## Camera
 
-The camera uses orthographic projection by default. Moving the camera position does **not** change what's visible — only `set_view_width` does. For 2D scenes the Z position is irrelevant to the visible area:
+Orthographic by default. In 2D, `set_view_width` controls how much world fits across the frame.
+Camera Z does not change the ortho crop.
 
-```rust
-scene.camera_mut().position = Vec3::new(0.0, 0.0, 10.0); // Z doesn't affect ortho bounds
+```python
+scene.set_view_width(16.0)
+scene.set_camera(position=(0.0, 0.0, 10.0), target=(0.0, 0.0, 0.0))
 ```
 
-For 3D scenes, you can orbit freely in the preview window.
-
-## Positioning tattvas
-
-Positions are passed as `Vec3` to `add_tattva`:
-
-```rust
-// Center of screen
-scene.add_tattva(shape, Vec3::new(0.0, 0.0, 0.0));
-
-// Upper left area
-scene.add_tattva(shape, Vec3::new(-4.0, 2.5, 0.0));
-```
+See [Camera](./camera.md).
 
 ## Colors
 
-Colors are `Vec4` in linear RGBA, values from `0.0` to `1.0`:
+The engine takes RGBA tuples `(r, g, b, a)` in `0.0…1.0`. Named swatches live in kit:
 
-```rust
-Vec4::new(r, g, b, a)
+```python
+from murali_kit.colors import WHITE, BLUE_D, GOLD_C
 
-// White
-Vec4::new(1.0, 1.0, 1.0, 1.0)
-
-// Semi-transparent red
-Vec4::new(1.0, 0.0, 0.0, 0.5)
+WHITE          # (1, 1, 1, 1)
+(1.0, 0.0, 0.0, 0.5)  # also fine
 ```
+
+The color table is on [Visual Foundations](./visual-foundations).

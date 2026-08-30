@@ -168,7 +168,8 @@ If it is the language, it is engine. If it is a sentence, lesson, or style, it i
 
 ## What's next
 
-- [Which API Should I Use?](./which-api-should-i-use)
-- [Murali Kit](./murali-kit)
+- [Space and color](./visual-foundations)
+- [Tattvas](./tattvas/)
+- [Animations](./animations)
+- [Teaching views](./murali-kit)
 - [Python API](./python-bindings)
-- [Common First Mistakes](./common-first-mistakes)
