@@ -47,3 +47,13 @@
   height: 100% !important;
   border: 0;
 }
+
+div[class^='announcementBar'] {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+div[class^='announcementBar'] a {
+  color: inherit;
+  text-decoration: underline;
+}

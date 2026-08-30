@@ -4,6 +4,18 @@ sidebar_position: 1
 
 # Introduction
 
+:::caution Unstable APIs until 0.5.0
+Scene authoring is now Python. Rust remains the rendering engine. We made that shift because people
+asked for a Python-first path.
+
+The Python and kit APIs will keep changing until **0.5.0**. After that, they are meant to stay
+stable.
+
+If you want to author scenes in Rust today, use the last Rust-authoring release:
+[`murali` 0.2.4](https://crates.io/crates/murali/0.2.4) and the
+[0.2.4 docs](/docs/0.2.4/intro).
+:::
+
 Murali is a Python animation engine for mathematical, AI, and teaching visuals. You write scenes
 in Python. A Rust runtime renders them on a modern GPU stack (`wgpu`: Metal, Vulkan, DirectX).
 

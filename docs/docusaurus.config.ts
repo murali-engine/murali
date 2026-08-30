@@ -67,6 +67,14 @@ const config: Config = {
       defaultMode: 'dark',
       respectPrefersColorScheme: true,
     },
+    announcementBar: {
+      id: 'python-authoring-unstable-0-5',
+      content:
+        'Authoring moved to Python; Rust stays the engine. That change followed public demand. These APIs are <strong>unstable until 0.5.0</strong>. For Rust scene authoring, use the <a href="/docs/0.2.4/intro">0.2.4 docs</a> and the <a href="https://crates.io/crates/murali/0.2.4">murali 0.2.4</a> crate.',
+      backgroundColor: '#3d2b00',
+      textColor: '#ffe7a3',
+      isCloseable: true,
+    },
     navbar: {
       title: 'Murali',
       logo: {

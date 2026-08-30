@@ -84,7 +84,9 @@ Develop against an adjacent engine checkout with that repo's `requirements-local
 
 ## Core Rust Engine
 
-Use this path when you are working on the runtime, not when you are writing scenes.
+Use this path when you are working on the runtime, not when you are writing new scenes. For
+Rust-authored animations on a frozen API, pin [`murali` 0.2.4](https://crates.io/crates/murali/0.2.4)
+and follow the [0.2.4 docs](/docs/0.2.4/intro). Current crate versions keep Rust as the engine only.
 
 You need Rust 1.85 or newer, `cargo`, and a graphics environment for preview.
 
