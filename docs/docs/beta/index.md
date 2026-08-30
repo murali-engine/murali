@@ -62,7 +62,7 @@ linear-algebra toolkit requires the `experimental` feature:
 
 ```toml
 [dependencies]
-murali = { version = "0.2.6", features = ["experimental"] }
+murali = { version = "0.3.0", features = ["experimental"] }
 ```
 
 Repository examples that use those APIs should be run with the same feature:

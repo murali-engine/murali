@@ -16,7 +16,7 @@ behind the `experimental` Cargo feature:
 
 ```toml
 [dependencies]
-murali = { version = "0.2.6", features = ["experimental"] }
+murali = { version = "0.3.0", features = ["experimental"] }
 ```
 
 See [Experimental Features](../beta/experimental-features.md) before depending on that module.

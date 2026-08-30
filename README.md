@@ -49,7 +49,7 @@ are promoted into stable sections only after they prove mature and broadly usefu
 The public authoring path is Python. Install Murali Kit, which pulls in a compatible engine:
 
 ```bash
-python3 -m pip install murali-kit==0.1.1
+python3 -m pip install murali-kit==0.3.0
 ```
 
 ```python
@@ -67,7 +67,7 @@ Prebuilt `murali-engine` wheels cover macOS arm64 and x86_64, Linux x86_64 and a
 x86_64. Those installs do not need a local Rust toolchain.
 
 ```bash
-python3 -m pip install murali-engine==0.2.6
+python3 -m pip install murali-engine==0.3.0
 ```
 
 Python examples live in [`murali-kit`](https://github.com/murali-engine/murali-kit). Docs:
@@ -89,7 +89,7 @@ Use the `murali` crate when you are working on the runtime:
 
 ```toml
 [dependencies]
-murali = "0.2.6"
+murali = "0.3.0"
 anyhow = "1"
 glam = "0.33"
 ```
@@ -108,7 +108,7 @@ requires the `experimental` feature:
 
 ```toml
 [dependencies]
-murali = { version = "0.2.6", features = ["experimental"] }
+murali = { version = "0.3.0", features = ["experimental"] }
 ```
 
 Repository examples that use that API should be run with the feature enabled:

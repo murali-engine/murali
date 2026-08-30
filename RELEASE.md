@@ -17,7 +17,7 @@ depends on a published `murali-engine` range.
 Set the version once:
 
 ```bash
-export VERSION=0.2.6
+export VERSION=0.3.0
 ```
 
 The git tag is `v${VERSION}`. Cargo.toml, pyproject.toml, and the Python wheel must use the same

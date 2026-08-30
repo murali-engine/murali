@@ -99,8 +99,8 @@ Named colors are not engine exports.
 ## Install
 
 ```bash
-python3 -m pip install murali-engine==0.2.6
-python3 -m pip install murali-kit==0.1.1
+python3 -m pip install murali-engine==0.3.0
+python3 -m pip install murali-kit==0.3.0
 ```
 
 Prebuilt wheels cover macOS arm64 and x86_64, Linux x86_64 and aarch64, and Windows x86_64. Those

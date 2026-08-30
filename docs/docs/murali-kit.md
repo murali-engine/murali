@@ -7,7 +7,7 @@ sidebar_position: 4
 Install **Murali Kit** and you get themes, named colors, and lesson diagrams on top of the engine.
 
 ```bash
-python3 -m pip install murali-kit==0.1.1
+python3 -m pip install murali-kit==0.3.0
 ```
 
 ```python
@@ -95,4 +95,4 @@ python examples/neural_networks.py
 
 Catalog: [`murali-kit/examples`](https://github.com/murali-engine/murali-kit/tree/main/examples).
 
-Kit currently depends on `murali-engine>=0.2.6,<0.3.0`.
+Kit currently depends on `murali-engine>=0.3.0,<0.4.0`.

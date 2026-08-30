@@ -23,11 +23,11 @@ scene.preview()
 Pinned versions:
 
 ```bash
-python3 -m pip install murali-engine==0.2.6
-python3 -m pip install murali-kit==0.1.1
+python3 -m pip install murali-engine==0.3.0
+python3 -m pip install murali-kit==0.3.0
 ```
 
-`murali-kit` depends on `murali-engine>=0.2.6,<0.3.0`. Installing the engine alone does not install
+`murali-kit` depends on `murali-engine>=0.3.0,<0.4.0`. Installing the engine alone does not install
 the kit.
 
 ## What you get
@@ -92,7 +92,7 @@ You need Rust 1.85 or newer, `cargo`, and a graphics environment for preview.
 
 ```toml
 [dependencies]
-murali = "0.2.6"
+murali = "0.3.0"
 anyhow = "1"
 glam = "0.33"
 ```
@@ -109,7 +109,7 @@ Some Rust APIs are feature-gated. The linear-algebra visual toolkit currently ne
 
 ```toml
 [dependencies]
-murali = { version = "0.2.6", features = ["experimental"] }
+murali = { version = "0.3.0", features = ["experimental"] }
 ```
 
 ```bash

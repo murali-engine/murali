@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "murali-engine"
-version = "0.2.6"
+version = "0.3.0"
 description = "Python bindings for Murali Engine."
 readme = "README.md"
 requires-python = ">=3.10"

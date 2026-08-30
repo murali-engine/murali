@@ -4,17 +4,23 @@ All notable changes to Murali are recorded here.
 
 ## Unreleased
 
+## 0.3.0 - 2026-08-30
+
+Python is now the public scene-authoring surface. Rust remains the engine. These APIs are
+unstable until 0.5.0. Rust scene authoring stays on the `0.2.4` crate.
+
 ### Added
 
-- GitHub Actions now builds `murali-engine` wheels for macOS arm64 and x86_64, Linux x86_64 and
-  aarch64, and Windows x86_64, plus a source distribution. Pushing a `v*` tag publishes them to
-  PyPI so common platforms do not need a local Rust toolchain.
+- GitHub Actions builds `murali-engine` wheels for macOS arm64 and x86_64, Linux x86_64 and
+  aarch64, and Windows x86_64, plus a source distribution. A `v*` tag publishes them to PyPI.
+- `Scene.preview(auto_close=..., hold=...)` so catalog runs can close after the timeline ends.
+- Kit-owned named colors, themes, and teaching views. Engine constructors take RGBA tuples.
 
 ### Changed
 
-- Public docs now lead with Python. Introduction, installation, first scene, mental model, kit,
-  and the homepage are Python-first. Frozen 0.2.x pages stay in the version dropdown. The live
-  docs line is the 0.3.0 track.
+- Engine `with_*` methods return `self` for Python chaining.
+- Public docs are one Murali guide (Start, Write scenes, Teaching views, Reference, Internals).
+- Named colors are no longer engine Python exports.
 
 ## 0.2.5 - 2026-08-29
 

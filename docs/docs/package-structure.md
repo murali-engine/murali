@@ -15,7 +15,7 @@ murali            Rust crate: the engine implementation
 Install kit. It depends on the engine.
 
 ```bash
-python3 -m pip install murali-kit==0.1.1
+python3 -m pip install murali-kit==0.3.0
 ```
 
 ```python
@@ -77,7 +77,7 @@ The native API is still the `murali` crate:
 
 ```toml
 [dependencies]
-murali = "0.2.6"
+murali = "0.3.0"
 ```
 
 Use it when you are changing the runtime. Scene authoring in this docs set is Python.
@@ -85,5 +85,4 @@ Use it when you are changing the runtime. Scene authoring in this docs set is Py
 ## 0.3.0
 
 The current docs are the Python-first 0.3.0 track. Frozen 0.2.x pages remain in the version
-dropdown as historical Rust-era docs. Kit currently depends on `murali-engine>=0.2.6,<0.3.0`;
-that range will move when the engine cuts 0.3.0.
+dropdown as historical Rust-era docs. Kit currently depends on `murali-engine>=0.3.0,<0.4.0`.
