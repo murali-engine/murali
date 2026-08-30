@@ -36,10 +36,11 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/murali-engine/murali/tree/main/docs/',
-          lastVersion: 'current',
+          lastVersion: '0.3.0',
           versions: {
             current: {
-              label: '0.3.0 🚧',
+              label: 'Next 🚧',
+              path: 'next',
             },
           },
         },

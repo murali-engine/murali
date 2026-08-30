@@ -1,0 +1,190 @@
+---
+sidebar_position: 1
+---
+
+# Introduction
+
+:::caution Unstable APIs until 0.5.0
+Scene authoring is now Python. Rust remains the rendering engine. We made that shift because people
+asked for a Python-first path.
+
+The Python and kit APIs will keep changing until **0.5.0**. After that, they are meant to stay
+stable.
+
+If you want to author scenes in Rust today, use the last Rust-authoring release:
+[`murali` 0.2.4](https://crates.io/crates/murali/0.2.4) and the
+[0.2.4 docs](/docs/0.2.4/intro).
+:::
+
+Murali is a Python animation engine for mathematical, AI, and teaching visuals. You write scenes
+in Python. A Rust runtime renders them on a modern GPU stack (`wgpu`: Metal, Vulkan, DirectX).
+
+It is inspired by the same spirit as [Manim](https://www.manim.community/): programmatic,
+precise, reproducible animation. The public authoring path is Python:
+
+```bash
+python3 -m pip install murali-kit
+```
+
+That installs Murali Kit and a compatible `murali-engine`. You do not need a local Rust toolchain
+on macOS, Linux, or Windows when a prebuilt wheel is available.
+
+```python
+from murali_engine import Circle, Label, Scene, Timeline
+from murali_kit.colors import GREEN_D, WHITE
+from murali_kit.themes import DarkTheme, apply_theme
+
+scene = apply_theme(Scene(), DarkTheme())
+title = scene.add(Label("Hello Murali", height=0.38, color=WHITE), at=(0.0, 2.4, 0.0))
+circle = scene.add(Circle(radius=1.2, color=GREEN_D).with_stroke(0.04, WHITE))
+
+timeline = Timeline()
+timeline.animate(title).at(0.0).for_duration(1.0).typewrite_text().spawn()
+timeline.animate(circle).at(0.4).for_duration(1.2).ease("out_cubic").draw().spawn()
+scene.play(timeline)
+scene.preview()
+```
+
+Two packages:
+
+- **`murali-engine`** — scene, tattvas, timeline, camera, preview, export
+- **`murali-kit`** — themes, named colors, and reusable teaching components
+
+Rust is the engine implementation. Use the `murali` crate when you are working on the runtime
+itself. Day-to-day scene authoring starts in Python.
+
+Murali is also being grown as an AI visualization engine for technical education. See
+[AI Visualization](./ai-visualization) for the public category roadmap.
+
+## Why Murali?
+
+Murali is built for narration-first and lesson-first work: you already know when a sentence lands,
+and the picture has to hit that time.
+
+- **Python authoring** — scenes, timelines, and teaching views in ordinary Python
+- **Time-driven animation** — properties are functions of time, not frame recipes
+- **World space** — positions and sizes are mathematical units, not pixels
+- **GPU rendering** — `wgpu` on Metal, Vulkan, and DirectX 12
+- **A small language** — Scene, tattva, timeline, then kit components on top
+
+## Why not Murali?
+
+Murali is new. The first public release was in April 2026. It does not have, and does not aim for,
+1:1 feature parity with Manim. APIs are still evolving. If you need a mature ecosystem with a large
+archive of existing content, Manim is the better choice today.
+
+Murali is being shaped in part by production use at [Kavriq](https://kavriq.com). If you have a
+specific use case, please share it on
+[GitHub Discussions](https://github.com/murali-engine/murali/discussions).
+
+## Core concepts
+
+- **Tattva** — any object in a scene (shape, text, or composite). From Sanskrit: “element” or “essence.”
+- **Scene** — owns tattvas, the timeline, the camera, and the frame
+- **Frame** — landscape, portrait, or square composition
+- **Timeline** — when properties change, and for how long
+- **World space** — coordinates in mathematical units, not pixels
+- **Kit** — themes, named colors, and teaching views built from engine primitives
+
+The workflow is:
+
+```text
+Create a scene → add tattvas → build a timeline → play it → preview or export
+```
+
+## Installation
+
+```bash
+python3 -m pip install murali-kit
+```
+
+That is enough for [Your First Scene](./first-scene). Details, optional tools, and the Rust crate
+are on the [Installation](./installation) page.
+
+Pinned versions when you want them:
+
+```bash
+python3 -m pip install murali-engine==0.3.0
+python3 -m pip install murali-kit==0.3.0
+```
+
+## Your First Scene
+
+A slightly fuller example: a title and two shapes that swap sides.
+
+```python
+from murali_engine import Circle, Label, Scene, Square, Timeline
+from murali_kit.colors import GREEN_D, RED_B, WHITE
+from murali_kit.themes import DarkTheme, apply_theme
+
+scene = apply_theme(Scene(), DarkTheme())
+
+title = scene.add(Label("My First Scene", height=0.38, color=WHITE))
+scene.to_edge(title, "up", margin=0.8)
+
+square = scene.add(
+    Square(size=1.2, color=RED_B).with_stroke(0.04, WHITE),
+    at=(-4.0, 0.0, 0.0),
+)
+circle = scene.add(
+    Circle(radius=0.65, color=GREEN_D, segments=48).with_stroke(0.04, WHITE),
+    at=(4.0, 0.0, 0.0),
+)
+
+timeline = Timeline()
+timeline.animate(square).at(0.0).for_duration(2.0).ease("in_out_quad").move_to((2.0, 0.0, 0.0)).spawn()
+timeline.animate(circle).at(0.5).for_duration(2.0).ease("out_quad").move_to((-2.0, 0.0, 0.0)).spawn()
+scene.play(timeline)
+scene.preview()
+```
+
+<div style={{position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', marginBottom: '1.5rem'}}>
+  <iframe
+    src="https://www.youtube.com/embed/7cjNZKHxi1A"
+    title="Murali — first scene demo"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+    style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0}}
+  />
+</div>
+
+`preview()` opens a window. `save_png(...)` and `export_video(...)` write files. Those methods
+consume the scene, so call exactly one of them at the end.
+
+See [Your First Scene](./first-scene) for the step-by-step walkthrough.
+
+## Learning path
+
+1. **[Installation](./installation)** — pip, wheels, optional tools
+2. **[Your First Scene](./first-scene)** — a complete Python scene
+3. **[Mental Model](./mental-model)** — Scene, tattva, timeline
+4. **[Space and color](./visual-foundations)** / **[Coordinates](./coordinate-system)**
+5. **[Tattvas](./tattvas/)** and **[Animations](./animations)**
+6. **[Teaching views](./murali-kit)** — themes, diagrams, kit examples
+7. **[Python API](./python-bindings)**
+
+**Internals** in the sidebar is the Rust runtime. Skip it until you are changing the engine.
+
+**By use case:**
+
+- Teaching math → [Teaching views](./murali-kit) plus `Label`, `Latex`, `Typst`, `Axes`
+- Explaining AI → [Teaching views](./murali-kit) and [AI Visualization](./ai-visualization)
+- Shorts / portrait → `Scene(frame="portrait")` and [Video Formats](./video-formats)
+
+## Why timeline-based animation?
+
+1. **Determinism** — the picture is a function of time, so it is reproducible
+2. **Narration-first timing** — you can hit an exact timestamp
+3. **Seeking** — timeline-authored state can be reconstructed at an absolute time, and fails
+   explicitly when a callback or updater makes that unsafe
+4. **Composability** — animations combine as independent functions of time
+
+## Why the name “Murali”?
+
+The name *Murali* comes from the flute of Lord Krishna, which, in Hindu tradition, is said to
+produce music so pure that it touches the soul.
+
+The goal of this project is similar: visual storytelling that feels effortless, so ideas flow
+clearly from storyteller to viewer.
+
+Welcome. We can't wait to see what you create.

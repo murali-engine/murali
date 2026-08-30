@@ -50,15 +50,23 @@ Use a crates.io API token. This is only for `cargo publish`. It is not used by t
 ### PyPI trusted publishing
 
 Configure once at
-`https://pypi.org/manage/project/murali-engine/settings/publishing/`:
+`https://pypi.org/manage/project/murali-engine/settings/publishing/`
+before the first tag upload. GitHub → Add a new publisher. The fields must match the job
+**exactly** (a mismatch is `invalid-publisher`):
 
-- Owner: `murali-engine`
-- Repository: `murali`
-- Workflow: `wheels.yml`
-- Environment: `pypi`
+| Field | Value |
+| --- | --- |
+| Owner | `murali-engine` |
+| Repository | `murali` |
+| Workflow name | `wheels.yml` (filename only, not `.github/workflows/wheels.yml`) |
+| Environment name | `pypi` (must not be blank) |
 
 In GitHub, create an Environment named `pypi` (`Settings → Environments`). Protection rules are
 optional.
+
+If a `v*` publish already failed with `invalid-publisher`, save the publisher on PyPI, then
+**Re-run failed jobs** on that workflow run. Do not cut a new tag. Wheel artifacts from the same
+run are reused.
 
 Do not put a PyPI token in the repo or in chat. The publish job uses OIDC.
 
@@ -77,9 +85,8 @@ rg "$VERSION" Cargo.toml Cargo.lock pyproject.toml README.md docs/docs
 scripts/check-release-metadata.sh
 ```
 
-That script checks crate/Python pins, licenses, and that live docs still use
-`lastVersion: 'current'` (the Python-first 0.3.0 track). Historical 0.2.x pages stay in the version
-dropdown.
+That script checks crate/Python pins, licenses, `lastVersion` matching the crate, and a Next
+docs line. Historical 0.2.x pages stay in the version dropdown.
 
 ## 2. Checks
 
@@ -173,22 +180,30 @@ https://muraliengine.com/docs/intro
 
 Then release kit: [murali-kit RELEASE.md](https://github.com/murali-engine/murali-kit/blob/main/RELEASE.md).
 
-## Docs Freeze (Only For A Named Docs Version)
+## Docs Freeze
 
-Live docs are the current Python-first track (`lastVersion: 'current'`, labeled `0.3.0 🚧`). Do
-**not** freeze Docusaurus on every crate patch.
-
-When you actually cut a public docs version that should stay at `/docs`:
+After a named release, lock that docs set and put ongoing work under Next:
 
 ```bash
 cd docs
 npm ci
-npm run build
 npm run docusaurus -- docs:version ${VERSION}
 ```
 
-Then point `lastVersion` at that frozen version, update `scripts/check-release-metadata.sh` to
-match, and prune older frozen trees if you do not want them in the dropdown.
+That copies `docs/docs/` to `versioned_docs/version-${VERSION}`. Then in `docusaurus.config.ts`:
+
+```ts
+lastVersion: '${VERSION}',
+versions: {
+  current: {
+    label: 'Next 🚧',
+    path: 'next',
+  },
+},
+```
+
+`/docs` is the frozen release. `/docs/next` is unreleased. Keep `0.2.4` in the dropdown for Rust
+authoring. Do not freeze on every patch.
 
 ## Do Not
 

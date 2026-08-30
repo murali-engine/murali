@@ -1,0 +1,247 @@
+---
+sidebar_position: 1
+---
+
+# Rust examples
+
+Python examples live in
+[`murali-kit/examples`](https://github.com/murali-engine/murali-kit/tree/main/examples).
+This catalog is the engine repository's Rust examples.
+
+If you are new to Murali, start with [Your First Scene](../first-scene.md) and [Animations](../animations.md).
+
+## Running Examples
+
+Clone the repository and run any example locally:
+
+```bash
+cargo run --example hello_shapes
+```
+
+The full catalog lives in the repository at [`examples/README.md`](https://github.com/murali-engine/murali/blob/main/examples/README.md).
+
+The published crate excludes `examples/**`, so these reference examples are available from the repository rather than from the crates.io package alone.
+
+Some examples use experimental APIs. For example, the linear-algebra examples require the
+`experimental` Cargo feature:
+
+```bash
+cargo run --features experimental --example linear_algebra_vectors
+```
+
+The repository helper scripts enable that feature automatically for examples tagged
+`linear-algebra`.
+
+## Collection Category Coverage
+
+Every newly added `collection` category has at least one exported component and at least one runnable
+example anchor:
+
+| Category | Example anchor |
+| --- | --- |
+| `maths::notation` | `equation_and_matrix_animation`, `latex_and_typst` |
+| `maths::graph` | `graphs_2d` |
+| `maths::basic_math` | `equation_and_matrix_animation` |
+| `maths::linear_algebra` | `linear_algebra_vectors`, `linear_algebra_matrix_vector` |
+| `maths::calculus` | `graphs_2d`, `curves_3d`, `traced_paths` |
+| `maths::probability` | `next_token_distribution` |
+| `maths::statistics` | `normalization`, `graphs_2d` |
+| `maths::optimization` | `force_fields`, `traced_paths`, `surfaces_3d` |
+| `maths::information_theory` | `next_token_distribution`, `transformer_attention` |
+| `maths::data_geometry` | `graphs_2d`, `tensor_slicing`, `linear_algebra_basis_change` |
+| `ai::deep_learning` | `neural_networks`, `normalization`, `transformer_attention` |
+| `ai::ml_components` | `neural_networks`, `tensor_semantics`, `graphs_2d` |
+| `ai::transformers_llms` | `transformer_attention`, `context_window`, `kv_cache` |
+| `ai::systems_agentic_ai` | `context_window`, `self_attention_lesson`, `stepwise_storytelling` |
+
+## Quick Start Picks
+
+If you only want a few examples to begin with:
+
+- `hello_shapes` - a first scene with a square, circle, rectangle, and polygon
+- `portrait_video` - intentional 9:16 composition with frame-relative layout
+- `motion_basics` - move, scale, rotate, and fade with clear pacing
+- `scene_view` - independently animated child scene docked inside a parent composition
+- `chat_input_box` - beta chat-style input boxes with typewriter text and configurable bottom tips
+- `context_window` - role-tagged model context with token budgets and explicit truncation
+- `next_token_distribution` - computed sampling filters and deterministic next-token selection
+- `kv_cache` - seekable key/value cache growth backed by semantic tensors
+- `normalization` - computed LayerNorm before/after values and per-token statistics
+- `kavriq_opening` - the beta `Opening` composite customized as a textured 3D brand ident
+- `opening_scene_view` - a perspective opening view fading into an ongoing orthographic scene
+- `text_animation` - write, reveal, indicate, and simple draw semantics
+- `code_blocks` - syntax-highlighted code presented as a scene element
+- `graphs_2d` - axes, function plots, labels, and sampled points
+- `surfaces_3d` - a shaded form-first surface with camera movement
+- `model_inspector` - automatic centering, framing, and inspection for local GLB/GLTF assets
+- `murali_logo` - the brand mark as a polished visual/reference composition
+
+## By Intent
+
+### Foundations
+
+- `hello_shapes`
+  What to notice: primitive tattvas and simple authored placement
+- `layout_and_groups`
+  What to notice: `next_to`, `align_to`, `HStack`, `VStack`, and `Group.move_to`
+- `portrait_video`
+  What to notice: portrait frame bounds, `to_edge`, preview sizing, and width-derived export
+- `style_and_paths`
+  What to notice: fill, stroke, dashes, arrows, and authored paths
+- `motion_basics`
+  What to notice: the core motion verbs with calm timing
+- `scene_view`
+  What to notice: an independent child timeline, offscreen composition, and whole-view transforms
+- `opening_scene_view`
+  What to notice: projection isolation and a full-frame SceneView handoff into continuing content
+- `chat_input_box`
+  What to notice: beta composite IDs, configurable chat tips, and typewriter-ready label text
+
+### Text And Math
+
+- `text_animation`
+  What to notice: `draw`, `undraw`, `typewrite_text`, `reveal_text`, and `indicate`
+- `code_blocks`
+  What to notice: syntax-highlighted code as a first-class tattva with layout and pacing
+- `latex_and_typst`
+  What to notice: static LaTeX and Typst rendering plus a compact renderer-crossing morph
+- `equation_and_matrix_animation`
+  What to notice: equation continuity and matrix-step highlighting
+- `tables`
+  What to notice: one table example that writes in, pauses, and unwrites cleanly
+
+### Experimental Linear Algebra
+
+These examples use `murali::frontend::collection::maths::linear_algebra`, which is currently gated
+behind the `experimental` Cargo feature.
+
+- `linear_algebra_vectors`
+  What to notice: vectors as arrows, labels, coordinates, and feature-list readouts
+- `linear_algebra_span`
+  What to notice: linear combinations, span regions, and basis-vector intuition
+- `linear_algebra_dot_product`
+  What to notice: angle arcs, projection shadows, orthogonality, and dot/cosine readouts
+- `linear_algebra_basis_change`
+  What to notice: one vector shown against standard and custom basis coordinates
+- `linear_algebra_matrix_transform`
+  What to notice: transformed grids, basis-column colors, and a linked matrix panel
+- `linear_algebra_matrix_vector`
+  What to notice: compact `A x = b` flow beside input and output vectors
+- `linear_algebra_column_combination`
+  What to notice: columns of `A` scaled by entries of `x` and summed geometrically
+- `linear_algebra_determinant`
+  What to notice: area scaling, orientation flip, and collapse to a line
+- `linear_algebra_composition`
+  What to notice: clean matrix-only comparison for `A` then `B` versus `B` then `A`
+- `linear_algebra_transform_order_scene_view`
+  What to notice: SceneView replay of each transform order before comparing the final outcomes
+
+Run one directly with:
+
+```bash
+cargo run --features experimental --example linear_algebra_matrix_vector
+```
+
+Or run the tagged group through the repository scripts:
+
+```bash
+./preview_all.sh --tag linear-algebra --auto
+./export_all.sh --tag linear-algebra --release
+```
+
+### Graphs And Fields
+
+- `graphs_2d`
+  What to notice: axes, number plane, one function graph, and sampled points
+- `curves_3d`
+  What to notice: one parametric space curve with 3D framing
+- `streamlines`
+  What to notice: seeded flow trajectories without mixing in arrow fields
+
+### Dynamics And Systems
+
+- `force_fields`
+  What to notice: updater-driven electric fields responding to moving charges
+- `particles`
+  What to notice: one orbital belt with cinematic motion
+- `traced_paths`
+  What to notice: a rolling wheel whose chosen point leaves behind a cycloid
+- `neural_networks`
+  What to notice: network structure and signal playback
+- `transformer_attention`
+  What to notice: tokens, attention relationships, and transformer-style block composition
+- `context_window`
+  What to notice: ordered context blocks, semantic roles, retained-token accounting, and visible truncation
+- `next_token_distribution`
+  What to notice: model versus sampling probability, filtered candidates, and the explicit unit sample
+- `kv_cache`
+  What to notice: shared token identity, occupied versus future slots, and deterministic cache growth
+- `normalization`
+  What to notice: named-axis normalization, preserved identity, and statistics bound to displayed output
+- `tensor_semantics`
+  What to notice: computed self-attention with named axes, stable element identity, and semantic selection
+- `tensor_operations`
+  What to notice: named-axis reshape, split/merge, and semantic broadcasting
+- `tensor_slicing`
+  What to notice: explicit rank-4 slicing into an animated token-by-feature view
+- `self_attention_lesson`
+  What to notice: a versioned JSON trace feeding computed attention, residual, logits, and sampling stages
+- `stepwise_storytelling`
+  What to notice: staged reveal flow and routed narrative transitions
+
+### Three D
+
+- `model_inspector`
+  What to notice: repository asset shorthand, automatic bounds-based fit, continuous centered
+  rotation, and interactive orbit/zoom controls
+- `kavriq_opening`
+  What to notice: built-in marble texture selection, script-level opening constants, local-time
+  clip authoring, and glyph particles
+- `opening_scene_view`
+  What to notice: a perspective opening and orthographic continuation running as separate scenes
+- `surfaces_3d`
+  What to notice: one translucent surface whose form is explained through color and camera framing
+- `wireframe_surfaces`
+  What to notice: wireframe-specific curvature reading
+- `textured_surface`
+  What to notice: UV texture mapping on a parametric globe
+
+### Brand And Demos
+
+- `murali_logo`
+  What to notice: a reference brand composition built from authored guides and bezier curves
+- `murali_logo_transparent`
+  What to notice: export-oriented logo capture with transparent background and simple scene flags
+- `fourier_formula_trace`
+  What to notice: Fourier coefficients reordered into epicycles that rebuild a Typst formula outline
+- `map_projection_morph`
+  What to notice: the Earth texture bending through multiple map projections
+
+## Choosing An Example
+
+Use this rough mapping when you are not sure where to start:
+
+- learning scene structure: start with `hello_shapes`, `layout_and_groups`, and `scene_view`
+- learning portrait video composition: start with `portrait_video`
+- learning animation vocabulary: start with `motion_basics` and `text_animation`
+- learning text, equations, or tables: start with `latex_and_typst`, `equation_and_matrix_animation`, and `tables`
+- learning graphs and fields: start with `graphs_2d` and `streamlines`
+- learning updater-driven motion: start with `force_fields`, `particles`, and `traced_paths`
+- inspecting a downloaded 3D prop: start with `model_inspector`
+- learning 3D camera and surface work: start with `curves_3d`, `surfaces_3d`, `textured_surface`, and `kavriq_opening`
+- learning story-first scenes: start with `stepwise_storytelling` and `chat_input_box`
+- learning AI diagrams: start with `neural_networks` and `transformer_attention`
+- learning semantic AI computation: start with `tensor_semantics`, `tensor_operations`, `tensor_slicing`, and `self_attention_lesson`
+- learning branding study scenes: start with `murali_logo`
+- learning branding export scenes: start with `murali_logo_transparent`
+
+## Related Docs
+
+- [Animations](../animations.md)
+- [Timelines](../timelines.md)
+- [SceneView](../scene-views.md)
+- [Scene and App](../scene-and-app.md)
+- [Text](../tattvas/text.md)
+- [Graphs](../tattvas/graphs.md)
+- [Math](../tattvas/math.md)
+- [Export and Capture](../export-and-capture.md)
