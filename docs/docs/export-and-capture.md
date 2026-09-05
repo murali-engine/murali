@@ -27,11 +27,11 @@ for inspection; authored motion still comes from the timeline.
 Kit examples use a small runner:
 
 ```bash
-python examples/hello_shapes.py              # preview
-python examples/hello_shapes.py --auto       # close 3s after the timeline ends
-python examples/hello_shapes.py --png
-python examples/hello_shapes.py --video --width 1920
-python preview_all.py --auto
+uv run python examples/hello_shapes.py              # preview
+uv run python examples/hello_shapes.py --auto       # close 3s after the timeline ends
+uv run python examples/hello_shapes.py --png
+uv run python examples/hello_shapes.py --video --width 1920
+uv run python preview_all.py --auto
 ```
 
 ## PNG

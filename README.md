@@ -42,6 +42,21 @@ preview, and export. `murali-kit` adds themes, named colors, reusable teaching v
 
 More: wheels, frames, export, maturin, kit examples — **[PYTHON.md](./PYTHON.md)**.
 
+## Development
+
+Murali uses [uv](https://docs.astral.sh/uv/) for its Python development environment and lockfile.
+From a checkout:
+
+```bash
+uv sync
+uv run pytest python/tests
+```
+
+After changing the Rust bindings, rebuild the editable extension with
+`uv run maturin develop --features python`.
+
+End-user wheels remain standard Python packages and do not require uv.
+
 ## Rust (runtime)
 
 ```toml

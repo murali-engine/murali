@@ -68,7 +68,11 @@ impl ResolveRenderConfig for ExportConfig {
 impl RenderConfig {
     pub fn preview() -> Result<Self> {
         let cwd = std::env::current_dir()?;
-        let project_root = find_project_root(&cwd);
+        Self::preview_from(cwd)
+    }
+
+    pub fn preview_from(start: impl AsRef<Path>) -> Result<Self> {
+        let project_root = find_project_root(start.as_ref());
         let murali_toml = project_root.join("murali.toml");
 
         let cfg = load_murali_config(&murali_toml)?;

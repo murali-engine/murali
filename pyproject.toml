@@ -32,6 +32,12 @@ Homepage = "https://muraliengine.com"
 Repository = "https://github.com/murali-engine/murali"
 Documentation = "https://muraliengine.com"
 
+[dependency-groups]
+dev = [
+    "maturin>=1.7,<2",
+    "pytest>=8,<9",
+]
+
 [tool.maturin]
 features = ["python"]
 module-name = "murali_engine"

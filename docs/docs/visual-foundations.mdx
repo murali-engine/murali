@@ -358,7 +358,7 @@ Once you're comfortable, you should create your own theme to define a consistent
 
 ### Creating a custom theme
 
-1. Create a `themes/` folder next to your `Cargo.toml`
+1. Create a `themes/` folder next to your `murali.toml`
 2. Add a file (e.g. `sesh.toml`)
 3. Define the required fields
 4. Activate it from `murali.toml`
@@ -384,7 +384,7 @@ Then point Murali at the theme from your project config:
 theme = "sesh"
 ```
 
-Murali will look for `themes/sesh.toml` next to your project `Cargo.toml`.
+Murali will look for `themes/sesh.toml` next to your project `murali.toml`.
 
 ---
 
@@ -396,7 +396,7 @@ Palettes allow you to define your own color systems beyond the built-in constant
 
 ### How to create a palette
 
-1. Create a `palettes/` folder next to your `Cargo.toml`
+1. Create a `palettes/` folder next to your `murali.toml`
 2. Add a file (e.g. `my_palette.toml`)
 3. Define your colors inside
 4. Load the palette by name in your scene code

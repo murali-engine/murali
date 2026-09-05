@@ -226,22 +226,22 @@ Python examples are split by package. The engine repository keeps a small smoke 
 From this engine repository, install the local Python extension and run the smoke example:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install maturin
-.venv/bin/maturin develop --features python
-.venv/bin/python python/examples/hello_shapes.py
+uv sync
+uv run python python/examples/hello_shapes.py
 ```
+
+After changing Rust binding code, rebuild the editable extension with
+`uv run maturin develop --features python`.
 
 From a sibling `murali-kit` checkout, create the kit environment and point it at the adjacent local
 engine checkout:
 
 ```bash
 cd ../murali-kit
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-local.txt
-source .venv/bin/activate
-python preview_all.py --list
-python examples/hello_shapes.py
+uv venv
+uv pip install -r requirements-local.txt
+uv run python preview_all.py --list
+uv run python examples/hello_shapes.py
 ```
 
 On supported platforms, install the released kit package with:

@@ -87,10 +87,10 @@ from murali_kit.layout import Group
 ## Examples
 
 ```bash
-python examples/hello_shapes.py
-python examples/motion_basics.py
-python examples/title_card.py
-python examples/neural_networks.py
+uv run python examples/hello_shapes.py
+uv run python examples/motion_basics.py
+uv run python examples/title_card.py
+uv run python examples/neural_networks.py
 ```
 
 Catalog: [`murali-kit/examples`](https://github.com/murali-engine/murali-kit/tree/main/examples).

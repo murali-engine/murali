@@ -531,14 +531,14 @@ impl PyScene {
     }
 
     #[pyo3(signature = (auto_close = false, hold = 3.0))]
-    fn preview(&mut self, auto_close: bool, hold: f32) -> PyResult<()> {
+    fn preview(&mut self, py: Python<'_>, auto_close: bool, hold: f32) -> PyResult<()> {
         if hold < 0.0 || !hold.is_finite() {
             return Err(PyValueError::new_err(
                 "hold must be a non-negative finite number of seconds",
             ));
         }
         let scene = self.take_scene()?;
-        let mut app = App::new()
+        let mut app = App::new_from(python_project_start(py)?)
             .map_err(|error| PyRuntimeError::new_err(error.to_string()))?
             .with_scene(scene)
             .with_preview();

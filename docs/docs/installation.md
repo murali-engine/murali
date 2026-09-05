@@ -73,14 +73,19 @@ the end of the script.
 Only if you are changing the engine itself, from a checkout of this repository:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install maturin
-.venv/bin/maturin develop --features python
-.venv/bin/python python/examples/hello_shapes.py
+uv sync
+uv run pytest python/tests
+uv run python python/examples/hello_shapes.py
 ```
 
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first. It creates the local
+`.venv`, installs the locked development tools, builds the extension through maturin, and keeps
+the environment synchronized with `pyproject.toml`. After changing Rust binding code, rebuild the
+editable extension with `uv run maturin develop --features python`. End-user wheel installation
+does not require uv.
+
 Kit examples live in the [`murali-kit`](https://github.com/murali-engine/murali-kit) repository.
-Develop against an adjacent engine checkout with that repo's `requirements-local.txt`.
+Develop against an adjacent engine checkout using that repository's uv development configuration.
 
 ## Core Rust Engine
 
@@ -130,6 +135,21 @@ fps = 60
 [export]
 fps = 60
 width = 1920
+```
+
+Murali finds the project by walking upward to the nearest `murali.toml`. In Python, the search
+starts beside the executing script, so `python3 /path/to/project/scenes/intro.py` finds
+`/path/to/project/murali.toml` even when the current directory is elsewhere. Interactive Python
+and notebooks, which do not have a script path, search upward from the current working directory.
+
+In a Python project, keep Murali's config beside the Python package manifest:
+
+```text
+my-animation/
+├── pyproject.toml
+├── murali.toml
+└── scenes/
+    └── intro.py
 ```
 
 `width` is the output width in pixels. Height follows the scene's landscape, portrait, or square

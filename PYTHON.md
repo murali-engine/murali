@@ -66,17 +66,23 @@ Python examples live in the kit repo, not in `murali/examples/`:
 [murali-kit/examples](https://github.com/murali-engine/murali-kit/tree/main/examples)
 
 ```bash
-python examples/hello_shapes.py
-python preview_all.py --auto
+uv run python examples/hello_shapes.py
+uv run python preview_all.py --auto
 ```
 
 ## Develop bindings from this repo
 
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
+
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install maturin
-.venv/bin/maturin develop --features python
+uv sync
+uv run pytest python/tests
 ```
+
+`uv sync` creates `.venv` when needed and installs the development dependencies locked in
+`uv.lock`. It also builds the local extension through maturin. After changing Rust binding code,
+rebuild it with `uv run maturin develop --features python`. The published `murali-engine` and
+`murali-kit` wheels do not depend on uv.
 
 Kit against an adjacent engine checkout: see
 [murali-kit](https://github.com/murali-engine/murali-kit).

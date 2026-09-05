@@ -22,7 +22,8 @@ exclude = [
   "Cargo.toml.orig",
   "preview_all.sh",
   "export_all.sh",
-  "RELEASE.md"
+  "RELEASE.md",
+  "uv.lock",
 ]
 
 [lib]

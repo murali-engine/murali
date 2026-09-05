@@ -45,6 +45,7 @@ use crate::frontend::props::DepthMode;
 use crate::resource::texture::{BuiltinTexture, TextureImage};
 use crate::resource::latex_resource::latex_vector_paths;
 use crate::resource::typst_resource::{typst_outline_points, typst_vector_paths};
+use crate::utils::project::find_murali_project_root;
 use glam::{EulerRot, Quat, Vec2, Vec3, Vec4, vec2, vec3, vec4};
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
@@ -235,6 +236,39 @@ fn invoke_scene_callback(callback: &Py<PyAny>, scene: &mut Scene, time: Option<f
             error.print(py);
         }
     });
+}
+
+fn python_project_start(py: Python<'_>) -> PyResult<PathBuf> {
+    let cwd = std::env::current_dir()
+        .map_err(|error| PyRuntimeError::new_err(error.to_string()))?;
+    let Ok(main) = py.import("__main__") else {
+        return Ok(cwd);
+    };
+    let Ok(file) = main.getattr("__file__") else {
+        return Ok(cwd);
+    };
+    let Ok(file) = file.extract::<String>() else {
+        return Ok(cwd);
+    };
+    if file.is_empty() || (file.starts_with('<') && file.ends_with('>')) {
+        return Ok(cwd);
+    }
+
+    let script = PathBuf::from(file);
+    let script = if script.is_absolute() {
+        script
+    } else {
+        cwd.join(script)
+    };
+
+    // Test runners and launchers can make __main__.__file__ point into the
+    // virtual environment. Prefer it only when it actually belongs to a
+    // Murali project; otherwise interactive/test usage remains cwd-based.
+    if find_murali_project_root(&script).is_some() {
+        Ok(script)
+    } else {
+        Ok(cwd)
+    }
 }
 
 fn color_from_tuple(color: ColorTuple) -> PyResult<Vec4> {

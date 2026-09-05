@@ -101,6 +101,7 @@ npm run build --prefix docs
 scripts/check-release-metadata.sh
 cargo package --list
 cargo publish --dry-run
+uv lock --check
 ```
 
 Review `cargo package --list`. The crate excludes `docs/**`, `examples/**`, and `RELEASE.md`.
@@ -108,7 +109,7 @@ Review `cargo package --list`. The crate excludes `docs/**`, `examples/**`, and 
 A local wheel is optional and only for the machine you are on:
 
 ```bash
-.venv/bin/maturin build --release --features python --locked
+uv run --locked maturin build --release --features python --locked
 ```
 
 Do not upload it.
@@ -161,6 +162,9 @@ gh release create "v${VERSION}" \
 Notes usually come from `CHANGELOG.md`. Link crates.io, PyPI, and `vPREVIOUS...v${VERSION}`.
 
 ## 6. Verify
+
+Use a plain `venv` and `pip` for this release check intentionally: it verifies the installation
+path used by people who do not have uv.
 
 ```bash
 python3 -m venv /tmp/murali-pypi-test

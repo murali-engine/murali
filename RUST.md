@@ -59,7 +59,7 @@ Catalog: [examples/README.md](./examples/README.md). Architecture:
 
 ## Config
 
-Murali looks for the nearest `murali.toml` next to a `Cargo.toml`.
+Murali walks upward from the working directory and uses the nearest `murali.toml`.
 
 ```toml
 [preview]

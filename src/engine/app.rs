@@ -1,6 +1,7 @@
 // src/engine/app.rs
 
 use anyhow::Result;
+use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -45,7 +46,12 @@ pub struct App {
 
 impl App {
     pub fn new() -> Result<Self> {
-        let preview_dt = 1.0 / RenderConfig::preview()?.fps.max(1) as f32;
+        let cwd = std::env::current_dir()?;
+        Self::new_from(cwd)
+    }
+
+    pub fn new_from(start: impl AsRef<Path>) -> Result<Self> {
+        let preview_dt = 1.0 / RenderConfig::preview_from(start)?.fps.max(1) as f32;
         Ok(Self {
             preview_dt,
             preview_frame_duration: Duration::from_secs_f32(preview_dt),

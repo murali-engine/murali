@@ -113,11 +113,14 @@ distribution if Rust 1.85+ is available.
 Local engine development from this repository:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install maturin
-.venv/bin/maturin develop --features python
-.venv/bin/python python/examples/hello_shapes.py
+uv sync
+uv run pytest python/tests
+uv run python python/examples/hello_shapes.py
 ```
+
+The repository commits `uv.lock` so contributors use the same Python development tools. `uv sync`
+builds the extension through maturin; after changing Rust binding code, rebuild it with
+`uv run maturin develop --features python`. uv is not a runtime dependency of the published wheel.
 
 Release wheels are built in CI. Pushing a `v*` tag publishes them to PyPI. The Rust crate is
 published with `cargo publish`. See `RELEASE.md`.
