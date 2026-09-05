@@ -16,9 +16,11 @@ same narration.
 ```python
 from murali_engine import Circle, Scene, Timeline
 from murali_kit.colors import BLUE_D, WHITE
+from murali_kit.themes import DarkTheme
 
 def build_child() -> Scene:
     child = Scene()
+    child.apply_theme(DarkTheme())
     node = child.add(Circle(radius=0.35, color=BLUE_D).with_stroke(0.03, WHITE), at=(-3.0, 0.0, 0.0))
     timeline = Timeline()
     timeline.animate(node).at(0.0).for_duration(2.0).ease("in_out_cubic").move_to((3.0, 0.0, 0.0)).spawn()
@@ -34,14 +36,15 @@ The child is an ordinary scene. It can use engine primitives and kit teaching vi
 
 ```python
 from murali_engine import Scene, SceneView
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-parent = apply_theme(Scene(), DarkTheme())
+parent = Scene()
+parent.apply_theme(DarkTheme())
 child = build_child()
 
 view = SceneView(child)
 view.size(14.0, 7.5)
-view.background((0.02, 0.03, 0.05, 1.0))
+view.apply_theme(DarkTheme())
 view.corner_radius(0.28)
 view.border(0.05, (0.25, 0.75, 1.0, 0.9))
 view.playback("loop", loop_duration=2.0)
@@ -50,6 +53,9 @@ view_id = parent.add_scene_view(view, at=(0.0, 0.0, 0.0))
 ```
 
 `view_id` is a parent handle. Animate it like any other tattva.
+
+Apply a theme to the child scene when the child content needs that look. Apply a theme to the
+`SceneView` when the inset surface itself should use the theme background.
 
 Playback names include `"once"` and `"loop"`. Loop needs `loop_duration`.
 

@@ -10,9 +10,10 @@ predictable and export resolution-independent.
 ```python
 from murali_engine import Circle, Scene
 from murali_kit.colors import BLUE_D, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 scene.add(Circle(radius=1.0, color=BLUE_D).with_stroke(0.04, WHITE))
 ```
 

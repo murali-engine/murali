@@ -40,10 +40,11 @@ Kit-style usage can be opinionated, but `Scene` still comes from the engine:
 
 ```python
 from murali_engine import Scene
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 from murali_kit.composite import TitleCard
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 TitleCard("Attention", "Query, key, value").add_to_scene(scene)
 ```
 
@@ -52,7 +53,8 @@ Independent theme usage can stay lightweight:
 ```python
 from murali_engine import Scene
 
-scene = apply_theme(Scene(), EditorialDark())
+scene = Scene()
+scene.apply_theme(EditorialDark())
 ```
 
 ## Engine Responsibilities
@@ -78,7 +80,8 @@ For the first coherent kit theme layer, prioritize:
 
 - `DarkTheme`
 - `LightTheme`
-- `apply_theme(scene, theme)` and `theme.apply(scene)`
+- `Scene.apply_theme(theme)` as the preferred API
+- `apply_theme(scene, theme)` as a compatibility helper
 - helpers that style common engine objects
 - examples that show the same scene in light and dark modes
 
@@ -102,6 +105,6 @@ This lets `0.3.0` become Python-coherent without breaking existing Rust users un
 ## Open Questions
 
 - Should engine `Scene` accept `background=` directly in `0.3.0`?
-- Should kit themes apply styles by constructing a scene, wrapping a scene, or both?
+- Should kit themes style only scenes, or also provide object-level style helpers?
 - Should kit themes style existing objects, or only provide constructors/presets for new objects?
 - Should code-block syntax themes stay as engine internals or become kit-level style choices?

@@ -27,6 +27,20 @@ impl PySceneView {
         Ok(())
     }
 
+    fn apply_theme<'py>(
+        mut slf: PyRefMut<'py, Self>,
+        theme: &Bound<'_, PyAny>,
+    ) -> PyResult<PyRefMut<'py, Self>> {
+        let background = theme.getattr("background").map_err(|_| {
+            PyValueError::new_err("theme must expose a background RGBA tuple")
+        })?;
+        let background: ColorTuple = background.extract().map_err(|_| {
+            PyValueError::new_err("theme.background must be an RGBA tuple")
+        })?;
+        slf.inner = Some(slf.take_view()?.background(color_from_tuple(background)?));
+        Ok(slf)
+    }
+
     fn transparent_background(&mut self) -> PyResult<()> {
         self.inner = Some(self.take_view()?.transparent_background());
         Ok(())
@@ -106,6 +120,20 @@ impl PyScene {
     fn set_background(&mut self, color: ColorTuple) -> PyResult<()> {
         self.scene_mut()?.set_background(color_from_tuple(color)?);
         Ok(())
+    }
+
+    fn apply_theme<'py>(
+        mut slf: PyRefMut<'py, Self>,
+        theme: &Bound<'_, PyAny>,
+    ) -> PyResult<PyRefMut<'py, Self>> {
+        let background = theme.getattr("background").map_err(|_| {
+            PyValueError::new_err("theme must expose a background RGBA tuple")
+        })?;
+        let background: ColorTuple = background.extract().map_err(|_| {
+            PyValueError::new_err("theme.background must be an RGBA tuple")
+        })?;
+        slf.scene_mut()?.set_background(color_from_tuple(background)?);
+        Ok(slf)
     }
 
     fn clear_background(&mut self) -> PyResult<()> {

@@ -24,9 +24,10 @@ Save this as `my_first_scene.py`:
 ```python
 from murali_engine import Circle, Label, Scene, Square, Timeline
 from murali_kit.colors import GREEN_D, RED_B, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 
 title = scene.add(Label("My First Scene", height=0.38, color=WHITE))
 scene.to_edge(title, "up", margin=0.8)
@@ -56,7 +57,7 @@ python3 my_first_scene.py
 
 ## What each part does
 
-**Theme.** `Scene()` comes from the engine. `apply_theme(..., DarkTheme())` is kit styling. The
+**Theme.** `Scene()` comes from the engine. `scene.apply_theme(DarkTheme())` is kit styling. The
 engine does not own named themes.
 
 **Tattvas.** `scene.add(...)` places an object and returns a handle. Use that handle to lay it out
@@ -98,7 +99,8 @@ video, when you want the motion visible.
 ## Portrait and other frames
 
 ```python
-scene = apply_theme(Scene(frame="portrait"), DarkTheme())
+scene = Scene(frame="portrait")
+scene.apply_theme(DarkTheme())
 ```
 
 `"landscape"`, `"portrait"`, and `"square"` are the frame names. See [Video Formats](./video-formats).

@@ -29,9 +29,10 @@ python3 -m pip install murali-kit==0.3.0
 ```python
 from murali_engine import Circle, Label, Scene
 from murali_kit.colors import GREEN_D, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 scene.add(Label("Hello Murali", height=0.38, color=WHITE), at=(0.0, 2.4, 0.0))
 scene.add(Circle(radius=1.2, color=GREEN_D).with_stroke(0.04, WHITE))
 scene.preview()

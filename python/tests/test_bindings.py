@@ -98,6 +98,16 @@ class PythonBindingsTest(unittest.TestCase):
         scene.clear_background()
         self.assertIsNone(scene.background())
 
+    def test_scene_applies_theme_like_objects(self) -> None:
+        class Theme:
+            background = GREEN
+
+        scene = Scene()
+
+        self.assertIs(scene.apply_theme(Theme()), scene)
+        for actual, expected in zip(scene.background(), GREEN, strict=True):
+            self.assertAlmostEqual(actual, expected, places=5)
+
     def test_scene_exposes_video_export_methods(self) -> None:
         scene = Scene()
 
@@ -450,6 +460,15 @@ class PythonBindingsTest(unittest.TestCase):
         scene.add_scene_view(view, at=(2.5, -1.5, 0.0))
 
         self.assertEqual(scene.tattva_count(), 5)
+
+    def test_scene_view_applies_theme_like_objects(self) -> None:
+        class Theme:
+            background = GREEN
+
+        child = Scene()
+        view = SceneView(child)
+
+        self.assertIs(view.apply_theme(Theme()), view)
 
     def test_scene_accepts_traced_path_path_updates_and_timeline_callbacks(self) -> None:
         scene = Scene()

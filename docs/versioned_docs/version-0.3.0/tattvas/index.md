@@ -12,9 +12,10 @@ Add it with `scene.add(...)`. Keep the handle.
 ```python
 from murali_engine import Circle, Label, Scene
 from murali_kit.colors import GREEN_D, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 title = scene.add(Label("Hello", height=0.38, color=WHITE), at=(0.0, 2.4, 0.0))
 circle = scene.add(
     Circle(radius=0.8, color=GREEN_D, segments=48).with_stroke(0.04, WHITE),

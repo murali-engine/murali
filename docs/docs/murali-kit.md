@@ -14,9 +14,10 @@ python3 -m pip install murali-kit==0.3.0
 from murali_engine import Scene, Label
 from murali_kit.colors import WHITE
 from murali_kit.composite import TitleCard
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 TitleCard("Murali Kit", "Teaching views on Murali Engine").add_to_scene(scene)
 scene.add(Label("Hello", height=0.3, color=WHITE))
 scene.preview()
@@ -28,15 +29,16 @@ replace `Scene` or `Timeline`.
 ## Themes and colors
 
 ```python
-from murali_kit.themes import DarkTheme, LightTheme, apply_theme
+from murali_kit.themes import DarkTheme, LightTheme
 from murali_kit.colors import WHITE, BLUE_D, GOLD_C
 
 theme = LightTheme()
-scene = apply_theme(Scene(), theme)
+scene = Scene()
+scene.apply_theme(theme)
 ```
 
-`apply_theme` styles an existing scene and returns it. Themes do not construct scenes. The palette
-table is on [Space and color](./visual-foundations).
+`scene.apply_theme(...)` styles an existing scene and returns it. Themes do not construct scenes.
+The palette table is on [Space and color](./visual-foundations).
 
 ## Composite
 

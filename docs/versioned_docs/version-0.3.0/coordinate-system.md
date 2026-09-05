@@ -16,9 +16,10 @@ are not pixels.
 ```python
 from murali_engine import Circle, Scene
 from murali_kit.colors import GREEN_D, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 scene.add(Circle(radius=0.8, color=GREEN_D).with_stroke(0.04, WHITE), at=(0.0, 0.0, 0.0))
 scene.add(Circle(radius=0.4, color=GREEN_D), at=(-4.0, 2.5, 0.0))
 ```

@@ -16,9 +16,10 @@ authoring animations, building visual tools, or integrating Murali into another 
 ```python
 from murali_engine import Scene, Circle, Label, Timeline
 from murali_kit.colors import GREEN_D, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 
 title = scene.add(Label("Hello Shapes", height=0.38, color=WHITE), at=(0, 2.8, 0))
 circle = scene.add(
@@ -51,6 +52,7 @@ Scene(frame="landscape" | "portrait" | "square")
 scene.to_edge(handle, "up", margin=0.8)
 scene.next_to(a, b, "right", padding)
 scene.align_to(a, b, "center")
+scene.apply_theme(theme)
 scene.set_view_width(16.0)
 scene.set_camera(...)
 scene.set_perspective_camera(fov_y_degrees, near, far)
@@ -86,6 +88,8 @@ Core types currently on `murali_engine`:
 `Latex`, `Typst`, `Axes`, `NumberLine`, `NumberPlane`, `TracedPath`, `Table`, `Axes3D`,
 `ParametricCurve3D`, `ParametricSurface`, `Prop3D`, `SceneView`, `EquationLayout`, `EquationPart`,
 `Matrix`.
+
+`SceneView` accepts `view.apply_theme(theme)` for styling the inset surface background.
 
 `with_stroke(...)`, `with_color(...)`, and other `with_*` methods return `self`.
 

@@ -42,9 +42,10 @@ Ease names are strings: `"linear"`, `"in_quad"`, `"out_quad"`, `"in_out_quad"`, 
 ```python
 from murali_engine import Circle, Scene, Timeline
 from murali_kit.colors import GREEN_D, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 circle = scene.add(Circle(radius=0.7, color=GREEN_D).with_stroke(0.04, WHITE), at=(-4.0, 0.0, 0.0))
 
 timeline = Timeline()

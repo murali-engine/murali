@@ -23,11 +23,14 @@ Changing export width does not turn a landscape scene into a portrait scene.
 
 ```python
 from murali_engine import Scene
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
-scene = apply_theme(Scene(frame="portrait"), DarkTheme())
-scene = apply_theme(Scene(frame="square"), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
+scene = Scene(frame="portrait")
+scene.apply_theme(DarkTheme())
+scene = Scene(frame="square")
+scene.apply_theme(DarkTheme())
 ```
 
 `to_edge` and camera aspect use that frame. Do not call `to_edge` and then change the frame.
@@ -40,9 +43,10 @@ frame on purpose.
 ```python
 from murali_engine import Circle, Label, Scene, Timeline
 from murali_kit.colors import BLUE_D, WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(frame="portrait"), DarkTheme())
+scene = Scene(frame="portrait")
+scene.apply_theme(DarkTheme())
 
 title = scene.add(Label("Attention In 30 Seconds", height=0.55, color=WHITE))
 scene.to_edge(title, "up", margin=0.8)
@@ -87,7 +91,8 @@ Full HD landscape is `width=1920`. Portrait Shorts are usually `width=1080`.
 ## Square PNG
 
 ```python
-scene = apply_theme(Scene(frame="square"), DarkTheme())
+scene = Scene(frame="square")
+scene.apply_theme(DarkTheme())
 scene.set_view_width(10.0)
 scene.add(Circle(radius=2.0, color=BLUE_D))
 scene.save_png("square_mark.png", width=1200)

@@ -14,9 +14,10 @@ Then:
 
 ```python
 from murali_engine import Scene
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 scene.preview()
 ```
 

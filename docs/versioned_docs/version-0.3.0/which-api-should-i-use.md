@@ -20,9 +20,10 @@ python3 -m pip install murali-kit
 ```python
 from murali_engine import Scene, Circle, Label
 from murali_kit.colors import WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
 ```
 
 **Why:** kit installs the engine, gives you named colors and themes, and owns teaching views.
@@ -162,7 +163,7 @@ independent content a `SceneView`.
 | Task | Use |
 | --- | --- |
 | Install | `pip install murali-kit` |
-| Theme | `apply_theme(Scene(), DarkTheme())` |
+| Theme | `scene.apply_theme(DarkTheme())` |
 | Named color | `from murali_kit.colors import WHITE` |
 | Add object | `scene.add(...)` |
 | Place on edge | `scene.to_edge(handle, "up", margin=0.8)` |

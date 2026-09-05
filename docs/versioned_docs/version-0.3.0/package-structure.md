@@ -21,7 +21,7 @@ python3 -m pip install murali-kit==0.3.0
 ```python
 from murali_engine import Scene, Timeline, Circle
 from murali_kit.colors import WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 ```
 
 The usual path is to author animations and visuals in Python. The Rust runtime is there to make
@@ -58,9 +58,10 @@ If it is a sentence, lesson, or look, put it in the kit.
 
 ```python
 from murali_engine import Scene
-from murali_kit.themes import LightTheme, apply_theme
+from murali_kit.themes import LightTheme
 
-scene = apply_theme(Scene(), LightTheme())
+scene = Scene()
+scene.apply_theme(LightTheme())
 ```
 
 The engine accepts a background as an RGBA tuple. It does not export `DarkTheme`.

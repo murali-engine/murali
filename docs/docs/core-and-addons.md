@@ -68,7 +68,7 @@ Then add the kit when you want themes, named colors, or teaching views:
 ```python
 from murali_kit.ai import NeuralNetworkDiagram, AttentionMatrix
 from murali_kit.maths.linear_algebra import VectorArrow2D, TransformableGrid2D
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 ```
 
 ## Decision rules

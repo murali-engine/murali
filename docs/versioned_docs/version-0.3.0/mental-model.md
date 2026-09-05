@@ -25,10 +25,12 @@ The scene owns tattvas, the timeline, the camera, the logical frame, and current
 
 ```python
 from murali_engine import Scene
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
-scene = apply_theme(Scene(frame="portrait"), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
+scene = Scene(frame="portrait")
+scene.apply_theme(DarkTheme())
 ```
 
 Think of it as a stage: it holds the actors, knows what time it is, and follows the script.

@@ -50,10 +50,12 @@ Themes do not create scenes. The engine owns `Scene`. The kit applies style to i
 
 ```python
 from murali_engine import Scene
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 
-scene = apply_theme(Scene(), DarkTheme())
-scene = apply_theme(Scene(frame="portrait"), DarkTheme())
+scene = Scene()
+scene.apply_theme(DarkTheme())
+scene = Scene(frame="portrait")
+scene.apply_theme(DarkTheme())
 ```
 
 ## 5. Preview and export on the same object
@@ -103,5 +105,5 @@ they run with `PYTHONPATH=src`. In your own project, import the package:
 
 ```python
 from murali_kit.colors import WHITE
-from murali_kit.themes import DarkTheme, apply_theme
+from murali_kit.themes import DarkTheme
 ```
