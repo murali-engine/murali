@@ -6,7 +6,7 @@ sidebar_position: 8
 
 Murali is a Python animation engine for AI education and technical visual storytelling. Teaching
 views such as attention matrices and neural diagrams live in [Murali Kit](../murali-kit). The
-runtime is Rust; day-to-day authoring is Python.
+runtime is written in Rust for performance; authoring and integrations are Python-first.
 
 The long-term target is to grow that visualization surface steadily through the end of 2030.
 
@@ -44,27 +44,22 @@ intuition, and the surrounding mathematical structure.
 | Data geometry | scatter plots, surfaces, tensor projections | embeddings, PCA, clustering, manifolds |
 | Systems and agentic AI | agentic flow charts, traces, context windows | tools, retries, branches, evaluations |
 
-## Import Surface
+## Import surface
 
-Murali's collection is the author-facing collection of reusable visual tattvas. Its implementation
-families remain organized by primitive family: `ai`, `maths`, `text`, `layout`, `storytelling`,
-and related modules. Alongside those, Murali exposes domain-oriented category modules directly
-under `collection`:
+Murali Kit is the author-facing collection of reusable teaching views. Import domain components
+from Python modules that match the lesson you are writing:
 
-```rust
-use murali::collection::ai::transformers_llms::*;
-use murali::collection::maths::probability::*;
-use murali::collection::maths::data_geometry::scatter_plot::ScatterPlot;
+```python
+from murali_kit.ai import AttentionMatrix, NeuralNetworkDiagram
+from murali_kit.maths import FunctionGraph, NumberLine
+from murali_engine import Scene, Timeline
 ```
 
-These category modules are re-export layers over real components. They are meant for lesson authors
-who think in teaching domains rather than implementation folders. A component still has one
-implementation owner; a domain facade is only a discovery surface. The experimental
-linear-algebra module is available only when the `experimental` feature is enabled.
+Use `murali-engine` for core scene objects, primitives, timelines, preview, and export. Use
+`murali-kit` for named colors, themes, examples, and composed teaching views.
 
-Support pieces stay in implementation families such as `primitives`, `text`, `maths`, `composite`,
-`layout`, `storytelling`, `table`, and `utility`. Domain facades are kept only where
-they clarify the teaching subject.
+The lower-level Rust collection remains the implementation and extension surface for engine work.
+Public lesson authoring should stay in Python.
 
 ## Source Architecture
 

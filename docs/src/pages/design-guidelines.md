@@ -16,7 +16,7 @@ Murali should feel:
 - precise
 - modern
 - technical, but not cold
-- premium without becoming flashy
+- polished without becoming flashy
 - clean enough for documentation
 
 The aesthetic target is a balance of:
@@ -37,7 +37,7 @@ Documentation is the product here. Visual styling should improve scanability, no
 - Use whitespace as structure.
 - Let headings and section rhythm do most of the work.
 
-### 2. Premium, not loud
+### 2. Polished, not loud
 
 We want polish, not visual chaos.
 
@@ -212,7 +212,7 @@ Before considering a landing page section done, verify:
 - cards are fully clickable and clearly interactive
 - dark mode and light mode both feel intentional
 - text remains readable at a glance
-- hover states feel premium but restrained
+- hover states feel polished but restrained
 - page rhythm feels calm, not cramped
 
 ## Anti-patterns
@@ -235,7 +235,7 @@ For Murali docs, the preferred direction is:
 - restrained surfaces
 - crisp typography
 - limited accent color
-- premium but quiet interaction
+- polished but quiet interaction
 
 This should be the baseline unless there is a strong reason to deviate.
 

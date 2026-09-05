@@ -8,7 +8,7 @@ Utility tattvas live under `murali::frontend::collection::utility`.
 
 ## TracedPath
 
-Records and renders the trajectory of a point on a moving tattva. Similar to Manim's `TracedPath`.
+Records and renders the trajectory of a point on a moving tattva.
 
 `TracedPath` implements `TattvaTrait` directly (not via the `Tattva<T>` wrapper) because it needs to manage its own state across frames.
 

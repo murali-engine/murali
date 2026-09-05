@@ -2558,7 +2558,7 @@ impl Animation for MorphGeometry {
 }
 
 /// WritePath animation: traces the path outline and fills the completed sector
-/// The fill appears as a growing sector as the path is drawn (Manim-style)
+/// The fill appears as a growing sector as the path is drawn.
 pub struct WritePath {
     pub target_id: TattvaId,
     pub ease: Ease,

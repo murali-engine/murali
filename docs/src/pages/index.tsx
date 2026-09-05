@@ -47,7 +47,7 @@ const pathways: Card[] = [
 const highlights: Card[] = [
   {
     title: 'Python authoring',
-    description: 'Write scenes in Python. The Rust engine renders them.',
+    description: 'Write scenes, lessons, and integrations in Python.',
   },
   {
     title: 'Time-driven animation',
@@ -55,7 +55,7 @@ const highlights: Card[] = [
   },
   {
     title: 'GPU-native rendering',
-    description: 'Powered by wgpu across Metal, Vulkan, and DirectX 12.',
+    description: 'A Rust core renders through wgpu across Metal, Vulkan, and DirectX 12.',
   },
 ];
 
@@ -92,13 +92,13 @@ type VideoShowcase = {
 
 const showcaseVideos: VideoShowcase[] = [
   {
-    title: 'Payful shapes animation',
-    description: 'A polished animation showing large no of shapes doing movement',
+    title: 'Playful shapes animation',
+    description: 'A polished motion study with many shapes moving through coordinated timing.',
     embedUrl: 'https://www.youtube.com/embed/rzQZHta2PQM',
   },
   {
-    title: 'Tattva move animation, alongwith camera smooth movement',
-    description: 'We show a Tattva moving, and then also the camera following that Tattva, while it keeps rotating',
+    title: 'Tattva motion and camera follow',
+    description: 'A moving tattva with a smooth camera follow and continuous rotation.',
     embedUrl: 'https://www.youtube.com/embed/W8WQQbSo70Y',
   },
 ];
@@ -109,7 +109,7 @@ function SurfaceCard({ title, description, to, href, label }: Card) {
   const content = (
     <>
       {label ? <span className={styles.cardLabel}>{label}</span> : null}
-      <Heading as="h3" className={styles.cardTitle}>
+      <Heading as="h3" className={clsx('card__title', styles.cardTitle)}>
         {title}
       </Heading>
       <p className={styles.cardDescription}>{description}</p>
@@ -119,16 +119,20 @@ function SurfaceCard({ title, description, to, href, label }: Card) {
 
   if (href) {
     return (
-      <Link className={styles.card} href={href}>
-        {content}
-      </Link>
+      <div className="col col--6 margin-bottom--lg">
+        <Link className={clsx('card', styles.surfaceCard)} href={href}>
+          {content}
+        </Link>
+      </div>
     );
   }
 
   return (
-    <Link className={styles.card} to={to!}>
-      {content}
-    </Link>
+    <div className="col col--6 margin-bottom--lg">
+      <Link className={clsx('card', styles.surfaceCard)} to={to!}>
+        {content}
+      </Link>
+    </div>
   );
 }
 
@@ -138,46 +142,51 @@ function HomepageHeader() {
 
   return (
     <header className={styles.hero}>
-      <div className={clsx('container', styles.heroInner)}>
-        <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Python animation engine</p>
-          <Heading as="h1" className={styles.heroTitle}>
-            Build precise teaching visuals.
-          </Heading>
-          <p className={styles.heroSubtitle}>
-            Write mathematical and AI animation in Python. Murali renders on a modern GPU runtime
-            with deterministic, timeline-driven scenes.
-          </p>
-          <p className={styles.heroNote}>
-            Developed in part for{' '}
-            <Link href="https://kavriq.com/">Kavriq</Link>, where production use will continue to
-            help shape the path forward for Murali.
-          </p>
-          <div className={styles.constructRow} aria-label="Murali building blocks">
-            {constructs.map((item) => (
-              <span key={item} className={styles.constructChip}>
-                {item}
-              </span>
-            ))}
+      <div className="container">
+        <div className={clsx('row', styles.heroInner)}>
+          <div className={clsx('col col--6', styles.heroCopy)}>
+            <p className={styles.eyebrow}>Python animation engine</p>
+            <Heading as="h1" className={styles.heroTitle}>
+              <span>Build precise math and AI animations</span>
+              <span className={styles.heroTitleAccent}>in Python.</span>
+            </Heading>
+            <p className={styles.heroSubtitle}>
+              Author mathematical and AI explainers with deterministic timelines.
+            </p>
+            <p className={styles.heroNote}>
+              Developed in part for{' '}
+              <Link href="https://kavriq.com/">Kavriq</Link>, where production use will continue to
+              help shape the path forward for Murali.
+            </p>
+            <div className={styles.constructRow} aria-label="Murali building blocks">
+              {constructs.map((item) => (
+                <span key={item} className={styles.constructChip}>
+                  {item}
+                </span>
+              ))}
+            </div>
+            <div className={styles.heroActions}>
+              <Link className="button button--primary button--lg" to="/docs/intro">
+                Start with the docs
+              </Link>
+              <Link
+                className={clsx('button button--secondary button--lg', styles.secondaryAction)}
+                href="https://github.com/murali-engine/murali"
+              >
+                View GitHub
+              </Link>
+            </div>
           </div>
-          <div className={styles.heroActions}>
-            <Link className="button button--primary button--lg" to="/docs/intro">
-              Start with the docs
-            </Link>
-            <Link className={styles.secondaryAction} href="https://github.com/murali-engine/murali">
-              View GitHub
-            </Link>
+          <div className={clsx('col col--6', styles.heroArt)} aria-hidden="true">
+            <ThemedImage
+              className={styles.heroLogo}
+              alt="Murali logo"
+              sources={{
+                light: logoLightUrl,
+                dark: logoDarkUrl,
+              }}
+            />
           </div>
-        </div>
-        <div className={styles.heroArt} aria-hidden="true">
-          <ThemedImage
-            className={styles.heroLogo}
-            alt="Murali logo"
-            sources={{
-              light: logoLightUrl,
-              dark: logoDarkUrl,
-            }}
-          />
         </div>
       </div>
     </header>
@@ -251,13 +260,17 @@ export default function Home(): ReactNode {
               title="A cleaner way to build mathematical animation"
               body="Write scenes in Python. Murali keeps tattvas, timelines, and rendering as one deterministic system, with kit components for lessons and themes."
             />
-            <div className={styles.threeUp}>
+            <div className="row">
               {highlights.map((item) => (
-                <div key={item.title} className={styles.featureCard}>
-                  <Heading as="h3" className={styles.featureTitle}>
-                    {item.title}
-                  </Heading>
-                  <p className={styles.featureBody}>{item.description}</p>
+                <div key={item.title} className="col col--4 margin-bottom--lg">
+                  <div className={clsx('card', styles.featureCard)}>
+                    <div className="card__body">
+                      <Heading as="h3" className={styles.featureTitle}>
+                        {item.title}
+                      </Heading>
+                      <p className={styles.featureBody}>{item.description}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -273,7 +286,7 @@ export default function Home(): ReactNode {
               title="Choose the right place to begin"
               body="One guide: start in Python, write scenes, add teaching views, then open Internals only if you are changing the runtime."
             />
-            <div className={styles.cardGrid}>
+            <div className="row">
               {pathways.map((item) => (
                 <SurfaceCard key={item.title} {...item} />
               ))}
@@ -283,25 +296,31 @@ export default function Home(): ReactNode {
 
         <section className={clsx(styles.section, styles.sectionTint)}>
           <div className="container">
-            <div className={styles.split}>
-              <SectionIntro
-                eyebrow="Explore"
-                title="Documentation, internals, examples, and showcase videos"
-                body="Start with the Python walkthrough, then kit examples. Architecture notes and Rust examples stay available for engine work."
-              />
-              <div className={styles.note}>
-                <p className={styles.noteTitle}>Suggested reading order</p>
-                <ol className={styles.noteList}>
-                  <li>Introduction</li>
-                  <li>Your first scene</li>
-                  <li>Tattvas and animations</li>
-                  <li>Teaching views</li>
-                  <li>Python API</li>
-                </ol>
+            <div className="row">
+              <div className="col col--8">
+                <SectionIntro
+                  eyebrow="Explore"
+                  title="Documentation, internals, examples, and showcase videos"
+                  body="Start with the Python walkthrough, then kit examples. Architecture notes and Rust examples stay available for engine work."
+                />
+              </div>
+              <div className="col col--4">
+                <div className={clsx('card', styles.note)}>
+                  <div className="card__body">
+                    <p className={styles.noteTitle}>Suggested reading order</p>
+                    <ol className={styles.noteList}>
+                      <li>Introduction</li>
+                      <li>Your first scene</li>
+                      <li>Tattvas and animations</li>
+                      <li>Teaching views</li>
+                      <li>Python API</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className={styles.cardGrid}>
+            <div className="row">
               {resources.map((item) => (
                 <SurfaceCard key={item.title} {...item} />
               ))}

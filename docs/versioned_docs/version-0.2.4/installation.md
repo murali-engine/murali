@@ -101,7 +101,7 @@ python3 -m pip install murali-engine
 ```
 
 The companion `murali-kit` package depends on `murali-engine` and contains broader Python examples
-and add-on experiments. Installing `murali-engine` gives you the engine, not the kit.
+and collections. Installing `murali-engine` gives you the engine, not the kit.
 
 ## Preview Vs Export Dependencies
 

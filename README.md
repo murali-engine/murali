@@ -1,59 +1,33 @@
 # Murali
 
-Murali is a Rust-based animation engine for semantic graphics and mathematical scenes. It is built around deterministic timelines, a frontend scene model, CPU-side projection, and a GPU-backed runtime.
+Murali is a **Python-first animation engine** for deterministic, timeline-driven mathematical, AI,
+and teaching visuals. You author scenes in Python. A Rust engine underneath does the heavy lifting
+for performance, rendering on `wgpu` (Metal, Vulkan, DirectX).
 
-## Documentation and cookbook
+| You want to | Install | Details |
+| --- | --- | --- |
+| Write Murali scenes | `pip install murali-kit==0.3.0` (pulls `murali-engine==0.3.0`) | [PYTHON.md](./PYTHON.md) |
+| Build an integration or authoring layer | Python packages `murali-engine` + `murali-kit` | [PYTHON.md](./PYTHON.md) |
+| Embed the runtime directly | Rust crate `murali = "0.3.0"` | [RUST.md](./RUST.md) |
 
-- Project overview: [Project Overview](https://muraliengine.com)
-- Scene and app docs: [Scene and App](https://muraliengine.com/docs/scene-and-app)
-- Internal architecture: [Architecture Overview](https://muraliengine.com/docs/architecture/overview)
-- AI visualization roadmap: [AI Visualization](https://muraliengine.com/docs/ai-visualization)
-- Youtube showcase [Murali Youtube Channel](https://www.youtube.com/@muraliengine)
-- Reference examples in this repo: [examples/README.md](./examples/README.md)
-- Collection category architecture: [src/frontend/collection](./src/frontend/collection/README.md)
+The public authoring layer is Python. The core renderer is written in Rust to squeeze maximum
+performance from the GPU stack. If you need a custom workflow, integration, or higher-level visual
+toolkit, build it in Python on top of `murali-engine`; use the Rust crate directly only when you
+are embedding or extending the runtime itself.
 
+Python APIs are unstable until **0.5.0**. The last first-party **Rust scene-authoring** API is
+[`murali` 0.2.4](https://crates.io/crates/murali/0.2.4) ([docs](https://muraliengine.com/docs/0.2.4/intro)).
 
-## Goals
+Site: [muraliengine.com](https://muraliengine.com).
 
-- Predictable, explicit animation behavior
-- World-space authoring instead of pixel-first APIs
-- Clear separation between authored scene state and render/runtime state
-- A modern GPU path built on `wgpu`
-
-## Building Blocks And Comfort Tattvas
-
-Murali is primarily a framework of building blocks. The stable core should make primitives, text,
-timelines, layouts, camera movement, and rendering expressive enough that users can assemble most
-visual elements on the fly.
-
-Murali also intentionally includes a small number of opinionated composite tattvas. These are
-comfort tattvas: higher-level components that make common video-making scenes easier to author,
-especially for AI explainers, mathematical storytelling, and reusable visual UI.
-
-That convenience has a cost. Too many composites can make the library bloated or too prescriptive,
-so new opinionated components usually live in beta first. They may change quickly, move, be renamed,
-or be removed while their ergonomics and visual language are tested in real productions. Components
-are promoted into stable sections only after they prove mature and broadly useful.
-
-## Current Shape
-
-- `src/frontend/` contains user-facing tattvas, animations, layout helpers, and scene authoring APIs
-- `src/projection/` contains backend-neutral render primitives and meshes
-- `src/backend/` contains the sync boundary, ECS cache, and renderer
-- `src/engine/` contains scene ownership, app lifecycle, timeline stepping, export, and config
-- `docs/` contains the longer-form documentation site
-- `examples/` contains the reference runnable examples for the crate
-
-## Getting Started
-
-The public authoring path is Python. Install Murali Kit, which pulls in a compatible engine:
+## Python (authoring + integration)
 
 ```bash
 python3 -m pip install murali-kit==0.3.0
 ```
 
 ```python
-from murali_engine import Circle, Label, Scene, Timeline
+from murali_engine import Circle, Label, Scene
 from murali_kit.colors import GREEN_D, WHITE
 from murali_kit.themes import DarkTheme, apply_theme
 
@@ -63,29 +37,12 @@ scene.add(Circle(radius=1.2, color=GREEN_D).with_stroke(0.04, WHITE))
 scene.preview()
 ```
 
-Prebuilt `murali-engine` wheels cover macOS arm64 and x86_64, Linux x86_64 and aarch64, and Windows
-x86_64. Those installs do not need a local Rust toolchain.
+`murali-engine` is the Python frontend over the Rust runtime: scene, tattvas, timeline, camera,
+preview, and export. `murali-kit` adds themes, named colors, reusable teaching views, and examples.
 
-```bash
-python3 -m pip install murali-engine==0.3.0
-```
+More: wheels, frames, export, maturin, kit examples — **[PYTHON.md](./PYTHON.md)**.
 
-Python examples live in [`murali-kit`](https://github.com/murali-engine/murali-kit). Docs:
-[muraliengine.com](https://muraliengine.com).
-
-### Local engine development
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install maturin
-.venv/bin/maturin develop --features python
-source .venv/bin/activate
-python python/examples/hello_shapes.py
-```
-
-### Rust crate
-
-Use the `murali` crate when you are working on the runtime:
+## Rust (runtime)
 
 ```toml
 [dependencies]
@@ -94,107 +51,15 @@ anyhow = "1"
 glam = "0.33"
 ```
 
-```bash
-git clone https://github.com/murali-engine/murali
-cd murali
-cargo run --example hello_shapes --release -- --preview
-```
+Use the crate directly when you are embedding Murali in a Rust program, extending the renderer, or
+building a lower-level runtime integration.
 
-The published crate excludes `examples/**`. Reference Rust examples are in this repository. You need
-Rust 1.85 or newer, a graphics environment for preview, and `ffmpeg` for video export.
+More: crate layout, `murali.toml`, Cargo examples, experimental features — **[RUST.md](./RUST.md)**.
 
-Some in-progress APIs are feature-gated. For example, the linear-algebra visual toolkit currently
-requires the `experimental` feature:
+## Videos
 
-```toml
-[dependencies]
-murali = { version = "0.3.0", features = ["experimental"] }
-```
-
-Repository examples that use that API should be run with the feature enabled:
-
-```bash
-cargo run --features experimental --example linear_algebra_vectors
-```
-
-Quickly inspect a GLB/GLTF asset before using it in a scene:
-
-```bash
-cargo run --example model_inspector -- demo-apple
-cargo run --example model_inspector -- /absolute/path/to/model.glb --rot-x -20
-```
-
-The inspector centers and frames the model automatically. Pass `--help` to see scale, rotation,
-camera, and continuous-preview controls.
-
-Some useful places to start:
-
-- [Documentation](https://muraliengine.com/docs/intro)
-- [Your first scene](https://muraliengine.com/docs/first-scene)
-- [Murali Kit examples](https://github.com/murali-engine/murali-kit/tree/main/examples)
-- [Release (crates.io + PyPI wheels)](./RELEASE.md)
-- [Future roadmap](./ROADMAP.md)
-- [YouTube showcase](https://www.youtube.com/@muraliengine)
-
-## Who It's For
-
-Murali is for people who want authored, programmatic control over mathematical, AI, and explainer-style visuals in Rust.
-
-If you like the kind of mathematical storytelling associated with Manim and want a Rust-native workflow, Murali is built in that spirit.
-
-Murali is also being grown as a long-term AI visualization engine. The
-[collection category architecture](./src/frontend/collection/README.md) names the math, probability,
-statistics, calculus, optimization, information theory, deep learning, LLM, and agentic-AI
-components that will be developed steadily through the end of 2030.
-
-## Preview And Export Config
-
-Murali looks for the nearest `murali.toml` next to a `Cargo.toml`. If no config file is present, sensible defaults are used.
-
-Example config:
-
-```toml
-[preview]
-fps = 60
-
-[export]
-fps = 60
-width = 1920
-```
-
-The scene owns its aspect ratio. Landscape is the default; portrait and square scenes are explicit:
-
-```rust
-let portrait = Scene::new().with_frame(Frame::portrait());
-let square = Scene::new().with_frame(Frame::square());
-```
-
-Export `width` is literal pixel width. Murali derives height from the scene frame, so a portrait scene at `width = 1080` exports at `1080 × 1920`.
-
-A sample file is included at [murali.toml.example](./murali.toml.example).
-
-
-## Examples
-
-### Shapes
-
-[![Watch the video](./resources/shapes.png)](https://youtu.be/rzQZHta2PQM)
-
-### Animation showcase
-
-[![Watch the video](./resources/animation_showcase.png)](https://youtu.be/W8WQQbSo70Y)
-
-## Status
-
-Murali is under active development. The repository already includes:
-
-- scene and timeline infrastructure
-- preview and headless export paths
-- text, LaTeX, and Typst support
-- primitives, layout helpers, tables, graph tattvas, and utility tattvas
-- write/unwrite, transform, text, and surface animation building blocks
-- semantic tensor snapshots, operations, slicing, transitions, and versioned AI trace ingestion
-- context-window, next-token sampling, KV-cache, and LayerNorm/RMSNorm teaching views
+[![Shapes](./resources/shapes.png)](https://youtu.be/rzQZHta2PQM)
+[![Animation showcase](./resources/animation_showcase.png)](https://youtu.be/W8WQQbSo70Y)
 
 ## License
 

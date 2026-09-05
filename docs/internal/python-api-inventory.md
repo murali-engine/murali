@@ -146,8 +146,7 @@ engine:
 - Should colors remain flat constants or move toward a namespace such as `colors.WHITE`?
 - Should engine `Scene` accept `background=` directly, or should background be set through an
   explicit method?
-- What shared theme protocol lets `murali-kit` and future premium packages provide themes without
-  either package depending on the other?
+- What shared theme protocol lets `murali-kit` and user-defined theme objects work cleanly?
 - Should Rust-only experimental modules remain inside the engine crate but hidden from Python, or
   move physically to kit once Python equivalents exist?
 

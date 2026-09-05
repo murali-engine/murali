@@ -4,9 +4,9 @@ sidebar_position: 1
 
 # Introduction
 
-:::caution Unstable APIs until 0.5.0
-Scene authoring is now Python. Rust remains the rendering engine. We made that shift because people
-asked for a Python-first path.
+:::caution[Unstable APIs until 0.5.0]
+Scene authoring is Python. Murali's renderer is written in Rust for performance, but animation and
+visual authoring should happen in Python.
 
 The Python and kit APIs will keep changing until **0.5.0**. After that, they are meant to stay
 stable.
@@ -16,11 +16,11 @@ If you want to author scenes in Rust today, use the last Rust-authoring release:
 [0.2.4 docs](/docs/0.2.4/intro).
 :::
 
-Murali is a Python animation engine for mathematical, AI, and teaching visuals. You write scenes
-in Python. A Rust runtime renders them on a modern GPU stack (`wgpu`: Metal, Vulkan, DirectX).
+Murali is a Python-first animation engine for mathematical, AI, and teaching visuals. You write
+scenes in Python. A Rust runtime underneath squeezes maximum performance from a modern GPU stack
+(`wgpu`: Metal, Vulkan, DirectX).
 
-It is inspired by the same spirit as [Manim](https://www.manim.community/): programmatic,
-precise, reproducible animation. The public authoring path is Python:
+The public authoring path is Python:
 
 ```bash
 python3 -m pip install murali-kit
@@ -47,11 +47,13 @@ scene.preview()
 
 Two packages:
 
-- **`murali-engine`** — scene, tattvas, timeline, camera, preview, export
-- **`murali-kit`** — themes, named colors, and reusable teaching components
+- **`murali-engine`** — the Python frontend over the Rust runtime: scene, tattvas, timeline,
+  camera, preview, export
+- **`murali-kit`** — themes, named colors, examples, and reusable teaching components
 
-Rust is the engine implementation. Use the `murali` crate when you are working on the runtime
-itself. Day-to-day scene authoring starts in Python.
+If you need to build your own integration, authoring workflow, or higher-level visual toolkit,
+start from the Python frontend layer. Use the Rust crate directly only when you are embedding the
+runtime or working on the engine itself.
 
 Murali is also being grown as an AI visualization engine for technical education. See
 [AI Visualization](./ai-visualization) for the public category roadmap.
@@ -61,17 +63,17 @@ Murali is also being grown as an AI visualization engine for technical education
 Murali is built for narration-first and lesson-first work: you already know when a sentence lands,
 and the picture has to hit that time.
 
-- **Python authoring** — scenes, timelines, and teaching views in ordinary Python
+- **Python authoring** — scenes, timelines, teaching views, and integrations in ordinary Python
 - **Time-driven animation** — properties are functions of time, not frame recipes
 - **World space** — positions and sizes are mathematical units, not pixels
-- **GPU rendering** — `wgpu` on Metal, Vulkan, and DirectX 12
+- **Rust performance core** — GPU rendering through `wgpu` on Metal, Vulkan, and DirectX 12
 - **A small language** — Scene, tattva, timeline, then kit components on top
 
 ## Why not Murali?
 
-Murali is new. The first public release was in April 2026. It does not have, and does not aim for,
-1:1 feature parity with Manim. APIs are still evolving. If you need a mature ecosystem with a large
-archive of existing content, Manim is the better choice today.
+Murali is new. The first public release was in April 2026. APIs are still evolving, and the project
+is intentionally focused on Python-authored teaching visuals, deterministic timelines, and a fast
+Rust rendering engine.
 
 Murali is being shaped in part by production use at [Kavriq](https://kavriq.com). If you have a
 specific use case, please share it on
@@ -163,7 +165,8 @@ See [Your First Scene](./first-scene) for the step-by-step walkthrough.
 6. **[Teaching views](./murali-kit)** — themes, diagrams, kit examples
 7. **[Python API](./python-bindings)**
 
-**Internals** in the sidebar is the Rust runtime. Skip it until you are changing the engine.
+**Internals** in the sidebar is the Rust runtime. Skip it while you are authoring scenes unless you
+are building a low-level integration.
 
 **By use case:**
 

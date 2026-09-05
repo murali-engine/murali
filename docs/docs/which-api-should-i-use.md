@@ -4,8 +4,12 @@ sidebar_position: 7
 
 # Which API Should I Use?
 
-Prefer the highest-level Python API that still says what you mean. Drop down only when that surface
-runs out.
+Author animations and visuals in Python. Prefer the highest-level Python API that still says what
+you mean, then drop to the lower-level Python engine surface when you are building a custom
+integration or reusable toolkit.
+
+Murali's runtime is written in Rust for performance, but Rust is not the normal authoring path in
+current docs.
 
 ## `murali-kit` vs `murali-engine`
 
@@ -27,15 +31,17 @@ scene = apply_theme(Scene(), DarkTheme())
 
 **Why:** kit installs the engine, gives you named colors and themes, and owns teaching views.
 
-### Import primitives from the engine
+### Use the Python engine layer for primitives and integrations
 
-**When:** the object is a language-level building block.
+**When:** the object is a language-level building block, or you are building an integration that
+should stay close to Murali's core scene/timeline model.
 
 ```python
 from murali_engine import Circle, Label, Latex, Axes, Table, Path
 ```
 
-**Why:** those stay on `murali_engine` even when kit collections exist.
+**Why:** `murali_engine` is the Python frontend over the Rust runtime. Primitives stay there even
+when higher-level kit collections exist.
 
 ### Import teaching views from the kit
 
@@ -157,6 +163,18 @@ independent content a `SceneView`.
 
 ---
 
+## Direct Rust runtime
+
+Most users should not need this. The Rust crate exists for embedding Murali in Rust applications,
+extending the runtime, and building lower-level systems beneath the Python frontend.
+
+```toml
+[dependencies]
+murali = "0.3.0"
+```
+
+For the old first-party Rust scene-authoring API, use `murali` 0.2.4 and the archived 0.2.4 docs.
+
 ## Quick reference
 
 | Task | Use |
@@ -172,6 +190,8 @@ independent content a `SceneView`.
 | Reveal path | `.draw()` |
 | Reveal text | `.typewrite_text()` or `.appear()` |
 | Teaching diagram | kit module, not `murali_engine` |
+| Custom Python integration | `murali_engine` |
+| Direct Rust embedding | `murali` crate |
 | Preview | `scene.preview()` |
 | PNG | `scene.save_png(...)` |
 | Video | `scene.export_video(...)` |

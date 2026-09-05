@@ -18,9 +18,8 @@
 //! - **Pure primaries:** `PURE_RED`, `PURE_GREEN`, `PURE_BLUE`
 //! - **Semantic colors:** [`semantic`] — theme-driven roles like `accent()`, `background()`.
 //!
-//! Shade naming follows the Manim convention where `_A` is lightest and `_E`
-//! is darkest. The unsuffixed name (e.g. `BLUE`) is an alias for the mid-range
-//! shade (`_C`).
+//! Shade suffixes run from `_A` (lightest) through `_E` (darkest). The
+//! unsuffixed name (e.g. `BLUE`) is an alias for the mid-range shade (`_C`).
 //!
 //! All constants are `glam::Vec4` values in linear **RGBA** (0.0–1.0).
 

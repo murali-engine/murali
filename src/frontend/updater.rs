@@ -1,6 +1,6 @@
 // src/frontend/updater.rs
 //! Updater system for dynamic tattva updates
-//! Similar to Manim's updater functions, allows attaching callbacks that run every frame
+//! Attach callbacks that run every frame for a tattva.
 
 use crate::engine::scene::Scene;
 use crate::frontend::TattvaId;

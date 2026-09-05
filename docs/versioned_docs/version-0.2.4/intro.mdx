@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Introduction
 
-Murali is a modern animation engine inspired by the same spirit as [Manim](https://www.manim.community/): mathematically precise, programmatic, GPU-accelerated animation. It takes that spirit in a Rust-native direction, with deterministic timelines, a modern `wgpu` backend, and a type system that helps larger animation codebases stay easier to maintain as they grow.
+Murali is a modern animation engine for mathematically precise, programmatic, GPU-accelerated animation. It uses deterministic timelines, a modern `wgpu` backend, and a type system that helps larger animation codebases stay easier to maintain as they grow.
 
 Unlike traditional animation tools, Murali treats animations as deterministic functions of time. Every frame is derived from a well-defined timeline, making visuals predictable, reproducible, and easy to reason about. Murali is especially shaped for workflows where animation supports an existing narrative, such as audio narration or pre-edited video, where precise timing and clean synchronization matter.
 
@@ -21,13 +21,7 @@ category roadmap.
 
 ## Why Murali?
 
-Manim is powerful, but it comes with trade-offs that become more noticeable as projects grow:
-
-* Built on OpenGL, which is deprecated on macOS
-* Frame-driven animation logic, which works well for animation-first workflows, but can make narration-first or video-first workflows harder to synchronize cleanly
-* Python’s dynamic typing makes large, complex scenes harder to maintain
-
-Murali is designed to solve these at a foundational level:
+Murali is designed around a few foundational choices:
 
 * **Modern GPU backend** — built on `wgpu` (Vulkan / Metal / DX12), so Murali benefits from a modern cross-platform graphics stack instead of carrying that burden alone
 * **Time-driven architecture** — animations are explicit functions of time, not frames
@@ -37,7 +31,7 @@ The result is an engine that feels closer to **engineering a system** than scrip
 
 ## Why not Murali?
 
-Murali is a new library, with its first release in April 2026. It neither has, nor aims for, 1:1 feature parity with Manim. The APIs are still evolving, and many features are on the roadmap but not yet implemented. If you need a highly mature tool with a large ecosystem of existing content, Manim is likely the better choice today.
+Murali is a new library, with its first release in April 2026. The APIs are still evolving, and many features are on the roadmap but not yet implemented.
 
 Murali will evolve through real-world use. The author is building it in part for [Kavriq](https://kavriq.com), where it will be used extensively for technical visual storytelling, and that experience will strongly influence the direction of the library. If you have a specific use case in mind, please share it on [GitHub Discussions](https://github.com/murali-engine/murali/discussions).
 

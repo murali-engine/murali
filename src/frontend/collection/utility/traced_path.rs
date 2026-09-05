@@ -6,7 +6,6 @@ use crate::frontend::props::SharedProps;
 use crate::frontend::tattva_trait::TattvaTrait;
 use crate::projection::{Project, ProjectionCtx, RenderPrimitive};
 /// TracedPath: Tracks and visualizes the path of a point on a moving object
-/// Similar to Manim's TracedPath animation
 use glam::{Vec2, Vec3, Vec4};
 
 /// A traced path that records the trajectory of a point on a moving object

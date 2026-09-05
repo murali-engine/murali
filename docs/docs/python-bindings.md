@@ -4,11 +4,14 @@ sidebar_position: 7
 
 # Python API
 
-`murali-engine` is the Python runtime, imported as `murali_engine`. It is a designed authoring
-surface, not a mechanical dump of every Rust type.
+`murali-engine` is the Python frontend over Murali's Rust runtime, imported as `murali_engine`. It
+is a designed authoring and integration surface, not a mechanical dump of every Rust type.
 
 Write scenes in Python. For themes, named colors, and teaching views, also install
 [Murali Kit](./murali-kit).
+
+The Rust layer is there for performance and direct embedding. Start from Python when you are
+authoring animations, building visual tools, or integrating Murali into another workflow.
 
 ```python
 from murali_engine import Scene, Circle, Label, Timeline

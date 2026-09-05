@@ -23,9 +23,7 @@ The engine owns:
 - object presets derived from engine primitives
 - authored combinations of colors, typography, spacing, surfaces, textures, and animation defaults
 
-Future packages can own additional themes. For example, a later premium package can ship
-professionally designed themes without depending on `murali-kit` if it only needs
-`murali-engine`.
+User-defined theme objects can style `murali-engine` scenes without depending on `murali-kit`.
 
 ## API Direction
 
@@ -49,11 +47,10 @@ scene = apply_theme(Scene(), DarkTheme())
 TitleCard("Attention", "Query, key, value").add_to_scene(scene)
 ```
 
-Premium-style usage can be independent:
+Independent theme usage can stay lightweight:
 
 ```python
 from murali_engine import Scene
-from murali_premium.themes import EditorialDark, apply_theme
 
 scene = apply_theme(Scene(), EditorialDark())
 ```
@@ -108,4 +105,3 @@ This lets `0.3.0` become Python-coherent without breaking existing Rust users un
 - Should kit themes apply styles by constructing a scene, wrapping a scene, or both?
 - Should kit themes style existing objects, or only provide constructors/presets for new objects?
 - Should code-block syntax themes stay as engine internals or become kit-level style choices?
-- How should premium themes share a common theme protocol without depending on `murali-kit`?

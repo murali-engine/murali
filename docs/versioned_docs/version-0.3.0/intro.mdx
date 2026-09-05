@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Introduction
 
-:::caution Unstable APIs until 0.5.0
+:::caution[Unstable APIs until 0.5.0]
 Scene authoring is now Python. Rust remains the rendering engine. We made that shift because people
 asked for a Python-first path.
 
@@ -19,8 +19,7 @@ If you want to author scenes in Rust today, use the last Rust-authoring release:
 Murali is a Python animation engine for mathematical, AI, and teaching visuals. You write scenes
 in Python. A Rust runtime renders them on a modern GPU stack (`wgpu`: Metal, Vulkan, DirectX).
 
-It is inspired by the same spirit as [Manim](https://www.manim.community/): programmatic,
-precise, reproducible animation. The public authoring path is Python:
+The public authoring path is Python:
 
 ```bash
 python3 -m pip install murali-kit
@@ -69,9 +68,9 @@ and the picture has to hit that time.
 
 ## Why not Murali?
 
-Murali is new. The first public release was in April 2026. It does not have, and does not aim for,
-1:1 feature parity with Manim. APIs are still evolving. If you need a mature ecosystem with a large
-archive of existing content, Manim is the better choice today.
+Murali is new. The first public release was in April 2026. APIs are still evolving, and the project
+is intentionally focused on Python-authored teaching visuals, deterministic timelines, and a fast
+Rust rendering engine.
 
 Murali is being shaped in part by production use at [Kavriq](https://kavriq.com). If you have a
 specific use case, please share it on

@@ -10,7 +10,7 @@ binding surface exposed as `murali_engine`.
 
 It should not try to be the main high-level authoring library for animation
 creation. Authored collections, teaching components, themes, and example-driven
-helpers should move to `murali-kit` or future add-on packages.
+helpers should move to `murali-kit`.
 
 ## Engine Responsibilities
 
@@ -22,7 +22,7 @@ The engine should keep:
 - camera, frame, projection, depth, and render synchronization logic
 - primitive geometry and generic renderables needed by many scenes
 - PyO3 bindings for the stable low-level Python authoring surface
-- tests for runtime behavior and contracts required by add-ons
+- tests for runtime behavior and contracts required by `murali-engine` and `murali-kit`
 
 ## Reference-Only Areas
 
@@ -112,4 +112,3 @@ Do not delete collection code immediately. The safer next iteration is:
 3. Update examples to prefer kit imports.
 4. Add engine/kit contract tests.
 5. Then remove or internalize Rust collection modules in small batches.
-

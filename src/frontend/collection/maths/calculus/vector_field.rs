@@ -1,5 +1,5 @@
 // src/frontend/collection/maths/graph/vector_field.rs
-//! Vector field visualization similar to Manim's VectorField
+//! Vector field visualization for sampling arrows across a grid.
 
 use crate::frontend::layout::{Bounded, Bounds};
 use crate::projection::{Project, ProjectionCtx, RenderPrimitive};

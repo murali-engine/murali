@@ -140,8 +140,8 @@ After the first PyPI release, users should install the engine package directly:
 python3 -m pip install murali-engine
 ```
 
-Companion Python examples and add-on experiments live in the `murali-kit` repository. `murali-kit`
-depends on `murali-engine`; installing `murali-engine` does not install the kit.
+Companion Python examples and collections live in the `murali-kit` repository. `murali-kit` depends
+on `murali-engine`; installing `murali-engine` does not install the kit.
 
 ## First Release Boundary
 

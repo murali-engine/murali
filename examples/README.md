@@ -220,7 +220,7 @@ Use this README as the full catalog, and use the top-level project README for a 
 
 ### Python Examples
 
-Python examples are split by package boundary. The engine repository keeps a small smoke example in
+Python examples are split by package. The engine repository keeps a small smoke example in
 `python/examples`, while broader companion examples live in the separate `murali-kit` repository.
 
 From this engine repository, install the local Python extension and run the smoke example:

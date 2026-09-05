@@ -294,7 +294,6 @@ let chart = AgenticFlowChart::new(nodes)
 This aligns perfectly with:
 - ECS (Entity Component System) thinking
 - GPU pipeline architecture
-- Manim-style mental model
+- explicit visual-system modeling
 
 The refactoring is moving us from implicit, scattered logic to explicit, composable systems.
-

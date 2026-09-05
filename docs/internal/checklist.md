@@ -80,10 +80,9 @@ animation system while keeping the Rust engine focused on runtime capabilities.
 - Review mathematical helper APIs where Python representations may need a
   different shape than the Rust implementation, especially vector and map
   projection helpers.
-- Improve theme interoperability between Murali Engine, Murali Kit, and future
-  add-on packages.
-- Identify a neutral engine palette base that can be overridden by Murali Kit,
-  user themes, or future theme plugins.
+- Improve theme interoperability between Murali Engine and Murali Kit.
+- Identify a neutral engine palette base that can be overridden by Murali Kit
+  or user themes.
 - Document accepted string values for options such as frame, direction, anchor,
   depth mode, render mode, playback mode, texture name, and easing.
 
@@ -111,4 +110,3 @@ animation system while keeping the Rust engine focused on runtime capabilities.
 - Add more task-oriented guides.
 - Keep the Rust/internal documentation clearly secondary to the Python user
   journey.
-

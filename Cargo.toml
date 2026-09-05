@@ -9,7 +9,7 @@ repository = "https://github.com/murali-engine/murali"
 homepage = "https://muraliengine.com"
 documentation = "https://muraliengine.com"
 readme = "README.md"
-keywords = ["animation", "graphics", "math", "visualization", "manim"]
+keywords = ["animation", "AI", "graphics", "math", "visualization"]
 categories = ["graphics", "rendering"]
 exclude = [
   "docs/**",

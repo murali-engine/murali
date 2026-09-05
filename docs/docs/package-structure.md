@@ -4,12 +4,12 @@ sidebar_position: 3
 
 # Engine vs Kit
 
-Murali is two Python packages and one Rust crate:
+Murali is a Python-first animation system with a Rust performance core:
 
 ```text
 murali-kit        Python authoring: themes, colors, teaching views
-murali-engine     Python runtime: Scene, primitives, timeline, preview, export
-murali            Rust crate: the engine implementation
+murali-engine     Python frontend: Scene, primitives, timeline, preview, export
+murali            Rust runtime: renderer, engine internals, lower-level embedding
 ```
 
 Install kit. It depends on the engine.
@@ -24,12 +24,15 @@ from murali_kit.colors import WHITE
 from murali_kit.themes import DarkTheme, apply_theme
 ```
 
-The engine does not depend on the kit. A future package can sit on `murali-engine` without taking
-kit opinions.
+The usual path is to author animations and visuals in Python. The Rust runtime is there to make
+rendering fast, not to make most users write Rust.
+
+The engine package does not depend on the kit. A future integration, course toolkit, or product can
+sit on `murali-engine` without taking kit opinions.
 
 ## Who owns what
 
-**Engine** is the language:
+**Engine** is the Python language layer:
 
 - scene identity, handles, timeline, camera, frames
 - preview and export
@@ -69,7 +72,7 @@ sidebar follows authoring: Start, Write scenes, Teaching views, Reference. The p
 this page, not two top-level products.
 
 Rust architecture and native constructor notes live under **Internals**. Ignore that section while
-you are writing scenes.
+you are writing scenes or building normal Python integrations.
 
 ## Rust crate
 
@@ -80,7 +83,8 @@ The native API is still the `murali` crate:
 murali = "0.3.0"
 ```
 
-Use it when you are changing the runtime. Scene authoring in this docs set is Python.
+Use it when you are changing the runtime, embedding Murali in Rust, or building something below the
+Python frontend. Scene authoring in this docs set is Python.
 
 ## 0.3.0
 

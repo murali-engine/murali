@@ -34,7 +34,7 @@ unstable until 0.5.0. Rust scene authoring stays on the `0.2.4` crate.
 
 ### Changed
 
-- Clarified the package boundary between Murali Engine, Murali Kit, and future add-on packages.
+- Documented what the `murali` crate, `murali-engine`, and `murali-kit` each do.
 - Updated installation and Python binding docs for the `0.2.5` release.
 
 ## 0.2.4 - 2026-08-22
