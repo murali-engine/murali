@@ -115,6 +115,22 @@ One parametric space curve with 3D axes and a few perspective camera frames.
 `cargo run --example surfaces_3d`
 One introductory parametric surface with a progressive reveal and a few camera frames.
 
+`cargo run --release --example mandelbulb_3d`
+Three generated Mandelbulb meshes blend into an evolving fractal with animated rainbow color,
+surface pulses, floating motion, and continuous rotation. Release mode is strongly recommended
+because the fractal variants are computed at startup and the mesh updates every frame.
+
+Choose a fixed palette by passing `aurora`, `solar`, `ocean`, or `candy` after `--`. The default
+`cycle` mode smoothly blends through all four palettes:
+
+```bash
+cargo run --release --example mandelbulb_3d -- aurora
+```
+
+`cargo run --release --example mandelbulb_shorts -- aurora`
+A dedicated 9:16, 1080x1920 Shorts composition with the evolving Mandelbulb centered beneath a
+large top title. It accepts the same `cycle`, `aurora`, `solar`, `ocean`, and `candy` palettes.
+
 `cargo run --example wireframe_surfaces`
 One wireframe saddle surface where the mesh itself explains the curvature.
 
