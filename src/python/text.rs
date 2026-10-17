@@ -1,4 +1,4 @@
-#[pyclass(name = "Label", module = "murali_engine")]
+#[pyclass(name = "Label", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyLabel {
     inner: Label,
@@ -39,7 +39,7 @@ impl PyLabel {
     }
 }
 
-#[pyclass(name = "CodeBlock", module = "murali_engine")]
+#[pyclass(name = "CodeBlock", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyCodeBlock {
     inner: CodeBlock,
@@ -119,7 +119,7 @@ impl PyCodeBlock {
     }
 }
 
-#[pyclass(name = "Latex", module = "murali_engine")]
+#[pyclass(name = "Latex", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyLatex {
     inner: Latex,
@@ -165,7 +165,7 @@ impl PyLatex {
     }
 }
 
-#[pyclass(name = "Typst", module = "murali_engine")]
+#[pyclass(name = "Typst", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyTypst {
     inner: Typst,
@@ -234,7 +234,7 @@ impl PyTypst {
     }
 }
 
-#[pyclass(name = "VectorPath", module = "murali_engine")]
+#[pyclass(name = "VectorPath", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyVectorPath {
     path: crate::frontend::collection::primitives::path::Path,
@@ -286,7 +286,7 @@ fn py_vector_paths(
         .collect()
 }
 
-#[pyclass(name = "Letter3D", module = "murali_engine")]
+#[pyclass(name = "Letter3D", module = "murali_engine", from_py_object)]
 #[derive(Clone)]
 struct PyLetter3D {
     inner: Letter3D,
@@ -342,7 +342,11 @@ impl PyLetter3D {
     }
 }
 
-#[pyclass(name = "LetterParticles3D", module = "murali_engine")]
+#[pyclass(
+    name = "LetterParticles3D",
+    module = "murali_engine",
+    from_py_object
+)]
 #[derive(Clone)]
 struct PyLetterParticles3D {
     inner: LetterParticles3D,

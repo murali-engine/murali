@@ -1,4 +1,4 @@
-#[pyclass(name = "Axes3D", module = "murali_engine")]
+#[pyclass(name = "Axes3D", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyAxes3D {
     inner: Axes3D,
@@ -62,7 +62,11 @@ impl PyAxes3D {
     }
 }
 
-#[pyclass(name = "ParametricCurve3D", module = "murali_engine")]
+#[pyclass(
+    name = "ParametricCurve3D",
+    module = "murali_engine",
+    from_py_object
+)]
 #[derive(Clone, Debug)]
 struct PyParametricCurve3D {
     inner: ParametricCurve3D,
@@ -118,7 +122,11 @@ impl PyParametricCurve3D {
     }
 }
 
-#[pyclass(name = "ParametricSurface", module = "murali_engine")]
+#[pyclass(
+    name = "ParametricSurface",
+    module = "murali_engine",
+    from_py_object
+)]
 #[derive(Clone)]
 struct PyParametricSurface {
     inner: ParametricSurface,
@@ -340,7 +348,7 @@ fn surface_from_python_function(
     )
 }
 
-#[pyclass(name = "Prop3D", module = "murali_engine")]
+#[pyclass(name = "Prop3D", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyProp3D {
     inner: Prop3D,

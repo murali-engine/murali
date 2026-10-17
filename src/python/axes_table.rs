@@ -1,4 +1,4 @@
-#[pyclass(name = "Axes", module = "murali_engine")]
+#[pyclass(name = "Axes", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyAxes {
     inner: Axes,
@@ -63,7 +63,7 @@ impl PyAxes {
     }
 }
 
-#[pyclass(name = "NumberPlane", module = "murali_engine")]
+#[pyclass(name = "NumberPlane", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyNumberPlane {
     inner: NumberPlane,
@@ -132,7 +132,7 @@ impl PyNumberPlane {
     }
 }
 
-#[pyclass(name = "Table", module = "murali_engine")]
+#[pyclass(name = "Table", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyTable {
     inner: Table,

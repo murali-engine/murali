@@ -1,4 +1,4 @@
-#[pyclass(name = "Circle", module = "murali_engine")]
+#[pyclass(name = "Circle", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyCircle {
     inner: Circle,
@@ -39,7 +39,7 @@ impl PyCircle {
     }
 }
 
-#[pyclass(name = "Square", module = "murali_engine")]
+#[pyclass(name = "Square", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PySquare {
     inner: Square,
@@ -76,7 +76,7 @@ impl PySquare {
     }
 }
 
-#[pyclass(name = "Rectangle", module = "murali_engine")]
+#[pyclass(name = "Rectangle", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyRectangle {
     inner: Rectangle,
@@ -114,7 +114,11 @@ impl PyRectangle {
     }
 }
 
-#[pyclass(name = "RoundedRectangle", module = "murali_engine")]
+#[pyclass(
+    name = "RoundedRectangle",
+    module = "murali_engine",
+    from_py_object
+)]
 #[derive(Clone, Debug)]
 struct PyRoundedRectangle {
     inner: RoundedRectangle,
@@ -163,7 +167,7 @@ impl PyRoundedRectangle {
     }
 }
 
-#[pyclass(name = "ChatBubble", module = "murali_engine")]
+#[pyclass(name = "ChatBubble", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyChatBubble {
     inner: ChatBubble,
@@ -235,7 +239,7 @@ impl PyChatBubble {
     }
 }
 
-#[pyclass(name = "Polygon", module = "murali_engine")]
+#[pyclass(name = "Polygon", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyPolygon {
     inner: Polygon,
@@ -296,7 +300,7 @@ impl PyPolygon {
     }
 }
 
-#[pyclass(name = "Line", module = "murali_engine")]
+#[pyclass(name = "Line", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyLine {
     inner: Line,
@@ -338,7 +342,7 @@ impl PyLine {
     }
 }
 
-#[pyclass(name = "Arrow", module = "murali_engine")]
+#[pyclass(name = "Arrow", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyArrow {
     inner: Arrow,
@@ -385,7 +389,7 @@ impl PyArrow {
     }
 }
 
-#[pyclass(name = "Path", module = "murali_engine")]
+#[pyclass(name = "Path", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyPath {
     inner: Path,
@@ -638,7 +642,7 @@ impl PyTracedPath {
     }
 }
 
-#[pyclass(name = "ParticleBelt", module = "murali_engine")]
+#[pyclass(name = "ParticleBelt", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyParticleBelt {
     inner: ParticleBelt,

@@ -1,4 +1,4 @@
-#[pyclass(name = "EquationPart", module = "murali_engine")]
+#[pyclass(name = "EquationPart", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyEquationPart {
     inner: EquationPart,
@@ -57,7 +57,11 @@ impl PyEquationPart {
     }
 }
 
-#[pyclass(name = "EquationLayout", module = "murali_engine")]
+#[pyclass(
+    name = "EquationLayout",
+    module = "murali_engine",
+    from_py_object
+)]
 #[derive(Clone, Debug)]
 struct PyEquationLayout {
     inner: EquationLayout,
@@ -99,7 +103,7 @@ impl PyEquationLayout {
     }
 }
 
-#[pyclass(name = "Matrix", module = "murali_engine")]
+#[pyclass(name = "Matrix", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyMatrix {
     inner: Matrix,
@@ -169,7 +173,7 @@ impl PyMatrix {
     }
 }
 
-#[pyclass(name = "NumberLine", module = "murali_engine")]
+#[pyclass(name = "NumberLine", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyNumberLine {
     inner: NumberLine,
@@ -242,7 +246,11 @@ impl PyNumberLine {
     }
 }
 
-#[pyclass(name = "OptimizationPath2D", module = "murali_engine")]
+#[pyclass(
+    name = "OptimizationPath2D",
+    module = "murali_engine",
+    from_py_object
+)]
 #[derive(Clone, Debug)]
 struct PyOptimizationPath2D {
     inner: OptimizationPath2D,

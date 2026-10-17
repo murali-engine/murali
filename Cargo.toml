@@ -39,7 +39,7 @@ typst_embedded = ["dep:typst", "dep:typst-as-lib", "dep:typst-svg"]
 winit = "0.30"
 wgpu = "26.0.1"
 env_logger = "0.11"
-glam = { version = "0.33", features = ["bytemuck"] }
+glam = { version = "0.34.1", features = ["bytemuck"] }
 tracing = "0.1"
 anyhow = "1"
 # bytemuck = "1.14"
@@ -50,7 +50,7 @@ tokio = { version = "1", features = [
   "full",
 ] }
 typst = { version = "0.13.1", optional = true } # version may vary; required for embedded Typst
-typst-as-lib = { version = "0.13", optional = true, features = ["typst-kit-fonts", "typst-kit-embed-fonts"] } # optional helper; pick actual maintained wrapper
+typst-as-lib = { version = "0.14.4", optional = true, features = ["typst-kit-fonts", "typst-kit-embed-fonts"] } # optional helper; pick actual maintained wrapper
 typst-svg = { version = "0.13.1", optional = true } # if available; otherwise use typst APIs
 typst-kit = "0.13.1"
 lru = "0.18"
@@ -74,7 +74,7 @@ thiserror = "2"
 # font rendering
 fontdue = "0.9"
 hecs = "0.11"
-pyo3 = { version = "0.25", optional = true, features = ["abi3-py310", "extension-module"] }
+pyo3 = { version = "0.29.3", optional = true, features = ["abi3-py310", "extension-module"] }
 
 # typst-kit depends on native-tls/openssl on Linux. Vendoring avoids a libssl
 # wheel dependency, which manylinux/PyPI would reject.
@@ -82,7 +82,7 @@ pyo3 = { version = "0.25", optional = true, features = ["abi3-py310", "extension
 openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
-naga = { version = "26", features = ["wgsl-in"] }
+naga = { version = "28", features = ["wgsl-in"] }
 proptest = "1"
 
 [[example]]

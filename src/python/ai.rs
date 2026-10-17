@@ -1,4 +1,4 @@
-#[pyclass(name = "ContextBlock", module = "murali_engine")]
+#[pyclass(name = "ContextBlock", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyContextBlock {
     inner: ContextBlock,
@@ -47,7 +47,7 @@ impl PyContextBlock {
     }
 }
 
-#[pyclass(name = "ContextWindow", module = "murali_engine")]
+#[pyclass(name = "ContextWindow", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PyContextWindow {
     inner: ContextWindow,
@@ -88,7 +88,7 @@ impl PyContextWindow {
     }
 }
 
-#[pyclass(name = "SignalFlow", module = "murali_engine")]
+#[pyclass(name = "SignalFlow", module = "murali_engine", from_py_object)]
 #[derive(Clone, Debug)]
 struct PySignalFlow {
     inner: SignalFlow,

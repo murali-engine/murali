@@ -829,14 +829,14 @@ impl PyTimeline {
             }
         }
         for spec in &self.during_specs {
-            let callback = Python::with_gil(|py| spec.callback.clone_ref(py));
+            let callback = Python::attach(|py| spec.callback.clone_ref(py));
             let ease = spec.ease;
             timeline.call_during(spec.start_time, spec.duration, move |scene, t| {
                 invoke_scene_callback(&callback, scene, Some(ease.eval(t)));
             });
         }
         for spec in &self.at_specs {
-            let callback = Python::with_gil(|py| spec.callback.clone_ref(py));
+            let callback = Python::attach(|py| spec.callback.clone_ref(py));
             timeline.call_at(spec.time, move |scene| {
                 invoke_scene_callback(&callback, scene, None);
             });

@@ -1,4 +1,4 @@
-#[pyclass(name = "TattvaHandle", module = "murali_engine")]
+#[pyclass(name = "TattvaHandle", module = "murali_engine", from_py_object)]
 #[derive(Clone, Copy, Debug)]
 struct PyTattvaHandle {
     #[pyo3(get)]

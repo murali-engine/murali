@@ -214,7 +214,7 @@ fn stop_traced_path(scene: &mut Scene, id: usize) -> PyResult<()> {
 }
 
 fn invoke_scene_callback(callback: &Py<PyAny>, scene: &mut Scene, time: Option<f32>) {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let tick = match Bound::new(
             py,
             PySceneTick {
