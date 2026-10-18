@@ -15,7 +15,9 @@ pub use crate::frontend::collection::ai::{
     TraceToken, TraceTokenRole, TransformerBlockDiagram, TransformerStage, TransformerStageKind,
 };
 pub use crate::frontend::collection::composite::{
-    Card, CardIds, MuraliLogoMark, MuraliLogoPalette,
+    Card, CardIds, KAVRIQ_BLUE, KAVRIQ_SPLASH_DURATION, KavriqLogoMark, KavriqSplashLogo,
+    MuraliLogoMark, MuraliLogoPalette, SmoothGround, SmoothGroundPalette, WaveMesh,
+    WaveMeshPalette,
 };
 pub use crate::frontend::collection::prelude::{HStack, VStack};
 pub use crate::frontend::collection::primitives::circle::Circle;

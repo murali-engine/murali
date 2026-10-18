@@ -14,25 +14,24 @@ Within this repository, the Rust crate is the primary engine and runtime surface
 Murali, extend rendering, or run computation- and performance-intensive workloads. The Python
 packages expose an experimental subset of the engine; expect their APIs to change.
 
-Python support is experimental and its APIs are unstable until at least **0.5.0**. For the earlier
+Python support is experimental and its APIs are unstable until at least **0.5.0**. For the stable,
 high-level Rust scene-authoring API, see [`murali` 0.2.4](https://crates.io/crates/murali/0.2.4)
-and its [GitHub-native documentation](./documentation/README.md).
+and the [Murali documentation](https://muraliengine.com/docs/intro).
 
-Documentation: [current Rust engine](./RUST.md) · [complete GitHub-native Rust docs](./documentation/README.md)
-· [experimental Python support](./PYTHON.md). These Markdown files are the documentation source of
-truth; this project does not maintain a separate documentation website.
+Documentation: [Rust documentation site](https://muraliengine.com/) · [current Rust engine](./RUST.md)
+· [experimental Python support](./PYTHON.md).
 
-## Project direction: JavaScript for authoring, Rust for performance
+## Murali and Veena
 
 Murali began as an exploration of how to build a capable programmatic animation system. After
 experimenting with Python, C++, and Rust, we settled on Rust and developed the animation engine in
 this repository. We then used it to create real content and learn what an authoring system needs in
 practice.
 
-That experience led us to explore a JavaScript-based system. JavaScript proved especially powerful
+That experience led us to create **Veena**, a separate JavaScript animation engine. JavaScript proved especially powerful
 for general-purpose authoring because the browser provides an extraordinarily broad visual
 platform: Canvas, SVG, WebGL, WebGPU, text and layout engines, media APIs, and the DOM. It also lets
-Murali build on existing frontend frameworks such as React instead of recreating those capabilities
+Veena build on existing frontend frameworks such as React instead of recreating those capabilities
 inside a native engine.
 
 We also found that current AI systems tend to generate and work with JavaScript more effectively
@@ -43,9 +42,11 @@ Rust remains the better tool for computation-heavy and performance-critical work
 workload, native Rust can be orders of magnitude faster and more resource-efficient than a
 JavaScript implementation.
 
-For that reason, the JavaScript-based Murali is now the main system for regular animation
-authoring. This Rust engine remains the performance-oriented Murali implementation for workloads
-that require intensive computation, predictable native performance, or lower-level control.
+For browser-native and JavaScript authoring, see [Veena](https://veenaengine.com/). Murali remains
+the Rust engine for workloads that require intensive computation, predictable native performance,
+or lower-level control. The two engines have distinct names and websites: Murali lives at
+[muraliengine.com](https://muraliengine.com/) and Veena lives at
+[veenaengine.com](https://veenaengine.com/).
 
 ## Rust engine
 

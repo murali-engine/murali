@@ -1,0 +1,11 @@
+release:
+  label: Release
+  description: Release announcements
+
+internals:
+  label: Internals
+  description: Deep dives into Murali internals
+
+tutorial:
+  label: Tutorial
+  description: Tutorials and guides

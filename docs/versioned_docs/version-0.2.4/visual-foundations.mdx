@@ -1,0 +1,426 @@
+---
+sidebar_position: 3
+---
+
+# Visual Foundations
+
+Before jumping into your first scene, it’s important to understand how Murali thinks about **space, positioning, and visuals**.
+
+Murali uses a deterministic, world-coordinate system — not pixels — which makes animations predictable and reproducible.
+
+This page builds the mental model you need.
+
+---
+
+## Key Idea
+
+Murali is **not pixel-based**.
+
+Everything is defined in a **world coordinate system**, which makes:
+
+- layouts predictable  
+- animations resolution-independent  
+- outputs reproducible  
+
+---
+
+## Colors
+
+Murali defines constants for colors so that it is easy to use them while creating scenes.
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Color</th>
+      <th>Preview</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    {/* Achromatic */}
+    <tr>
+      <td>Achromatic</td>
+      <td>WHITE</td>
+      <td style={{ backgroundColor: "#FFFFFF", color: "#000", padding: "6px 12px" }}>#FFFFFF</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>BLACK</td>
+      <td style={{ backgroundColor: "#000000", color: "#fff", padding: "6px 12px" }}>#000000</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>GRAY_A → GRAY_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#DCDCDC", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#BBBBBB", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#888888", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#555555", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#222222", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Blue */}
+    <tr>
+      <td>Blue</td>
+      <td>BLUE_A → BLUE_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#C7E9F1", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#9CDCEB", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#58C4DD", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#29ABCA", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#1C758A", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Teal */}
+    <tr>
+      <td>Teal</td>
+      <td>TEAL_A → TEAL_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#ACEAD7", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#76DDC0", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#5CD0B3", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#55C1A7", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#49A88F", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Green */}
+    <tr>
+      <td>Green</td>
+      <td>GREEN_A → GREEN_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#C9E2AE", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#A6CF8C", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#83C167", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#77B05D", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#699C52", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Yellow */}
+    <tr>
+      <td>Yellow</td>
+      <td>YELLOW_A → YELLOW_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#FFF1B6", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#FFEA94", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#FFFF00", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#F4D345", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#E8C11C", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Gold */}
+    <tr>
+      <td>Gold</td>
+      <td>GOLD_A → GOLD_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#F7C797", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#F9B775", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#F0AC5F", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#E1A158", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#C78D46", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Orange */}
+    <tr>
+      <td>Orange</td>
+      <td>ORANGE_A → ORANGE_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#F7C59F", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#FCAF80", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#FF862F", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#F26522", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#D14C0A", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Red */}
+    <tr>
+      <td>Red</td>
+      <td>RED_A → RED_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#F7A1A3", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#FF8080", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#FC6255", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#E65A4C", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#CF5044", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Maroon */}
+    <tr>
+      <td>Maroon</td>
+      <td>MAROON_A → MAROON_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#ECABC1", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#EC92AB", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#C55F73", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#A24D61", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#94424F", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Purple */}
+    <tr>
+      <td>Purple</td>
+      <td>PURPLE_A → PURPLE_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#CAA3E8", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#B189C6", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#9A72AC", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#715582", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#644172", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Pink */}
+    <tr>
+      <td>Pink</td>
+      <td>PINK_A → PINK_E</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#F4A2C0", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#F5829B", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#D147A3", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#C2185B", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#AD1457", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+    {/* Pure */}
+    <tr>
+      <td>Pure</td>
+      <td>PURE_RED / PURE_GREEN / PURE_BLUE</td>
+      <td>
+        <div style={{ display: "flex" }}>
+          <div style={{ backgroundColor: "#FF0000", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#00FF00", width: "40px", height: "20px" }} />
+          <div style={{ backgroundColor: "#0000FF", width: "40px", height: "20px" }} />
+        </div>
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+### How to think about colors
+
+- Use **palette constants** (e.g. `BLUE_C`, `GREEN_E`) for semantic meaning  
+- Use **raw colors (`Vec4`)** for fine-tuned visuals (backgrounds, subtle tones)  
+- Prefer consistency over variety  
+
+```rust
+use murali::colors::*;
+
+let circle_id = scene.add_tattva(
+    Circle::new(1.5, 48, GREEN_E),
+    ORIGIN,
+);
+````
+
+---
+
+## Positions
+
+In Murali, the center of the screen is `(0, 0, 0)`.
+
+You define positions using:
+
+```rust
+Vec3::new(x, y, z)
+```
+
+* `+x` → right
+* `-x` → left
+* `+y` → up
+* `-y` → down
+* `z` → depth (used for layering; higher values come closer to the camera)
+
+> In Murali, positions are **absolute and deterministic** — the same coordinates always produce the same visual result.
+
+You can either use raw vectors:
+
+```rust
+Vec3::new(2.0, 1.0, 0.0)
+```
+
+Or use predefined constants from `murali::positions`.
+
+```rust
+use glam::Vec3;
+
+pub const ORIGIN: Vec3 = Vec3::ZERO;
+pub const CAMERA_DEFAULT_POS: Vec3 = Vec3::new(0.0, 0.0, 10.0);
+
+pub const UP: Vec3 = Vec3::Y;
+pub const DOWN: Vec3 = Vec3::NEG_Y;
+pub const LEFT: Vec3 = Vec3::NEG_X;
+pub const RIGHT: Vec3 = Vec3::X;
+```
+
+### Common Position Constants
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Vector</th>
+      <th>Meaning</th>
+      <th>Visual</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>UP</code></td>
+      <td><code>(0, 1, 0)</code></td>
+      <td>Move upward</td>
+      <td>⬆️</td>
+    </tr>
+    <tr>
+      <td><code>DOWN</code></td>
+      <td><code>(0, -1, 0)</code></td>
+      <td>Move downward</td>
+      <td>⬇️</td>
+    </tr>
+    <tr>
+      <td><code>LEFT</code></td>
+      <td><code>(-1, 0, 0)</code></td>
+      <td>Move left</td>
+      <td>⬅️</td>
+    </tr>
+    <tr>
+      <td><code>RIGHT</code></td>
+      <td><code>(1, 0, 0)</code></td>
+      <td>Move right</td>
+      <td>➡️</td>
+    </tr>
+    <tr>
+      <td><code>ORIGIN</code></td>
+      <td><code>(0, 0, 0)</code></td>
+      <td>Center of screen</td>
+      <td>🎯</td>
+    </tr>
+    <tr>
+      <td><code>CAMERA_DEFAULT_POS</code></td>
+      <td><code>(0, 0, 10)</code></td>
+      <td>Default camera position</td>
+      <td>📷</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Themes
+
+Murali provides two built-in themes:
+
+* `dark` (default)
+* `light`
+
+Themes define:
+
+* background color
+* surface colors
+* text colors
+* accent colors
+
+Once you're comfortable, you should create your own theme to define a consistent visual identity.
+
+### Creating a custom theme
+
+1. Create a `themes/` folder next to your `Cargo.toml`
+2. Add a file (e.g. `sesh.toml`)
+3. Define the required fields
+4. Activate it from `murali.toml`
+
+Example:
+
+```toml
+name = "murali-dark"
+background = "#0A121C"
+surface    = "#1C2E45"
+surface_alt = "#2B405C"
+text_primary = "#F2F7FC"
+text_muted   = "#BCCEE2"
+accent      = "#56C1F4"
+accent_alt  = "#AA8EF9"
+positive    = "#4FD193"
+warning     = "#F9B742"
+```
+
+Then point Murali at the theme from your project config:
+
+```toml
+theme = "sesh"
+```
+
+Murali will look for `themes/sesh.toml` next to your project `Cargo.toml`.
+
+---
+
+## Palettes
+
+For advanced use cases, Murali supports **custom palettes**.
+
+Palettes allow you to define your own color systems beyond the built-in constants.
+
+### How to create a palette
+
+1. Create a `palettes/` folder next to your `Cargo.toml`
+2. Add a file (e.g. `my_palette.toml`)
+3. Define your colors inside
+4. Load the palette by name in your scene code
+
+Example palette file:
+
+```toml
+name = "my-palette"
+primary = "#56C1F4"
+secondary = "#AA8EF9"
+highlight = "#F9B742"
+```
+
+Example usage:
+
+```rust
+use murali::Palette;
+
+let palette = Palette::load("my_palette");
+let primary = palette.require("primary");
+```
+
+> This feature is evolving — examples will be added soon.
+
+---
+
+You now have the core mental model for how Murali represents visuals.
+
+→ Continue to [First Scene](./first-scene)

@@ -14,6 +14,15 @@ Placement helpers like `next_to`, `align_to`, `HStack`, `VStack`, and `Group.mov
 A hand-built transformer running on its own looping child timeline while the complete view docks,
 tilts, scales, and returns inside a separate parent composition.
 
+`cargo run --example wave_mesh_background`
+An animated wire terrain for floors and opening backgrounds. The phase loops, and a supplied camera keeps the grid at a steady screen size.
+
+`cargo run --example smooth_ground`
+A filled dune sheet for the same job. No wires or dots. The horizon mixes into the clear color, and the sheet stays opaque so objects on it keep their depth.
+
+`cargo run --example kavriq_splash`
+The Kavriq drop fills, falls, and breaks into a puddle. Drive `KavriqSplashLogo.time` to seek or loop it.
+
 `cargo run --example kavriq_opening`
 Extruded, bone-textured capital letters fall through a perspective scene, settle into KAVRIQ,
 burst into glyph-shaped particles, and dissolve to reveal a stable tagline end card. It demonstrates
@@ -184,10 +193,10 @@ and sampling.
 One narrative flow that reveals step by step and then replays a routed feedback journey.
 
 `cargo run --example murali_logo`
-The Murali brand mark as a visual reference study built from authored geometry and guide structure.
+The solid, single-color Murali brand mark with a minimal reveal.
 
 `cargo run --example murali_logo_transparent`
-The Murali brand mark prepared for transparent PNG export with example-level toggles for frame visibility.
+The filled Murali brand mark prepared for transparent PNG export.
 
 `cargo run --example fourier_formula_trace`
 An advanced Fourier-series demo where ranked coefficients become epicycles that reconstruct a Typst pi outline.

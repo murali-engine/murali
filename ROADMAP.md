@@ -34,8 +34,6 @@ run against it without local setup surprises.
 - Add release confidence checks for Python import, Python examples, `murali-kit` examples, Maturin
   wheel builds, and normal Rust tests.
 
-The working inventory for this effort lives in `documentation/internal/python-api-inventory.md`.
-
 ## P0: Reliability And Quality Gates
 
 - Add Linux, macOS, and headless-render coverage for the `wgpu` runtime.

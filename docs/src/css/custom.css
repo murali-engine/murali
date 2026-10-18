@@ -1,0 +1,274 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+}
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #df5149;
+  --ifm-color-primary-dark: #d43f37;
+  --ifm-color-primary-darker: #c93a33;
+  --ifm-color-primary-darkest: #a82e29;
+  --ifm-color-primary-light: #e86c65;
+  --ifm-color-primary-lighter: #ef817b;
+  --ifm-color-primary-lightest: #f7aaa6;
+  --ifm-background-color: #f6f2ea;
+  --ifm-navbar-background-color: rgba(255, 253, 249, 0.94);
+  --ifm-font-family-base: Inter, 'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --ifm-font-family-monospace: 'SFMono-Regular', 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  --ifm-font-color-base: #192432;
+  --ifm-heading-color: #101926;
+  --ifm-heading-font-weight: 700;
+  --ifm-color-content-secondary: #5e6873;
+  --ifm-code-font-size: 90%;
+  --ifm-code-background: rgba(16, 25, 38, 0.06);
+  --ifm-code-border-radius: 2px;
+  --ifm-global-radius: 2px;
+  --ifm-menu-color: #3d4b5c;
+  --ifm-menu-color-background-active: transparent;
+  --ifm-menu-color-background-hover: rgba(16, 25, 38, 0.045);
+  --ifm-hover-overlay: rgba(16, 25, 38, 0.045);
+  --ifm-breadcrumb-border-radius: 2px;
+  --ifm-toc-border-color: rgba(16, 25, 38, 0.12);
+  --ifm-pagination-nav-border-radius: 0;
+  --docusaurus-highlighted-code-line-bg: rgba(16, 25, 38, 0.06);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #ff776c;
+  --ifm-color-primary-dark: #ff6256;
+  --ifm-color-primary-darker: #ff574a;
+  --ifm-color-primary-darkest: #ff2f20;
+  --ifm-color-primary-light: #ff8c84;
+  --ifm-color-primary-lighter: #ff9790;
+  --ifm-color-primary-lightest: #ffc2be;
+  --ifm-background-color: #0c1522;
+  --ifm-font-color-base: #f7f2e9;
+  --ifm-heading-color: #f7f2e9;
+  --ifm-color-content-secondary: #a9b1bb;
+  --ifm-background-surface-color: #111d2c;
+  --ifm-navbar-background-color: rgba(12, 21, 34, 0.94);
+  --ifm-code-background: rgba(255, 253, 249, 0.08);
+  --ifm-menu-color: #c5cdd6;
+  --ifm-menu-color-background-hover: rgba(255, 255, 255, 0.045);
+  --ifm-hover-overlay: rgba(255, 255, 255, 0.045);
+  --ifm-toc-border-color: rgba(255, 255, 255, 0.1);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.06);
+}
+
+.navbar {
+  border-bottom: 1px solid rgba(127, 127, 127, 0.16);
+  box-shadow: none;
+  /* Keep the bar transparent. backdrop-filter on .navbar itself becomes the
+     containing block for the position:fixed mobile drawer, so that drawer
+     collapses to the 60px bar and the menu is clipped. */
+  background-color: transparent;
+}
+
+.navbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ifm-navbar-background-color);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  pointer-events: none;
+}
+
+/* The drawer reuses the navbar color, which is translucent for the glass
+   bar. On a phone that lets the page show through the menu. */
+.navbar-sidebar {
+  background-color: var(--ifm-background-color);
+}
+
+.navbar__logo {
+  height: 30px;
+  margin-right: 0.7rem;
+  width: 30px;
+}
+
+.navbar__logo img {
+  height: 30px;
+  width: 30px;
+}
+
+.navbar__title {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.footer--dark {
+  --ifm-footer-background-color: #070d16;
+  --ifm-footer-color: rgba(255, 253, 249, 0.72);
+  --ifm-footer-link-color: rgba(255, 253, 249, 0.72);
+  --ifm-footer-link-hover-color: #fffdf9;
+  --ifm-footer-title-color: rgba(255, 253, 249, 0.46);
+}
+
+.footer__title {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.footer__copyright {
+  color: rgba(255, 253, 249, 0.4);
+  font-size: 0.85rem;
+}
+
+.markdown > h1,
+.markdown > h2,
+.blog-list-page article h2,
+.blog-post-page article h1 {
+  letter-spacing: -0.035em;
+}
+
+.blog-list-page article h2 a {
+  color: var(--ifm-heading-color);
+}
+
+.blog-list-page article h2 a:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.theme-doc-sidebar-container {
+  background: transparent;
+}
+
+.menu__link {
+  border-radius: 0;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  background: transparent;
+  box-shadow: inset 2px 0 0 var(--ifm-color-primary);
+  font-weight: 650;
+}
+
+.menu__list .menu__list {
+  margin-left: 0.15rem;
+  padding-left: 0.35rem;
+}
+
+.breadcrumbs__item--active .breadcrumbs__link {
+  background: transparent;
+  font-weight: 650;
+}
+
+.theme-doc-version-badge {
+  --ifm-badge-background-color: transparent;
+  border: 1px solid rgba(127, 127, 127, 0.28);
+  border-radius: 2px;
+  color: var(--ifm-color-content-secondary);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.table-of-contents__link {
+  font-size: 0.84rem;
+}
+
+.table-of-contents__link--active {
+  font-weight: 650;
+}
+
+.theme-code-block {
+  --prism-background-color: #fffdf9 !important;
+  border: 1px solid rgba(16, 25, 38, 0.1);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-theme='dark'] .theme-code-block {
+  --prism-background-color: #0a111c !important;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:not(pre) > code {
+  border: 1px solid rgba(127, 127, 127, 0.16);
+  padding: 0.08rem 0.32rem;
+}
+
+.theme-admonition.alert {
+  --admonition-accent: var(--ifm-color-primary);
+  --ifm-alert-shadow: none;
+  background: rgba(255, 253, 249, 0.55);
+  border: 1px solid rgba(16, 25, 38, 0.1);
+  border-left: 3px solid var(--admonition-accent);
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--ifm-font-color-base);
+}
+
+[data-theme='dark'] .theme-admonition.alert {
+  background: rgba(17, 29, 44, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+  border-left-color: var(--admonition-accent);
+}
+
+.theme-admonition.alert--info {
+  --admonition-accent: #7f8b99;
+}
+
+.theme-admonition.alert--success {
+  --admonition-accent: #3f8f72;
+}
+
+.theme-admonition.alert--warning {
+  --admonition-accent: #c9862a;
+}
+
+.pagination-nav__link {
+  border-color: rgba(127, 127, 127, 0.22);
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+.pagination-nav__sublabel {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pagination-nav__link--prev .pagination-nav__label::before {
+  content: '← ';
+}
+
+.pagination-nav__link--next .pagination-nav__label::after {
+  content: ' →';
+}
+
+.videoEmbed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  margin: 0 0 1rem;
+  background: var(--ifm-background-surface-color);
+}
+
+.videoEmbed iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0;
+}

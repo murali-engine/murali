@@ -4,6 +4,12 @@ All notable changes to Murali are recorded here.
 
 ## Unreleased
 
+### Added
+
+- `WaveMesh`, an animated wire terrain for floors and opening backgrounds. Supply a camera view and line thickness stays a fraction of the screen.
+- `SmoothGround`, a filled dune sheet for the same job when a wire lattice would compete with the subject. Vertex alpha stays 1, and the horizon is a color mix into the scene clear color.
+- `KavriqLogoMark` and `KavriqSplashLogo`, the Kavriq drop and its seekable fill-fall-splash ident.
+
 ## 0.3.0 - 2026-08-30
 
 Python is now the public scene-authoring surface. Rust remains the engine. These APIs are

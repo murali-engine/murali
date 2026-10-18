@@ -40,7 +40,10 @@ require_text README.md 'dual-licensed under either the MIT License or the Apache
 require_text RUST.md "murali = \"$version\""
 require_text PYTHON.md "murali-engine==$version"
 require_text PYTHON.md "murali-kit==$version"
-require_text documentation/README.md 'only documentation source of truth'
+require_text docs/static/CNAME 'muraliengine.com'
+require_text docs/docusaurus.config.ts "organizationName: 'murali-engine'"
+require_text docs/docusaurus.config.ts "projectName: 'murali'"
+require_text docs/docusaurus.config.ts 'https://github.com/murali-engine/murali'
 
 for file in LICENSE-APACHE LICENSE-MIT; do
   if [[ ! -s "$file" ]]; then

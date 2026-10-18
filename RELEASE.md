@@ -85,8 +85,9 @@ rg "$VERSION" Cargo.toml Cargo.lock pyproject.toml README.md RUST.md PYTHON.md
 scripts/check-release-metadata.sh
 ```
 
-That script checks the crate/Python pins and licenses. The GitHub-native Markdown documentation is
-the only documentation source of truth.
+That script checks the crate/Python pins, licenses, and the Docusaurus domain/repository identity.
+The published Rust documentation lives in `docs/`; the root Rust and Python guides track the
+current engine surfaces.
 
 ## 2. Checks
 
@@ -103,8 +104,7 @@ cargo publish --dry-run
 uv lock --check
 ```
 
-Review `cargo package --list`. The crate excludes `documentation/**`, `examples/**`, and
-`RELEASE.md`.
+Review `cargo package --list`. The crate excludes `examples/**` and `RELEASE.md`.
 
 A local wheel is optional and only for the machine you are on:
 
@@ -185,10 +185,10 @@ Then release kit: [murali-kit RELEASE.md](https://github.com/murali-engine/mural
 
 ## Documentation
 
-Update `README.md`, `RUST.md`, `PYTHON.md`, and relevant files under `documentation/` in the same
-release commit. All documentation must remain ordinary Markdown with relative internal links so it
-works on GitHub and in offline clones. Do not add a documentation site or generated documentation
-copy.
+Update `README.md`, `RUST.md`, `PYTHON.md`, and the published pages under `docs/` in the same
+release commit. When you cut a docs version, update `docs/versioned_docs/` for that version too.
+Root guides stay ordinary Markdown with relative internal links so they work on GitHub and in
+offline clones.
 
 ## Do Not
 

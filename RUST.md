@@ -56,7 +56,7 @@ cargo run --example model_inspector -- /absolute/path/to/model.glb --rot-x -20
 ```
 
 Catalog: [examples/README.md](./examples/README.md). Architecture:
-[Rust `0.2.4` architecture reference](./documentation/architecture/overview.md).
+[Rust `0.2.4` architecture reference](./docs/versioned_docs/version-0.2.4/architecture/overview.md).
 
 ## Config
 

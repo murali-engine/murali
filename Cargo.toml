@@ -12,7 +12,6 @@ readme = "README.md"
 keywords = ["animation", "AI", "graphics", "math", "visualization"]
 categories = ["graphics", "rendering"]
 exclude = [
-  "documentation/**",
   "examples/**",
   "scripts/**",
   "optimization/**",
